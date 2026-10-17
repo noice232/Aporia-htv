@@ -1,0 +1,30 @@
+{
+  "name": "aporia-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "smoke": "node scripts/smoke.mjs",
+    "format:check": "prettier --check src/App.tsx src/api/client.ts src/styles.css src/main.tsx vite.config.ts scripts/smoke.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "types:generate": "openapi-typescript contracts/openapi.yaml -o src/api/generated.ts"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "openapi-fetch": "^0.15.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "openapi-typescript": "^7.10.0",
+    "playwright-core": "^1.64.1",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}
