@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy.orm import Session
 
 from app.models.policy import CandidateScore, PolicyRun, PolicySnapshot
 from app.models.project import ResearchEvent
 from app.policy.candidates import Candidate, DEFAULT_CANDIDATES
-from app.policy.scoring import score_conditioned, score_unconditioned
+from app.policy.scoring import clear_provenance, get_last_provenance, score_conditioned, score_unconditioned
 
 
 def _utcnow() -> datetime:
@@ -66,6 +69,7 @@ def run_policy(
     fallback_reason = None if human_context else "no_human_context"
 
     scores_data: list[dict[str, Any]] = []
+    clear_provenance()
 
     for c in infeasible:
         scores_data.append({
@@ -123,8 +127,25 @@ def run_policy(
         if not sel_candidate.feasible:
             selected_id = None
 
+    from app.config import settings
+    if settings.scoring_mode == "gemini" and selected_id:
+        if w < 0.01 and selected_id != "A":
+            logger.warning("Calibration drift: w≈0 selected %s, expected A", selected_id)
+        if human_context and w >= 1.0 and selected_id != "B":
+            logger.warning("Calibration drift: w≥1 with context selected %s, expected B", selected_id)
+
+    _prov_u, _ = get_last_provenance()
+    any_prov = next(iter(_prov_u.values()), None)
+    if any_prov and any_prov.provider == "gemini" and fallback_reason is None:
+        pass
+    elif settings.scoring_mode == "gemini" and any_prov and any_prov.provider == "stub" and fallback_reason is None:
+        fallback_reason = "gemini_unavailable"
+
     cset_hash = _candidate_set_hash(candidates)
     now = _utcnow()
+
+    prov_u, prov_c = get_last_provenance()
+    first_prov = next(iter(prov_u.values()), None)
 
     snapshot = PolicySnapshot(
         project_id=project_id,
@@ -134,6 +155,10 @@ def run_policy(
         constraints_hash=cset_hash,
         human_context_json=json.dumps(human_context) if human_context else None,
         conditioned_context_status=conditioned_status,
+        model_provider=first_prov.provider if first_prov else "stub",
+        model_id=first_prov.model_id if first_prov else None,
+        prompt_template_version=first_prov.prompt_template_version if first_prov else None,
+        calibration_version=first_prov.calibration_version if first_prov else None,
         created_at=now,
     )
     db.add(snapshot)
@@ -155,9 +180,15 @@ def run_policy(
     db.flush()
 
     for s in scores_data:
+        cid = s["candidate_id"]
+        pu = prov_u.get(cid)
+        pc = prov_c.get(cid)
+        total_prompt = (pu.prompt_tokens if pu else 0) + (pc.prompt_tokens if pc else 0)
+        total_compl = (pu.completion_tokens if pu else 0) + (pc.completion_tokens if pc else 0)
+        total_lat = (pu.latency_ms if pu else 0) + (pc.latency_ms if pc else 0)
         cs = CandidateScore(
             policy_run_id=policy_run.id,
-            candidate_id=s["candidate_id"],
+            candidate_id=cid,
             s_unconditioned=s["s_u"],
             s_conditioned=s["s_c"] if human_context else s["s_u"],
             delta=s["delta"],
@@ -168,6 +199,13 @@ def run_policy(
             feasibility=s["feasible"],
             infeasibility_reason=s["infeasibility_reason"],
             data_mode="measured",
+            scoring_provider=pu.provider if pu else "stub",
+            scoring_model_id=pu.model_id if pu else None,
+            prompt_tokens=total_prompt if total_prompt else None,
+            completion_tokens=total_compl if total_compl else None,
+            latency_ms=total_lat if total_lat else None,
+            rationale_u_json=json.dumps(pu.rationale) if pu and pu.rationale else None,
+            rationale_c_json=json.dumps(pc.rationale) if pc and pc.rationale else None,
         )
         db.add(cs)
 

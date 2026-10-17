@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -20,6 +20,10 @@ class PolicySnapshot(Base):
     constraints_hash: Mapped[str] = mapped_column(String(64))
     human_context_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     conditioned_context_status: Mapped[str] = mapped_column(String(32), default="missing")
+    model_provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    model_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    prompt_template_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    calibration_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -39,6 +43,13 @@ class CandidateScore(Base):
     feasibility: Mapped[bool] = mapped_column(Boolean, default=True)
     infeasibility_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     data_mode: Mapped[str] = mapped_column(String(32), default="measured")
+    scoring_provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    scoring_model_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latency_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rationale_u_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rationale_c_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class PolicyRun(Base):
