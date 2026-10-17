@@ -142,6 +142,88 @@ paths:
                   $ref: "#/components/schemas/AgendaItemOut"
         "404":
           description: Project not found
+  /api/v1/projects/{project_id}/policy/score:
+    post:
+      operationId: score_policy
+      summary: Score candidates with dual CFG policy
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreRequest"
+      responses:
+        "200":
+          description: Policy run with all scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRunOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/policy/runs/{policy_run_id}:
+    get:
+      operationId: get_policy_run
+      summary: Get policy run with full provenance
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: policy_run_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Policy run details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRunOut"
+        "404":
+          description: Project or policy run not found
+  /api/v1/projects/{project_id}/policy/choose:
+    post:
+      operationId: choose_policy_action
+      summary: Choose and lock a policy action (idempotent)
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChooseRequest"
+      responses:
+        "200":
+          description: Action chosen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChooseResult"
+        "400":
+          description: Invalid request (infeasible candidate, wrong status)
+        "404":
+          description: Project not found
 components:
   schemas:
     ProviderHealth:
@@ -383,3 +465,133 @@ components:
         - status
         - priority
         - created_at
+    ScoreRequest:
+      type: object
+      properties:
+        w:
+          type: number
+          minimum: 0
+          maximum: 2
+        human_context:
+          anyOf:
+            - type: object
+            - type: "null"
+        candidate_ids:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
+      required:
+        - w
+    ChooseRequest:
+      type: object
+      properties:
+        policy_run_id:
+          type: string
+        candidate_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        idempotency_key:
+          type: string
+      required:
+        - policy_run_id
+        - idempotency_key
+    CandidateScoreOut:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        label:
+          type: string
+        s_u:
+          anyOf:
+            - type: number
+            - type: "null"
+        s_c:
+          anyOf:
+            - type: number
+            - type: "null"
+        delta:
+          anyOf:
+            - type: number
+            - type: "null"
+        s_guided:
+          anyOf:
+            - type: number
+            - type: "null"
+        feasible:
+          type: boolean
+        infeasibility_reason:
+          anyOf:
+            - type: string
+            - type: "null"
+        rubric_u:
+          anyOf:
+            - type: object
+            - type: "null"
+        rubric_c:
+          anyOf:
+            - type: object
+            - type: "null"
+      required:
+        - candidate_id
+        - label
+        - feasible
+    PolicyRunOut:
+      type: object
+      properties:
+        id:
+          type: string
+        snapshot_id:
+          type: string
+        project_id:
+          type: string
+        w:
+          type: number
+        selected_candidate_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        selected_label:
+          anyOf:
+            - type: string
+            - type: "null"
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateScoreOut"
+        status:
+          type: string
+        fallback_reason:
+          anyOf:
+            - type: string
+            - type: "null"
+        computed_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - snapshot_id
+        - project_id
+        - w
+        - scores
+        - status
+        - computed_at
+    ChooseResult:
+      type: object
+      properties:
+        policy_run_id:
+          type: string
+        selected_candidate_id:
+          type: string
+        status:
+          type: string
+        idempotency_key:
+          type: string
+      required:
+        - policy_run_id
+        - selected_candidate_id
+        - status
+        - idempotency_key
