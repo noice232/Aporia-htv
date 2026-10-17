@@ -1,0 +1,867 @@
+openapi: 3.1.0
+info:
+  title: APORIA API
+  version: 1.0.0
+  description: Working contract — updated as endpoints are added.
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/v1/health:
+    get:
+      operationId: get_health
+      summary: Health check
+      tags:
+        - health
+      responses:
+        "200":
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /api/v1/projects:
+    post:
+      operationId: create_project
+      summary: Create a new project
+      tags:
+        - projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProject"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectOut"
+  /api/v1/projects/{project_id}/goals:
+    post:
+      operationId: submit_goal
+      summary: Submit a coverage goal and run experiment loop
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitGoal"
+      responses:
+        "200":
+          description: Goal evaluation complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalResult"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/runs:
+    get:
+      operationId: list_runs
+      summary: List experiment runs for a project
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunSummary"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/events:
+    get:
+      operationId: list_events
+      summary: List research events with cursor pagination
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: after
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Page of events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventPage"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/agenda:
+    get:
+      operationId: list_agenda
+      summary: List agenda items (subproblems) for a project
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of agenda items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgendaItemOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/policy/score:
+    post:
+      operationId: score_policy
+      summary: Score candidates with dual CFG policy
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreRequest"
+      responses:
+        "200":
+          description: Policy run with all scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRunOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/policy/runs/{policy_run_id}:
+    get:
+      operationId: get_policy_run
+      summary: Get policy run with full provenance
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: policy_run_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Policy run details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRunOut"
+        "404":
+          description: Project or policy run not found
+  /api/v1/projects/{project_id}/policy/choose:
+    post:
+      operationId: choose_policy_action
+      summary: Choose and lock a policy action (idempotent)
+      tags:
+        - policy
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChooseRequest"
+      responses:
+        "200":
+          description: Action chosen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChooseResult"
+        "400":
+          description: Invalid request (infeasible candidate, wrong status)
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/judgments:
+    post:
+      operationId: submit_judgment
+      summary: Submit raw feedback as a candidate principle
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JudgmentRequest"
+      responses:
+        "201":
+          description: Principle created (unapproved)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/principles:
+    get:
+      operationId: list_principles
+      summary: List all principles for a project
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of principles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/principles/{principle_id}/approve:
+    post:
+      operationId: approve_principle
+      summary: Approve a principle (makes it active for conditioned scoring)
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Principle approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project or principle not found
+  /api/v1/projects/{project_id}/principles/{principle_id}:
+    put:
+      operationId: update_principle
+      summary: Edit a principle (text, enabled, confidence)
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePrinciple"
+      responses:
+        "200":
+          description: Principle updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project or principle not found
+    delete:
+      operationId: delete_principle
+      summary: Delete a principle
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Principle deleted
+        "404":
+          description: Project or principle not found
+  /api/v1/projects/{project_id}/profile:
+    get:
+      operationId: get_profile
+      summary: Get current researcher profile with computed scoring weights
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Researcher profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileOut"
+        "404":
+          description: Project not found or no profile exists
+  /api/v1/projects/{project_id}/profile/history:
+    get:
+      operationId: get_profile_history
+      summary: Get profile version history
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile version history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProfileVersionOut"
+        "404":
+          description: Project not found
+components:
+  schemas:
+    ProviderHealth:
+      type: object
+      properties:
+        provider:
+          type: string
+        connected:
+          type: boolean
+        mode:
+          type: string
+        model_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        checked_at:
+          type: string
+        last_error:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - provider
+        - connected
+        - mode
+      additionalProperties: false
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        api_version:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderHealth"
+        database_mode:
+          type: string
+        last_event_sequence:
+          anyOf:
+            - type: integer
+            - type: "null"
+      required:
+        - status
+        - api_version
+        - providers
+        - database_mode
+      additionalProperties: false
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items: {}
+        correlation_id:
+          type: string
+      required:
+        - code
+        - message
+      additionalProperties: false
+    CreateProject:
+      type: object
+      properties:
+        title:
+          type: string
+        objective:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - title
+    ProjectOut:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        objective:
+          anyOf:
+            - type: string
+            - type: "null"
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - status
+        - created_at
+    SubmitGoal:
+      type: object
+      properties:
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        seed:
+          type: integer
+          default: 42
+      required:
+        - threshold
+    GoalResult:
+      type: object
+      properties:
+        project_id:
+          type: string
+        runs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RunSummary"
+        best_coverage:
+          type: number
+        threshold_met:
+          type: boolean
+        agenda_item_id:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - project_id
+        - runs
+        - best_coverage
+        - threshold_met
+    RunSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        evaluator_version:
+          type: string
+        seed:
+          type: integer
+        status:
+          type: string
+        coverage_fraction:
+          anyOf:
+            - type: number
+            - type: "null"
+        parameters_json:
+          anyOf:
+            - type: object
+            - type: "null"
+        started_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        ended_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+      required:
+        - id
+        - evaluator_version
+        - seed
+        - status
+    EventOut:
+      type: object
+      properties:
+        id:
+          type: string
+        sequence:
+          type: integer
+        type:
+          type: string
+        entity_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        payload:
+          anyOf:
+            - type: object
+            - type: "null"
+        data_mode:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sequence
+        - type
+        - data_mode
+        - occurred_at
+    EventPage:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventOut"
+        next_sequence:
+          anyOf:
+            - type: integer
+            - type: "null"
+      required:
+        - events
+    AgendaItemOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        question:
+          type: string
+        status:
+          type: string
+        priority:
+          type: number
+        originating_run_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        originating_event_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        dedup_key:
+          anyOf:
+            - type: string
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - project_id
+        - question
+        - status
+        - priority
+        - created_at
+    ScoreRequest:
+      type: object
+      properties:
+        w:
+          type: number
+          minimum: 0
+          maximum: 2
+        human_context:
+          anyOf:
+            - type: object
+            - type: "null"
+        candidate_ids:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
+      required:
+        - w
+    ChooseRequest:
+      type: object
+      properties:
+        policy_run_id:
+          type: string
+        candidate_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        idempotency_key:
+          type: string
+      required:
+        - policy_run_id
+        - idempotency_key
+    CandidateScoreOut:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        label:
+          type: string
+        s_u:
+          anyOf:
+            - type: number
+            - type: "null"
+        s_c:
+          anyOf:
+            - type: number
+            - type: "null"
+        delta:
+          anyOf:
+            - type: number
+            - type: "null"
+        s_guided:
+          anyOf:
+            - type: number
+            - type: "null"
+        feasible:
+          type: boolean
+        infeasibility_reason:
+          anyOf:
+            - type: string
+            - type: "null"
+        rubric_u:
+          anyOf:
+            - type: object
+            - type: "null"
+        rubric_c:
+          anyOf:
+            - type: object
+            - type: "null"
+      required:
+        - candidate_id
+        - label
+        - feasible
+    PolicyRunOut:
+      type: object
+      properties:
+        id:
+          type: string
+        snapshot_id:
+          type: string
+        project_id:
+          type: string
+        w:
+          type: number
+        selected_candidate_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        selected_label:
+          anyOf:
+            - type: string
+            - type: "null"
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/CandidateScoreOut"
+        status:
+          type: string
+        fallback_reason:
+          anyOf:
+            - type: string
+            - type: "null"
+        computed_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - snapshot_id
+        - project_id
+        - w
+        - scores
+        - status
+        - computed_at
+    ChooseResult:
+      type: object
+      properties:
+        policy_run_id:
+          type: string
+        selected_candidate_id:
+          type: string
+        status:
+          type: string
+        idempotency_key:
+          type: string
+      required:
+        - policy_run_id
+        - selected_candidate_id
+        - status
+        - idempotency_key
+    JudgmentRequest:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
+    UpdatePrinciple:
+      type: object
+      properties:
+        text:
+          anyOf:
+            - type: string
+            - type: "null"
+        enabled:
+          anyOf:
+            - type: boolean
+            - type: "null"
+        confidence:
+          anyOf:
+            - type: number
+            - type: "null"
+    PrincipleOut:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        source:
+          type: string
+        scope:
+          type: string
+        confidence:
+          type: number
+        enabled:
+          type: boolean
+        approved:
+          type: boolean
+        approved_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        weight_adjustments:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - text
+        - source
+        - scope
+        - confidence
+        - enabled
+        - approved
+        - weight_adjustments
+        - created_at
+    ProfileOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        version:
+          type: integer
+        principles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PrincipleOut"
+        scoring_weights:
+          anyOf:
+            - type: object
+            - type: "null"
+      required:
+        - id
+        - project_id
+        - version
+        - principles
+    ProfileVersionOut:
+      type: object
+      properties:
+        version:
+          type: integer
+        principles_snapshot:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - version
+        - principles_snapshot
+        - created_at
