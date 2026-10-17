@@ -1,3 +1,30 @@
+# APORIA — Backend
+
+## Quick start
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Server starts at **http://localhost:8000**.
+
+Health check: `GET http://localhost:8000/api/v1/health`
+
+Run tests:
+
+```bash
+python -m pytest tests/ -v
+```
+
+---
+
 ## Intellectual Property
 
 Copyright © 2026 APORIA contributors.

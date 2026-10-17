@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info:
+  title: APORIA API
+  version: 1.0.0
+  description: Working contract — updated as endpoints are added.
+servers:
+  - url: http://localhost:8000
+paths:
+  /api/v1/health:
+    get:
+      operationId: get_health
+      summary: Health check
+      tags:
+        - health
+      responses:
+        "200":
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    ProviderHealth:
+      type: object
+      properties:
+        provider:
+          type: string
+        connected:
+          type: boolean
+        mode:
+          type: string
+        model_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        checked_at:
+          type: string
+        last_error:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - provider
+        - connected
+        - mode
+      additionalProperties: false
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        api_version:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderHealth"
+        database_mode:
+          type: string
+        last_event_sequence:
+          anyOf:
+            - type: integer
+            - type: "null"
+      required:
+        - status
+        - api_version
+        - providers
+        - database_mode
+      additionalProperties: false
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items: {}
+        correlation_id:
+          type: string
+      required:
+        - code
+        - message
+      additionalProperties: false
