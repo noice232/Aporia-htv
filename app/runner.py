@@ -134,12 +134,51 @@ def run_goal(
                         "message": f"Best coverage {best_coverage:.4f} < threshold {threshold:.4f}",
                     })
 
+        template_question = (
+            f"Coverage {best_coverage:.2%} below threshold {threshold:.2%} "
+            f"— investigate missing geometry or alternative poses"
+        )
+        question = template_question
+        data_mode = "measured"
+        sp_provider = None
+        sp_model_id = None
+        sp_prompt_tokens = None
+        sp_completion_tokens = None
+        sp_latency_ms = None
+        hypothesis_payload: dict[str, Any] = {}
+
+        from app.config import settings
+        if settings.scoring_mode == "gemini" and settings.gemini_api_key:
+            try:
+                from app.policy.gemini import generate_subproblem
+                evidence = {
+                    "threshold": threshold,
+                    "best_coverage": best_coverage,
+                    "runs": run_summaries,
+                }
+                sp_result = generate_subproblem(
+                    evidence=evidence,
+                    api_key=settings.gemini_api_key,
+                    model_id=settings.gemini_model_id,
+                )
+                question = sp_result.question
+                data_mode = "ai_generated"
+                sp_provider = "gemini"
+                sp_model_id = settings.gemini_model_id
+                sp_prompt_tokens = sp_result.prompt_tokens
+                sp_completion_tokens = sp_result.completion_tokens
+                sp_latency_ms = sp_result.latency_ms
+                hypothesis_payload = {
+                    "hypothesis": sp_result.hypothesis,
+                    "proposed_action": sp_result.proposed_action,
+                    "rationale": sp_result.rationale,
+                }
+            except Exception:
+                pass
+
         item = AgendaItem(
             project_id=project_id,
-            question=(
-                f"Coverage {best_coverage:.2%} below threshold {threshold:.2%} "
-                f"— investigate missing geometry or alternative poses"
-            ),
+            question=question,
             status="queued",
             priority=1.0,
             originating_run_id=best_run_id,
@@ -149,12 +188,18 @@ def run_goal(
                 "required_coverage": threshold,
                 "current_best": best_coverage,
             }),
+            model_provider=sp_provider,
+            model_id=sp_model_id,
+            generation_prompt_tokens=sp_prompt_tokens,
+            generation_completion_tokens=sp_completion_tokens,
+            generation_latency_ms=sp_latency_ms,
         )
         db.add(item)
         db.flush()
 
-        _emit(db, project_id, "agenda.queued", entity_id=item.id,
-              payload={"agenda_item_id": item.id, "question": item.question})
+        agenda_payload: dict[str, Any] = {"agenda_item_id": item.id, "question": item.question, "data_mode": data_mode}
+        agenda_payload.update(hypothesis_payload)
+        _emit(db, project_id, "agenda.queued", entity_id=item.id, payload=agenda_payload)
 
         agenda_item_id = item.id
 

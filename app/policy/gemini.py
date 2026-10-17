@@ -221,3 +221,102 @@ def build_conditioned_prompt(candidate: Candidate, human_context: dict) -> str:
         principles="; ".join(principles) if principles else "(none stated)",
         dimensions=_DIMENSION_DEFINITIONS,
     )
+
+
+_SUBPROBLEM_PROMPT = """You are a research agent analyzing the results of a 3D reconstruction experiment that failed to meet its coverage target.
+
+{scene}
+
+Experiment results:
+- Coverage threshold required: {threshold:.2%}
+- Best coverage achieved: {best_coverage:.2%}
+- Gap: {gap:.2%}
+
+Per-camera results:
+{per_camera_results}
+
+Based on this evidence, generate a research hypothesis about why coverage was insufficient and propose a concrete next step to improve it.
+
+Return a JSON object with exactly these fields:
+- question: string (the research question to investigate, 1-2 sentences)
+- hypothesis: string (your hypothesis about the coverage gap, grounded in the per-camera evidence)
+- proposed_action: string (a concrete next step to test the hypothesis)
+- rationale: string (why this hypothesis and action are the most promising based on the evidence)"""
+
+_SUBPROBLEM_RESPONSE_SCHEMA = types.Schema(
+    type=types.Type.OBJECT,
+    properties={
+        "question": types.Schema(type=types.Type.STRING),
+        "hypothesis": types.Schema(type=types.Type.STRING),
+        "proposed_action": types.Schema(type=types.Type.STRING),
+        "rationale": types.Schema(type=types.Type.STRING),
+    },
+    required=["question", "hypothesis", "proposed_action", "rationale"],
+)
+
+
+@dataclass(frozen=True)
+class SubproblemResult:
+    question: str
+    hypothesis: str
+    proposed_action: str
+    rationale: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    latency_ms: float = 0.0
+
+
+def generate_subproblem(
+    evidence: dict[str, Any],
+    api_key: str,
+    model_id: str = "gemini-2.0-flash",
+    temperature: float = 0.0,
+) -> SubproblemResult:
+    client = genai.Client(api_key=api_key)
+
+    per_camera_lines = []
+    for run in evidence.get("runs", []):
+        params = run.get("parameters_json", {})
+        label = params.get("camera_label", "unknown")
+        eye = params.get("eye", [])
+        cov = run.get("coverage_fraction", 0.0)
+        per_camera_lines.append(f"  - {label} (eye={eye}): coverage={cov:.2%}")
+
+    prompt = _SUBPROBLEM_PROMPT.format(
+        scene=_SCENE_DESCRIPTION,
+        threshold=evidence.get("threshold", 1.0),
+        best_coverage=evidence.get("best_coverage", 0.0),
+        gap=evidence.get("threshold", 1.0) - evidence.get("best_coverage", 0.0),
+        per_camera_results="\n".join(per_camera_lines) if per_camera_lines else "  (no per-camera data)",
+    )
+
+    t0 = time.monotonic()
+    response = client.models.generate_content(
+        model=model_id,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=temperature,
+            response_mime_type="application/json",
+            response_schema=_SUBPROBLEM_RESPONSE_SCHEMA,
+        ),
+    )
+    latency_ms = (time.monotonic() - t0) * 1000
+
+    import json as _json
+    data = _json.loads(response.text)
+
+    prompt_tokens = 0
+    completion_tokens = 0
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        prompt_tokens = getattr(response.usage_metadata, "prompt_token_count", 0) or 0
+        completion_tokens = getattr(response.usage_metadata, "candidates_token_count", 0) or 0
+
+    return SubproblemResult(
+        question=data["question"],
+        hypothesis=data["hypothesis"],
+        proposed_action=data["proposed_action"],
+        rationale=data["rationale"],
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        latency_ms=latency_ms,
+    )
