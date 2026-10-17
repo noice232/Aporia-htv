@@ -1,0 +1,28 @@
+{
+  "data_mode": "demo_fixture",
+  "rubric_version": "demo-rubric-v1",
+  "candidate_set_hash": "fixture-two-actions",
+  "weight": 1.5,
+  "candidates": [
+    {
+      "candidate_id": "view-a",
+      "title": "maximize single-view appearance",
+      "s_unconditioned": 0.8,
+      "s_conditioned": 0.5,
+      "delta": -0.3,
+      "s_guided": 0.35,
+      "feasible": true
+    },
+    {
+      "candidate_id": "view-b",
+      "title": "favor geometry consistency",
+      "s_unconditioned": 0.6,
+      "s_conditioned": 0.9,
+      "delta": 0.3,
+      "s_guided": 1.05,
+      "feasible": true
+    }
+  ],
+  "selected_candidate_id": "view-b",
+  "note": "Demonstration fixture ONLY; not Gemini or measured experiment data."
+}

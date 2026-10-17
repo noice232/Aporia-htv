@@ -1,0 +1,21 @@
+{
+  "id": "evt-demo-0001",
+  "schema_version": "v1",
+  "project_id": "project-demo",
+  "session_id": null,
+  "sequence": 5,
+  "type": "problem.discovered",
+  "occurred_at": "2026-10-17T12:00:00Z",
+  "entity_id": "problem-demo-1",
+  "payload": {
+    "problem": "insufficient surface coverage",
+    "parent_objective_id": "goal-demo-1",
+    "metric_value": 0.31,
+    "threshold": 0.6,
+    "unit": "fraction",
+    "run_id": "run-demo-1",
+    "note": "Synthetic for frontend interaction only"
+  },
+  "data_mode": "demo_fixture",
+  "correlation_id": "corr-demo"
+}

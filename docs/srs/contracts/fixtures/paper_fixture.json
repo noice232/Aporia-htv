@@ -1,0 +1,30 @@
+{
+  "id": "paper-demo-1",
+  "arxiv_id": null,
+  "openalex_id": null,
+  "doi": null,
+  "title": "DEMO FIXTURE \u2014 paper visual node",
+  "authors": [
+    "Example Researcher"
+  ],
+  "abstract": "This is deliberately fictional and cannot be opened as an actual paper.",
+  "url": "",
+  "publication_year": null,
+  "citation_count": null,
+  "topics": [
+    "3D Reconstruction"
+  ],
+  "position": [
+    0.12,
+    0.55,
+    -0.04
+  ],
+  "provenance": {
+    "provider": "fixture",
+    "source_id": "paper-demo-1",
+    "source_url": null,
+    "retrieved_at": "2026-10-17T12:00:00Z",
+    "access_scope": "demo",
+    "data_mode": "demo_fixture"
+  }
+}

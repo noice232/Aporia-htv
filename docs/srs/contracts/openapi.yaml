@@ -1,0 +1,4152 @@
+openapi: 3.1.0
+info:
+  title: APORIA Frozen Shared API
+  version: 1.0.0
+  description: Source-of-truth initial scaffold contract. Requirements in ../01 SRS. Changes require human approval.
+servers:
+- url: http://localhost:8000
+paths:
+  /api/v1/health:
+    get:
+      operationId: get_health
+      summary: get health
+      tags:
+      - health
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/workspaces:
+    get:
+      operationId: get_workspaces
+      summary: get workspaces
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: create_workspace
+      summary: create workspace
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                visibility:
+                  type: string
+              required:
+              - name
+              - visibility
+              additionalProperties: false
+  /api/v1/workspaces/{workspace_id}/members:
+    get:
+      operationId: get_members
+      summary: get members
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items: &id001
+                  type: object
+                  additionalProperties: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: add_member
+      summary: add member
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                role:
+                  type: string
+              required:
+              - user_id
+              - role
+              additionalProperties: false
+  /api/v1/projects:
+    get:
+      operationId: list_projects
+      summary: list projects
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: query
+        required: false
+        schema:
+          type: string
+    post:
+      operationId: create_project
+      summary: create project
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workspace_id:
+                  type: string
+                title:
+                  type: string
+                objective:
+                  type: string
+              required:
+              - workspace_id
+              - title
+              - objective
+              additionalProperties: false
+  /api/v1/projects/{project_id}/state:
+    get:
+      operationId: get_project_state
+      summary: get project state
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectState'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}:
+    patch:
+      operationId: update_project
+      summary: update project
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *id001
+  /api/v1/projects/{project_id}/events:
+    get:
+      operationId: list_project_events
+      summary: list project events
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPage'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: after
+        in: query
+        required: false
+        schema: &id002
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        schema: *id002
+  /api/v1/projects/{project_id}/stream:
+    get:
+      operationId: stream_project_events
+      summary: stream project events
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Server-sent events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: after
+        in: query
+        required: false
+        schema: *id002
+  /api/v1/projects/{project_id}/graph:
+    get:
+      operationId: get_graph
+      summary: get graph
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchGraph'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/papers:
+    get:
+      operationId: search_papers
+      summary: search papers
+      tags:
+      - papers
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paper'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: topic
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema: *id002
+  /api/v1/papers/{paper_id}:
+    get:
+      operationId: get_paper
+      summary: get paper
+      tags:
+      - papers
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paper'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: paper_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/corpus/sync:
+    post:
+      operationId: sync_corpus
+      summary: sync corpus
+      tags:
+      - corpus
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                max_works: *id002
+              required:
+              - query
+              - max_works
+              additionalProperties: false
+  /api/v1/projects/{project_id}/sources:
+    get:
+      operationId: get_sources
+      summary: get sources
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceContext'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/sources/search:
+    post:
+      operationId: search_sources
+      summary: search sources
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceContext'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                scope:
+                  type: string
+              required:
+              - query
+              - scope
+              additionalProperties: false
+  /api/v1/papiers/status:
+    get:
+      operationId: papiers_status
+      summary: papiers status
+      tags:
+      - papiers
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PapiersStatus'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/projects/{project_id}/plan:
+    post:
+      operationId: compile_plan
+      summary: compile plan
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchPlan'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objective:
+                  type: string
+                max_experiments: *id002
+              required:
+              - objective
+              - max_experiments
+              additionalProperties: false
+  /api/v1/projects/{project_id}/plans/{plan_id}/approve:
+    post:
+      operationId: approve_plan
+      summary: approve plan
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchPlan'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approved: &id003
+                  type: boolean
+                comment:
+                  type: string
+              required:
+              - approved
+              - comment
+              additionalProperties: false
+  /api/v1/projects/{project_id}/runs:
+    get:
+      operationId: list_runs
+      summary: list runs
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: start_run
+      summary: start run
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                experiment_spec_id:
+                  type: string
+                idempotency_key:
+                  type: string
+              required:
+              - experiment_spec_id
+              - idempotency_key
+              additionalProperties: false
+  /api/v1/runs/{run_id}:
+    get:
+      operationId: get_run
+      summary: get run
+      tags:
+      - runs
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/runs/{run_id}/cancel:
+    post:
+      operationId: cancel_run
+      summary: cancel run
+      tags:
+      - runs
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required:
+              - reason
+              additionalProperties: false
+  /api/v1/artifacts/{artifact_id}:
+    get:
+      operationId: get_artifact
+      summary: get artifact
+      tags:
+      - artifacts
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: artifact_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/agenda:
+    get:
+      operationId: list_agenda
+      summary: list agenda
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgendaItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/agenda/{agenda_id}/action:
+    post:
+      operationId: agenda_action
+      summary: agenda action
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgendaItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: agenda_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                comment:
+                  type: string
+              required:
+              - action
+              - comment
+              additionalProperties: false
+  /api/v1/projects/{project_id}/questions:
+    get:
+      operationId: list_questions
+      summary: list questions
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HumanQuestion'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/questions/{question_id}/answer:
+    post:
+      operationId: answer_question
+      summary: answer question
+      tags:
+      - questions
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HumanIntervention'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: question_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                choice:
+                  type: string
+                rationale:
+                  type: string
+              required:
+              - choice
+              - rationale
+              additionalProperties: false
+  /api/v1/projects/{project_id}/judgments/compile:
+    post:
+      operationId: compile_judgment
+      summary: compile judgment
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JudgmentProposal'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source_context_id:
+                  type: string
+                context_text:
+                  type: string
+              required:
+              - source_context_id
+              - context_text
+              additionalProperties: false
+  /api/v1/projects/{project_id}/judgments/{judgment_id}/review:
+    post:
+      operationId: review_judgment
+      summary: review judgment
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JudgmentProposal'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: judgment_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approved: *id003
+                comment:
+                  type: string
+              required:
+              - approved
+              - comment
+              additionalProperties: false
+  /api/v1/projects/{project_id}/policy/runs/{policy_run_id}:
+    get:
+      operationId: get_policy_run
+      summary: get policy run
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: policy_run_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/policy/score:
+    post:
+      operationId: score_policy
+      summary: score policy
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snapshot_id:
+                  type: string
+                candidate_ids:
+                  type: array
+                  items:
+                    type: string
+                weight: &id004
+                  type: number
+                approved_intervention_id:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+              required:
+              - snapshot_id
+              - candidate_ids
+              - weight
+              - approved_intervention_id
+              additionalProperties: false
+  /api/v1/projects/{project_id}/policy/choose:
+    post:
+      operationId: choose_action
+      summary: choose action
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyRun'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                policy_run_id:
+                  type: string
+                candidate_id:
+                  type: string
+                approval_id:
+                  type: string
+                idempotency_key:
+                  type: string
+              required:
+              - policy_run_id
+              - candidate_id
+              - approval_id
+              - idempotency_key
+              additionalProperties: false
+  /api/v1/projects/{project_id}/forks:
+    get:
+      operationId: list_forks
+      summary: list forks
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResearchFork'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: create_fork
+      summary: create fork
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchFork'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checkpoint_id:
+                  type: string
+                original_policy_run_id:
+                  type: string
+                guided_policy_run_id:
+                  type: string
+                idempotency_key:
+                  type: string
+              required:
+              - checkpoint_id
+              - original_policy_run_id
+              - guided_policy_run_id
+              - idempotency_key
+              additionalProperties: false
+  /api/v1/projects/{project_id}/forks/{fork_id}:
+    get:
+      operationId: get_fork
+      summary: get fork
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchFork'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: fork_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/analytics:
+    get:
+      operationId: get_analytics
+      summary: get analytics
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchAnalytics'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/court:
+    get:
+      operationId: list_disputes
+      summary: list disputes
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Disagreement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: open_dispute
+      summary: open dispute
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Disagreement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                claim_ids:
+                  type: array
+                  items:
+                    type: string
+                notes:
+                  type: string
+              required:
+              - claim_ids
+              - notes
+              additionalProperties: false
+  /api/v1/projects/{project_id}/court/{disagreement_id}/test:
+    post:
+      operationId: test_disagreement
+      summary: test disagreement
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Disagreement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: disagreement_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                experiment_spec_id:
+                  type: string
+                approved: *id003
+              required:
+              - experiment_spec_id
+              - approved
+              additionalProperties: false
+  /api/v1/workspaces/{workspace_id}/sessions:
+    get:
+      operationId: list_team_sessions
+      summary: list team sessions
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamSession'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/sessions:
+    post:
+      operationId: create_team_session
+      summary: create team session
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSession'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                visibility:
+                  type: string
+              required:
+              - visibility
+              additionalProperties: false
+  /api/v1/sessions/{session_id}/join:
+    post:
+      operationId: join_team_session
+      summary: join team session
+      tags:
+      - sessions
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSession'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+              required:
+              - role
+              additionalProperties: false
+  /api/v1/sessions/{session_id}/comments:
+    get:
+      operationId: list_team_comments
+      summary: list team comments
+      tags:
+      - sessions
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamComment'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: add_team_comment
+      summary: add team comment
+      tags:
+      - sessions
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamComment'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                source_refs:
+                  type: array
+                  items:
+                    type: string
+              required:
+              - body
+              - source_refs
+              additionalProperties: false
+  /api/v1/projects/{project_id}/experts/request:
+    post:
+      operationId: request_expert
+      summary: request expert
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                researcher_id:
+                  type: string
+                question_id:
+                  type: string
+              required:
+              - researcher_id
+              - question_id
+              additionalProperties: false
+  /api/v1/workspaces/{workspace_id}/lessons:
+    get:
+      operationId: list_lessons
+      summary: list lessons
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResearchLesson'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: propose_lesson
+      summary: propose lesson
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchLesson'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                statement:
+                  type: string
+                evidence_run_ids:
+                  type: array
+                  items:
+                    type: string
+              required:
+              - title
+              - statement
+              - evidence_run_ids
+              additionalProperties: false
+  /api/v1/lessons/{lesson_id}/review:
+    post:
+      operationId: review_lesson
+      summary: review lesson
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchLesson'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                approved: *id003
+                comment:
+                  type: string
+              required:
+              - approved
+              - comment
+              additionalProperties: false
+  /api/v1/lessons/{lesson_id}/transfer:
+    post:
+      operationId: test_lesson_transfer
+      summary: test lesson transfer
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: lesson_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_project_id:
+                  type: string
+                experiment_spec_id:
+                  type: string
+              required:
+              - target_project_id
+              - experiment_spec_id
+              additionalProperties: false
+  /api/v1/researchers/{user_id}:
+    get:
+      operationId: get_researcher_profile
+      summary: get researcher profile
+      tags:
+      - researchers
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearcherProfile'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      operationId: update_researcher_profile
+      summary: update researcher profile
+      tags:
+      - researchers
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearcherProfile'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: *id001
+  /api/v1/workspaces/{workspace_id}/portfolio:
+    get:
+      operationId: get_portfolio
+      summary: get portfolio
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/workspaces/{workspace_id}/portfolio/reprioritize:
+    post:
+      operationId: reprioritize_portfolio
+      summary: reprioritize portfolio
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioItem'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agenda_item_id:
+                  type: string
+                priority: *id004
+                reason:
+                  type: string
+              required:
+              - agenda_item_id
+              - priority
+              - reason
+              additionalProperties: false
+  /api/v1/workspaces/{workspace_id}/meta:
+    get:
+      operationId: list_meta_trials
+      summary: list meta trials
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetaTrial'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/workspaces/{workspace_id}/meta/trials:
+    post:
+      operationId: start_meta_trial
+      summary: start meta trial
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaTrial'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategy_a:
+                  type: string
+                strategy_b:
+                  type: string
+                common_conditions: *id001
+              required:
+              - strategy_a
+              - strategy_b
+              - common_conditions
+              additionalProperties: false
+  /api/v1/workspaces/{workspace_id}/meta/{trial_id}/rollback:
+    post:
+      operationId: rollback_strategy
+      summary: rollback strategy
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaTrial'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: trial_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategy_version:
+                  type: string
+              required:
+              - strategy_version
+              additionalProperties: false
+  /api/v1/integrations/status:
+    get:
+      operationId: integrations_status
+      summary: integrations status
+      tags:
+      - integrations
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderHealth'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/projects/{project_id}/claims:
+    get:
+      operationId: get_claims
+      summary: get claims
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evidence'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/claims/{claim_id}/invalidate:
+    post:
+      operationId: invalidate_claim
+      summary: invalidate claim
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidence'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: claim_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidence_refs:
+                  type: array
+                  items:
+                    type: string
+                reason:
+                  type: string
+              required:
+              - evidence_refs
+              - reason
+              additionalProperties: false
+  /api/v1/me:
+    get:
+      operationId: get_me
+      summary: get me
+      tags:
+      - me
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/projects/{project_id}/hypotheses:
+    get:
+      operationId: get_hypotheses
+      summary: get hypotheses
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hypothesis'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/experiments:
+    get:
+      operationId: get_experiment_specs
+      summary: get experiment specs
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentSpec'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/experiments/propose:
+    post:
+      operationId: propose_experiment
+      summary: propose experiment
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentSpec'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hypothesis_id:
+                  type: string
+                plugin:
+                  type: string
+                parameters: *id001
+              required:
+              - hypothesis_id
+              - plugin
+              - parameters
+              additionalProperties: false
+  /api/v1/sources/{source_context_id}:
+    get:
+      operationId: get_source_context
+      summary: get source context
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceContext'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: source_context_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/policy/snapshots/latest:
+    get:
+      operationId: get_latest_policy_snapshot
+      summary: get latest policy snapshot
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicySnapshot'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/policy/snapshots:
+    post:
+      operationId: create_policy_snapshot
+      summary: create policy snapshot
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicySnapshot'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                candidate_ids:
+                  type: array
+                  items:
+                    type: string
+                rubric_version:
+                  type: string
+              required:
+              - candidate_ids
+              - rubric_version
+              additionalProperties: false
+  /api/v1/projects/{project_id}/judgments:
+    get:
+      operationId: list_judgments
+      summary: list judgments
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JudgmentProposal'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/research/status:
+    get:
+      operationId: get_research_status
+      summary: get research status
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchSessionStatus'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/projects/{project_id}/research/control:
+    post:
+      operationId: control_research
+      summary: control research
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchSessionStatus'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                idempotency_key:
+                  type: string
+              required:
+              - action
+              - idempotency_key
+              additionalProperties: false
+  /api/v1/projects/{project_id}/research/checkpoints:
+    get:
+      operationId: list_checkpoints
+      summary: list checkpoints
+      tags:
+      - projects
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResearchCheckpoint'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/sessions/{session_id}:
+    get:
+      operationId: get_team_session
+      summary: get team session
+      tags:
+      - sessions
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSession'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/workspaces/{workspace_id}/strategies:
+    get:
+      operationId: list_strategies
+      summary: list strategies
+      tags:
+      - workspaces
+      responses:
+        '200':
+          description: Successful result
+          content:
+            application/json:
+              schema:
+                type: array
+                items: *id001
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: string
+components:
+  schemas:
+    Provenance:
+      type: object
+      properties:
+        provider:
+          type: string
+        source_id:
+          type: string
+        source_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+        retrieved_at:
+          type: string
+        access_scope:
+          type: string
+        data_mode:
+          type: string
+      required:
+      - provider
+      - source_id
+      - data_mode
+      additionalProperties: false
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        title:
+          type: string
+        objective:
+          type: string
+        status:
+          type: string
+        objective_version: *id002
+        created_at:
+          type: string
+      required:
+      - id
+      - workspace_id
+      - title
+      - objective
+      - status
+      additionalProperties: false
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        visibility:
+          type: string
+      required:
+      - id
+      - name
+      - role
+      additionalProperties: false
+    Metric:
+      type: object
+      properties:
+        name:
+          type: string
+        value: *id004
+        unit:
+          type: string
+        direction:
+          type: string
+        protocol:
+          type: string
+        data_mode:
+          type: string
+      required:
+      - name
+      - value
+      - unit
+      - direction
+      - protocol
+      - data_mode
+      additionalProperties: false
+    Paper:
+      type: object
+      properties:
+        id:
+          type: string
+        arxiv_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        openalex_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        doi:
+          anyOf:
+          - type: string
+          - type: 'null'
+        title:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        abstract:
+          anyOf:
+          - type: string
+          - type: 'null'
+        url:
+          type: string
+        publication_year:
+          anyOf:
+          - *id002
+          - type: 'null'
+        citation_count:
+          anyOf:
+          - *id002
+          - type: 'null'
+        topics:
+          type: array
+          items:
+            type: string
+        position:
+          type: array
+          items: *id004
+        provenance:
+          $ref: '#/components/schemas/Provenance'
+      required:
+      - id
+      - title
+      - authors
+      - url
+      - provenance
+      additionalProperties: false
+    GraphNode:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        title:
+          type: string
+        summary:
+          anyOf:
+          - type: string
+          - type: 'null'
+        status:
+          type: string
+        project_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        source_refs:
+          type: array
+          items:
+            type: string
+        x:
+          anyOf:
+          - *id004
+          - type: 'null'
+        y:
+          anyOf:
+          - *id004
+          - type: 'null'
+        z:
+          anyOf:
+          - *id004
+          - type: 'null'
+        data_mode:
+          type: string
+        meta: *id001
+      required:
+      - id
+      - kind
+      - title
+      - status
+      - data_mode
+      - source_refs
+      additionalProperties: false
+    GraphEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source_id:
+          type: string
+        target_id:
+          type: string
+        relation:
+          type: string
+        evidence_refs:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+      required:
+      - id
+      - source_id
+      - target_id
+      - relation
+      additionalProperties: false
+    ResearchGraph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GraphEdge'
+        layout_version:
+          type: string
+        indexed_papers: *id002
+        visible_papers: *id002
+      required:
+      - nodes
+      - edges
+      additionalProperties: false
+    Evidence:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        source_refs:
+          type: array
+          items:
+            type: string
+        run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        claim:
+          type: string
+        status:
+          type: string
+        data_mode:
+          type: string
+      required:
+      - id
+      - kind
+      - source_refs
+      - claim
+      - status
+      - data_mode
+      additionalProperties: false
+    ResearchPlan:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        objective:
+          type: string
+        hypotheses:
+          type: array
+          items: *id001
+        experiments:
+          type: array
+          items: *id001
+        metrics:
+          type: array
+          items: *id001
+        constraints:
+          type: array
+          items: *id001
+        source_refs:
+          type: array
+          items:
+            type: string
+        review_status:
+          type: string
+        data_mode:
+          type: string
+        provider:
+          anyOf:
+          - type: string
+          - type: 'null'
+        model_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - id
+      - project_id
+      - objective
+      - hypotheses
+      - experiments
+      - metrics
+      - constraints
+      - source_refs
+      - review_status
+      - data_mode
+      additionalProperties: false
+    RunArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        sha256:
+          type: string
+        content_type:
+          type: string
+        url:
+          type: string
+        access_scope:
+          type: string
+      required:
+      - id
+      - kind
+      - sha256
+      - url
+      additionalProperties: false
+    ExperimentRun:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        spec_id:
+          type: string
+        status:
+          type: string
+        data_mode:
+          type: string
+        dataset_id:
+          type: string
+        dataset_sha:
+          type: string
+        evaluator_version:
+          type: string
+        code_sha:
+          type: string
+        seed: *id002
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunArtifact'
+        branch_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        started_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+        completed_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - id
+      - project_id
+      - spec_id
+      - status
+      - data_mode
+      - metrics
+      - artifacts
+      additionalProperties: false
+    AgendaItem:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        problem_node_id:
+          type: string
+        question:
+          type: string
+        status:
+          type: string
+        blocked_parent_node_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        originating_event_id:
+          type: string
+        priority: *id004
+        priority_breakdown: *id001
+        acceptance_criteria: *id001
+        source_refs:
+          type: array
+          items:
+            type: string
+        assigned_to:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - id
+      - project_id
+      - problem_node_id
+      - question
+      - status
+      - originating_event_id
+      - priority
+      - acceptance_criteria
+      additionalProperties: false
+    HumanQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        prompt:
+          type: string
+        reason_for_asking:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        evidence_refs:
+          type: array
+          items:
+            type: string
+        routed_to:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - id
+      - project_id
+      - prompt
+      - reason_for_asking
+      - options
+      - status
+      - evidence_refs
+      additionalProperties: false
+    HumanIntervention:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        author_id:
+          type: string
+        source_context_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        original_text:
+          type: string
+        interpreted_judgment: *id001
+        approval_status:
+          type: string
+        scope:
+          type: string
+        applied_policy_run_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        created_at:
+          type: string
+      required:
+      - id
+      - project_id
+      - author_id
+      - original_text
+      - approval_status
+      - scope
+      additionalProperties: false
+    SourceContext:
+      type: object
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+        source_locator:
+          type: string
+        kind:
+          type: string
+        title:
+          type: string
+        excerpt:
+          anyOf:
+          - type: string
+          - type: 'null'
+        access_scope:
+          type: string
+        data_mode:
+          type: string
+        retrieved_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+        provenance:
+          $ref: '#/components/schemas/Provenance'
+      required:
+      - id
+      - provider
+      - source_locator
+      - kind
+      - title
+      - access_scope
+      - data_mode
+      - provenance
+      additionalProperties: false
+    CandidateAction:
+      type: object
+      properties:
+        id:
+          type: string
+        experiment_spec_id:
+          type: string
+        hypothesis_id:
+          type: string
+        title:
+          type: string
+        estimated_cost: *id004
+        feasible: *id003
+        hard_constraints:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - experiment_spec_id
+      - hypothesis_id
+      - title
+      - feasible
+      additionalProperties: false
+    CandidateScore:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        s_unconditioned: *id004
+        s_conditioned: *id004
+        delta: *id004
+        s_guided: *id004
+        feasible: *id003
+        infeasibility_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+        score_dimensions_unconditioned: *id001
+        score_dimensions_conditioned: *id001
+        explanation_unconditioned:
+          type: string
+        explanation_conditioned:
+          type: string
+        evidence_refs:
+          type: array
+          items:
+            type: string
+      required:
+      - candidate_id
+      - s_unconditioned
+      - s_conditioned
+      - delta
+      - s_guided
+      - feasible
+      additionalProperties: false
+    PolicyRun:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        snapshot_id:
+          type: string
+        candidate_set_hash:
+          type: string
+        weight: *id004
+        selected_candidate_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        status:
+          type: string
+        fallback_reason:
+          anyOf:
+          - type: string
+          - type: 'null'
+        rubric_version:
+          type: string
+        model_provider:
+          type: string
+        model_id:
+          type: string
+        human_source_ids:
+          type: array
+          items:
+            type: string
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateScore'
+        data_mode:
+          type: string
+        created_at:
+          type: string
+      required:
+      - id
+      - project_id
+      - snapshot_id
+      - candidate_set_hash
+      - weight
+      - status
+      - rubric_version
+      - scores
+      - data_mode
+      additionalProperties: false
+    JudgmentProposal:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        source_context_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        human_claim:
+          type: string
+        falsifiable_implication:
+          type: string
+        control_experiment_id:
+          type: string
+        guided_experiment_id:
+          type: string
+        shared_evaluator_id:
+          type: string
+        review_status:
+          type: string
+        scope:
+          type: string
+        provenance_refs:
+          type: array
+          items:
+            type: string
+        data_mode:
+          type: string
+      required:
+      - id
+      - project_id
+      - human_claim
+      - falsifiable_implication
+      - shared_evaluator_id
+      - review_status
+      - data_mode
+      additionalProperties: false
+    ForkBranch:
+      type: object
+      properties:
+        id:
+          type: string
+        branch_type:
+          type: string
+        policy_run_id:
+          type: string
+        weight: *id004
+        status:
+          type: string
+        run_ids:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+      required:
+      - id
+      - branch_type
+      - policy_run_id
+      - weight
+      - status
+      - run_ids
+      - metrics
+      additionalProperties: false
+    ResearchFork:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        checkpoint_id:
+          type: string
+        intervention_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        comparison_status:
+          type: string
+        common_dataset_sha:
+          type: string
+        common_evaluator_version:
+          type: string
+        common_budget: *id001
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForkBranch'
+        limitations:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - project_id
+      - checkpoint_id
+      - comparison_status
+      - branches
+      additionalProperties: false
+    ResearchEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        schema_version:
+          type: string
+        project_id:
+          type: string
+        session_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        sequence: *id002
+        type:
+          type: string
+        occurred_at:
+          type: string
+        entity_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payload: *id001
+        data_mode:
+          type: string
+        correlation_id:
+          type: string
+      required:
+      - id
+      - schema_version
+      - project_id
+      - sequence
+      - type
+      - occurred_at
+      - payload
+      - data_mode
+      additionalProperties: false
+    EventPage:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchEvent'
+        last_sequence: *id002
+        has_more: *id003
+      required:
+      - events
+      - last_sequence
+      - has_more
+      additionalProperties: false
+    PapiersStatus:
+      type: object
+      properties:
+        connected: *id003
+        mode:
+          type: string
+        authenticated_user:
+          anyOf:
+          - type: string
+          - type: 'null'
+        capabilities:
+          type: array
+          items:
+            type: string
+        checked_at:
+          type: string
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - connected
+      - mode
+      - capabilities
+      additionalProperties: false
+    ProviderHealth:
+      type: object
+      properties:
+        provider:
+          type: string
+        connected: *id003
+        mode:
+          type: string
+        model_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        checked_at:
+          type: string
+        last_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - provider
+      - connected
+      - mode
+      additionalProperties: false
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        api_version:
+          type: string
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderHealth'
+        database_mode:
+          type: string
+        last_event_sequence:
+          anyOf:
+          - *id002
+          - type: 'null'
+      required:
+      - status
+      - api_version
+      - providers
+      - database_mode
+      additionalProperties: false
+    ResearchAnalytics:
+      type: object
+      properties:
+        project_id:
+          type: string
+        database_mode:
+          type: string
+        source_query:
+          type: string
+        activity_buckets:
+          type: array
+          items: *id001
+        metric_samples:
+          type: array
+          items: *id001
+        data_mode:
+          type: string
+      required:
+      - project_id
+      - database_mode
+      - activity_buckets
+      - metric_samples
+      - data_mode
+      additionalProperties: false
+    ResearchLesson:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        title:
+          type: string
+        statement:
+          type: string
+        applicability: *id001
+        counterexamples:
+          type: array
+          items:
+            type: string
+        evidence_run_ids:
+          type: array
+          items:
+            type: string
+        version: *id002
+        review_state:
+          type: string
+        reviewer_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        access_scope:
+          type: string
+        transfer_tests:
+          type: array
+          items: *id001
+      required:
+      - id
+      - workspace_id
+      - title
+      - statement
+      - review_state
+      - access_scope
+      additionalProperties: false
+    TeamSession:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        workspace_id:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+        started_at:
+          type: string
+        last_sequence: *id002
+      required:
+      - id
+      - project_id
+      - workspace_id
+      - participants
+      - state
+      additionalProperties: false
+    TeamComment:
+      type: object
+      properties:
+        id:
+          type: string
+        session_id:
+          type: string
+        author_id:
+          type: string
+        body:
+          type: string
+        source_refs:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+      required:
+      - id
+      - session_id
+      - author_id
+      - body
+      - created_at
+      additionalProperties: false
+    Disagreement:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        claims:
+          type: array
+          items:
+            type: string
+        positions:
+          type: array
+          items: *id001
+        discriminating_experiment_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        evidence_refs:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+      required:
+      - id
+      - project_id
+      - claims
+      - positions
+      - status
+      additionalProperties: false
+    ResearcherProfile:
+      type: object
+      properties:
+        user_id:
+          type: string
+        visibility:
+          type: string
+        preferences:
+          type: array
+          items: *id001
+        principles:
+          type: array
+          items: *id001
+        expertise:
+          type: array
+          items: *id001
+        assumptions:
+          type: array
+          items: *id001
+        version: *id002
+      required:
+      - user_id
+      - visibility
+      - preferences
+      - principles
+      - expertise
+      - assumptions
+      additionalProperties: false
+    PortfolioItem:
+      type: object
+      properties:
+        agenda_item_id:
+          type: string
+        project_id:
+          type: string
+        priority: *id004
+        information_gain: *id004
+        unlock_value: *id004
+        estimated_cost: *id004
+        confidence: *id004
+        explanation:
+          type: string
+      required:
+      - agenda_item_id
+      - project_id
+      - priority
+      - explanation
+      additionalProperties: false
+    MetaTrial:
+      type: object
+      properties:
+        id:
+          type: string
+        strategy_a:
+          type: string
+        strategy_b:
+          type: string
+        status:
+          type: string
+        conditions: *id001
+        outcomes: *id001
+        evidence_run_ids:
+          type: array
+          items:
+            type: string
+        conclusion:
+          type: string
+        data_mode:
+          type: string
+      required:
+      - id
+      - strategy_a
+      - strategy_b
+      - status
+      - evidence_run_ids
+      - data_mode
+      additionalProperties: false
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details: *id001
+        correlation_id:
+          type: string
+      required:
+      - code
+      - message
+      additionalProperties: false
+    ProjectState:
+      type: object
+      properties:
+        schema_version:
+          type: string
+        project:
+          $ref: '#/components/schemas/Project'
+        graph:
+          $ref: '#/components/schemas/ResearchGraph'
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRun'
+        agenda:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgendaItem'
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/HumanQuestion'
+        forks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchFork'
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceContext'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResearchLesson'
+        last_sequence: *id002
+      required:
+      - schema_version
+      - project
+      - graph
+      - runs
+      - agenda
+      - questions
+      - forks
+      - sources
+      - skills
+      - last_sequence
+      additionalProperties: false
+    ResearchSessionStatus:
+      type: object
+      properties:
+        project_id:
+          type: string
+        status:
+          type: string
+        active_job_ids:
+          type: array
+          items:
+            type: string
+        last_checkpoint_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        budget_remaining: *id001
+        data_mode:
+          type: string
+      required:
+      - project_id
+      - status
+      - active_job_ids
+      - data_mode
+      additionalProperties: false
+    ResearchCheckpoint:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        objective_version: *id002
+        dataset_sha:
+          type: string
+        evaluator_version:
+          type: string
+        policy_snapshot_id:
+          type: string
+        created_at:
+          type: string
+        source_run_ids:
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - project_id
+      - dataset_sha
+      - evaluator_version
+      - policy_snapshot_id
+      additionalProperties: false
+    PolicySnapshot:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        candidate_set_hash:
+          type: string
+        candidate_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateAction'
+        rubric_version:
+          type: string
+        human_context_source_ids:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+      required:
+      - id
+      - project_id
+      - candidate_set_hash
+      - candidate_actions
+      - rubric_version
+      - human_context_source_ids
+      additionalProperties: false
+    Hypothesis:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        statement:
+          type: string
+        status:
+          type: string
+        source_refs:
+          type: array
+          items:
+            type: string
+        metrics:
+          type: array
+          items: *id001
+        controls:
+          type: array
+          items: *id001
+      required:
+      - id
+      - project_id
+      - statement
+      - status
+      additionalProperties: false
+    ExperimentSpec:
+      type: object
+      properties:
+        id:
+          type: string
+        hypothesis_id:
+          type: string
+        dataset_id:
+          type: string
+        evaluator_version:
+          type: string
+        plugin:
+          type: string
+        parameters: *id001
+        budget: *id001
+        metrics:
+          type: array
+          items: *id001
+        status:
+          type: string
+      required:
+      - id
+      - hypothesis_id
+      - dataset_id
+      - evaluator_version
+      - plugin
+      - parameters
+      - status
+      additionalProperties: false
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+security:
+- BearerAuth: []
