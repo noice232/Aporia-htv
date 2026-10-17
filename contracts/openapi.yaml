@@ -397,6 +397,81 @@ paths:
                   $ref: "#/components/schemas/ProfileVersionOut"
         "404":
           description: Project not found
+  /api/v1/projects/{project_id}/forks:
+    post:
+      operationId: create_fork
+      summary: Create a counterfactual fork — run both unguided and guided branches
+      tags:
+        - fork
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForkRequest"
+      responses:
+        "201":
+          description: Fork created with both branches evaluated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForkOut"
+        "404":
+          description: Project not found
+    get:
+      operationId: list_forks
+      summary: List all forks for a project
+      tags:
+        - fork
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of fork summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForkSummaryOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/forks/{fork_id}:
+    get:
+      operationId: get_fork
+      summary: Get a fork with full branch comparison
+      tags:
+        - fork
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: fork_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Fork details with measured coverage comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForkOut"
+        "404":
+          description: Project or fork not found
 components:
   schemas:
     ProviderHealth:
@@ -864,4 +939,154 @@ components:
       required:
         - version
         - principles_snapshot
+        - created_at
+    ForkRequest:
+      type: object
+      properties:
+        w:
+          type: number
+          minimum: 0
+          maximum: 10
+        idempotency_key:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - w
+    BranchOut:
+      type: object
+      properties:
+        candidate_id:
+          type: string
+        candidate_label:
+          type: string
+        run_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        coverage_fraction:
+          anyOf:
+            - type: number
+            - type: "null"
+        visible_count:
+          anyOf:
+            - type: integer
+            - type: "null"
+        total_count:
+          anyOf:
+            - type: integer
+            - type: "null"
+        status:
+          type: string
+          enum:
+            - evaluated
+            - not_evaluated
+      required:
+        - candidate_id
+        - candidate_label
+        - status
+    ComparisonOut:
+      type: object
+      properties:
+        coverage_delta:
+          anyOf:
+            - type: number
+            - type: "null"
+        winner:
+          anyOf:
+            - type: string
+              enum:
+                - guided
+                - unguided
+                - tie
+            - type: "null"
+        status:
+          type: string
+          enum:
+            - pending
+            - partial
+            - complete
+        confounds:
+          type: array
+          items:
+            type: string
+        limitations:
+          type: array
+          items:
+            type: string
+      required:
+        - status
+        - confounds
+        - limitations
+    ForkOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        checkpoint_snapshot_id:
+          type: string
+        w_unguided:
+          type: number
+        w_guided:
+          type: number
+        branch_unguided:
+          $ref: "#/components/schemas/BranchOut"
+        branch_guided:
+          $ref: "#/components/schemas/BranchOut"
+        comparison:
+          $ref: "#/components/schemas/ComparisonOut"
+        shared_evaluator_version:
+          type: string
+        shared_dataset_hash:
+          type: string
+        shared_budget:
+          anyOf:
+            - type: string
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - project_id
+        - checkpoint_snapshot_id
+        - w_unguided
+        - w_guided
+        - branch_unguided
+        - branch_guided
+        - comparison
+        - shared_evaluator_version
+        - shared_dataset_hash
+        - created_at
+    ForkSummaryOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        candidate_id_unguided:
+          type: string
+        candidate_id_guided:
+          type: string
+        w_guided:
+          type: number
+        winner:
+          anyOf:
+            - type: string
+            - type: "null"
+        comparison_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - project_id
+        - candidate_id_unguided
+        - candidate_id_guided
+        - w_guided
+        - comparison_status
         - created_at
