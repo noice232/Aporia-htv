@@ -19,6 +19,129 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /api/v1/projects:
+    post:
+      operationId: create_project
+      summary: Create a new project
+      tags:
+        - projects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProject"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectOut"
+  /api/v1/projects/{project_id}/goals:
+    post:
+      operationId: submit_goal
+      summary: Submit a coverage goal and run experiment loop
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitGoal"
+      responses:
+        "200":
+          description: Goal evaluation complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalResult"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/runs:
+    get:
+      operationId: list_runs
+      summary: List experiment runs for a project
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunSummary"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/events:
+    get:
+      operationId: list_events
+      summary: List research events with cursor pagination
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: after
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Page of events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventPage"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/agenda:
+    get:
+      operationId: list_agenda
+      summary: List agenda items (subproblems) for a project
+      tags:
+        - projects
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of agenda items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgendaItemOut"
+        "404":
+          description: Project not found
 components:
   schemas:
     ProviderHealth:
@@ -84,3 +207,179 @@ components:
         - code
         - message
       additionalProperties: false
+    CreateProject:
+      type: object
+      properties:
+        title:
+          type: string
+        objective:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - title
+    ProjectOut:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        objective:
+          anyOf:
+            - type: string
+            - type: "null"
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - status
+        - created_at
+    SubmitGoal:
+      type: object
+      properties:
+        threshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        seed:
+          type: integer
+          default: 42
+      required:
+        - threshold
+    GoalResult:
+      type: object
+      properties:
+        project_id:
+          type: string
+        runs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RunSummary"
+        best_coverage:
+          type: number
+        threshold_met:
+          type: boolean
+        agenda_item_id:
+          anyOf:
+            - type: string
+            - type: "null"
+      required:
+        - project_id
+        - runs
+        - best_coverage
+        - threshold_met
+    RunSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        evaluator_version:
+          type: string
+        seed:
+          type: integer
+        status:
+          type: string
+        coverage_fraction:
+          anyOf:
+            - type: number
+            - type: "null"
+        parameters_json:
+          anyOf:
+            - type: object
+            - type: "null"
+        started_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        ended_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+      required:
+        - id
+        - evaluator_version
+        - seed
+        - status
+    EventOut:
+      type: object
+      properties:
+        id:
+          type: string
+        sequence:
+          type: integer
+        type:
+          type: string
+        entity_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        payload:
+          anyOf:
+            - type: object
+            - type: "null"
+        data_mode:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sequence
+        - type
+        - data_mode
+        - occurred_at
+    EventPage:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventOut"
+        next_sequence:
+          anyOf:
+            - type: integer
+            - type: "null"
+      required:
+        - events
+    AgendaItemOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        question:
+          type: string
+        status:
+          type: string
+        priority:
+          type: number
+        originating_run_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        originating_event_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        dedup_key:
+          anyOf:
+            - type: string
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - project_id
+        - question
+        - status
+        - priority
+        - created_at
