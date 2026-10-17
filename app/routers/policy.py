@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.policy import CandidateScore, PolicyRun, PolicySnapshot
 from app.models.project import Project
 from app.policy.engine import choose_action, run_policy
+from app.policy.profile import build_human_context
 from app.schemas.policy import (
     CandidateScoreOut,
     ChooseRequest,
@@ -56,11 +57,16 @@ def score_policy(project_id: str, body: ScoreRequest, db: Session = Depends(get_
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if body.human_context is not None:
+        human_context = body.human_context
+    else:
+        human_context = build_human_context(db, project_id)
+
     result = run_policy(
         db,
         project_id,
         w=body.w,
-        human_context=body.human_context,
+        human_context=human_context,
     )
     db.commit()
     return _build_run_out(result)

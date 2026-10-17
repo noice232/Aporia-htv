@@ -224,6 +224,179 @@ paths:
           description: Invalid request (infeasible candidate, wrong status)
         "404":
           description: Project not found
+  /api/v1/projects/{project_id}/judgments:
+    post:
+      operationId: submit_judgment
+      summary: Submit raw feedback as a candidate principle
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JudgmentRequest"
+      responses:
+        "201":
+          description: Principle created (unapproved)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/principles:
+    get:
+      operationId: list_principles
+      summary: List all principles for a project
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of principles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project not found
+  /api/v1/projects/{project_id}/principles/{principle_id}/approve:
+    post:
+      operationId: approve_principle
+      summary: Approve a principle (makes it active for conditioned scoring)
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Principle approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project or principle not found
+  /api/v1/projects/{project_id}/principles/{principle_id}:
+    put:
+      operationId: update_principle
+      summary: Edit a principle (text, enabled, confidence)
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePrinciple"
+      responses:
+        "200":
+          description: Principle updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipleOut"
+        "404":
+          description: Project or principle not found
+    delete:
+      operationId: delete_principle
+      summary: Delete a principle
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: principle_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Principle deleted
+        "404":
+          description: Project or principle not found
+  /api/v1/projects/{project_id}/profile:
+    get:
+      operationId: get_profile
+      summary: Get current researcher profile with computed scoring weights
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Researcher profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileOut"
+        "404":
+          description: Project not found or no profile exists
+  /api/v1/projects/{project_id}/profile/history:
+    get:
+      operationId: get_profile_history
+      summary: Get profile version history
+      tags:
+        - profile
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profile version history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProfileVersionOut"
+        "404":
+          description: Project not found
 components:
   schemas:
     ProviderHealth:
@@ -595,3 +768,100 @@ components:
         - selected_candidate_id
         - status
         - idempotency_key
+    JudgmentRequest:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
+    UpdatePrinciple:
+      type: object
+      properties:
+        text:
+          anyOf:
+            - type: string
+            - type: "null"
+        enabled:
+          anyOf:
+            - type: boolean
+            - type: "null"
+        confidence:
+          anyOf:
+            - type: number
+            - type: "null"
+    PrincipleOut:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        source:
+          type: string
+        scope:
+          type: string
+        confidence:
+          type: number
+        enabled:
+          type: boolean
+        approved:
+          type: boolean
+        approved_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        weight_adjustments:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - text
+        - source
+        - scope
+        - confidence
+        - enabled
+        - approved
+        - weight_adjustments
+        - created_at
+    ProfileOut:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: string
+        version:
+          type: integer
+        principles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PrincipleOut"
+        scoring_weights:
+          anyOf:
+            - type: object
+            - type: "null"
+      required:
+        - id
+        - project_id
+        - version
+        - principles
+    ProfileVersionOut:
+      type: object
+      properties:
+        version:
+          type: integer
+        principles_snapshot:
+          type: array
+          items:
+            type: object
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - version
+        - principles_snapshot
+        - created_at

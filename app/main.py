@@ -7,6 +7,7 @@ import app.models  # noqa: F401 — register ORM models so init_db creates table
 from app.routers.health import router as health_router
 from app.routers.projects import router as projects_router
 from app.routers.policy import router as policy_router
+from app.routers.profile import router as profile_router
 
 
 @asynccontextmanager
@@ -19,3 +20,4 @@ app = FastAPI(title="APORIA", version="1.0.0", lifespan=lifespan)
 app.include_router(health_router)
 app.include_router(projects_router)
 app.include_router(policy_router)
+app.include_router(profile_router)
