@@ -90,11 +90,18 @@ function shortId(id: string) {
 function readable(text: string) {
   return text.replaceAll('_', ' ').replaceAll('.', ' · ')
 }
+function displayLabel(text: string) {
+  const value = readable(text)
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
 function timeLabel(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+function eventForEntity(events: Event[], entityId: string | null | undefined) {
+  return entityId ? [...events].reverse().find((item) => item.entity_id === entityId) : undefined
 }
 
 function ModeBadge({ mode }: { mode?: string | null }) {
@@ -121,10 +128,33 @@ function ModeBadge({ mode }: { mode?: string | null }) {
 function StatusBadge({ status }: { status: string }) {
   const kind = /fail|error|falsif|offline/i.test(status)
     ? 'danger'
-    : /pending|partial|unavailable|unknown/i.test(status)
+    : /pending|partial|unavailable|unknown|unguided_only|not_evaluated/i.test(status)
       ? 'amber'
       : 'green'
   return <span className={`status-badge ${kind}`}>{readable(status)}</span>
+}
+
+function ActionNotice({
+  kind,
+  message,
+  action,
+  onAction,
+}: {
+  kind: 'success' | 'warning' | 'error'
+  message: string
+  action?: string
+  onAction?: () => void
+}) {
+  return (
+    <div className={`action-notice ${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
+      <span>{message}</span>
+      {action && onAction && (
+        <button className="notice-action" type="button" onClick={onAction}>
+          {action} <ArrowRight size={14} />
+        </button>
+      )}
+    </div>
+  )
 }
 
 function EmptyState({ title, detail }: { title: string; detail: string }) {
@@ -152,40 +182,47 @@ function ErrorNote({ error, onDismiss }: { error: string | null; onDismiss: () =
 }
 
 function Rubric({ score }: { score: Candidate }) {
-  const makeLines = (value: Record<string, unknown> | null | undefined, heading: string) => {
-    if (!value) return null
-    const entries = Object.entries(value).filter(([, v]) => v != null)
-    if (!entries.length) return null
-    return (
-      <div className="rubric-group">
-        <span className="rubric-heading">{heading}</span>
-        {entries.slice(0, 4).map(([key, item]) => (
-          <span key={key} className="rubric-line">
-            {key !== 'rationale' && <strong>{readable(key)}: </strong>}
-            {typeof item === 'object'
-              ? Object.entries(item as Record<string, unknown>)
-                  .map(([name, detail]) => `${readable(name)}: ${String(detail)}`)
-                  .join(' · ')
-              : String(item)}
-          </span>
-        ))}
-      </div>
-    )
-  }
   if (!score.feasible)
     return (
       <span className="infeasible-explanation">
         {score.infeasibility_reason || 'Backend marked this candidate infeasible.'}
       </span>
     )
-  const u = makeLines(score.rubric_u, 'Independent')
-  const c = makeLines(score.rubric_c, 'Human-aligned')
+  const groups = [
+    { label: 'Independent', value: score.rubric_u },
+    { label: 'Human-aligned', value: score.rubric_c },
+  ]
+  const hasRubric = groups.some((group) => group.value && Object.keys(group.value).length)
+  if (!hasRubric) return <span className="muted">No rationale returned.</span>
   return (
-    <div className="rubric">
-      {u}
-      {c}
-      {!u && !c && <span className="muted">No rationale returned.</span>}
-    </div>
+    <details className="rubric-details">
+      <summary>View rationale</summary>
+      <div className="rubric-popover">
+        {groups.map((group) => (
+          <div className="rubric-group" key={group.label}>
+            <strong>{group.label}</strong>
+            {group.value ? (
+              <ul>
+                {Object.entries(group.value).map(([key, value]) => (
+                  <li key={key}>
+                    <span>{displayLabel(key)}</span>
+                    <b>
+                      {typeof value === 'object' && value !== null
+                        ? Object.entries(value)
+                            .map(([name, item]) => `${displayLabel(name)} ${String(item)}`)
+                            .join(', ')
+                        : String(value)}
+                    </b>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No rationale returned.</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </details>
   )
 }
 
@@ -195,14 +232,19 @@ function JudgmentView({
   setW,
   busy,
   error,
+  onRetry,
+  onOpenProfile,
 }: {
   policy: PolicyRun | null
   w: number
   setW: (value: number) => void
   busy: boolean
   error: string | null
+  onRetry: () => void
+  onOpenProfile: () => void
 }) {
   const selected = policy?.scores.find((item) => item.candidate_id === policy.selected_candidate_id)
+  const guidanceInert = policy?.fallback_reason === 'no_human_context'
   return (
     <section className="view-stack">
       <div className="view-intro">
@@ -210,14 +252,22 @@ function JudgmentView({
           <span className="eyebrow">
             <Scale size={14} /> POLICY / JUDGMENTS
           </span>
-          <h1>Make the human influence visible.</h1>
+          <h1>Compare the next experiments.</h1>
           <p>
-            One candidate set, two scoring perspectives. The server recomputes every score when you change
-            guidance.
+            Change the guidance weight to see which experiment the server would select. Scores are
+            predictions, not outcomes.
           </p>
         </div>
-        <span className="intro-mark">01 / 04</span>
+        <span className="intro-mark">02 / 04</span>
       </div>
+      {guidanceInert && (
+        <ActionNotice
+          kind="warning"
+          message="Guidance inert — no approved principles yet. Approve a judgment to make the slider move the decision. Conditioned context is missing (backend fallback: no_human_context)."
+          action="Open researcher profile"
+          onAction={onOpenProfile}
+        />
+      )}
       <div className="slider-panel">
         <div className="slider-top">
           <div>
@@ -237,6 +287,7 @@ function JudgmentView({
           max="2"
           step="0.05"
           value={w}
+          disabled={guidanceInert}
           onChange={(event) => setW(Number(event.target.value))}
         />
         <div className="slider-zones">
@@ -257,7 +308,7 @@ function JudgmentView({
           <span>
             <Sparkles size={15} /> predicted selection — not yet executed.
           </span>
-          <span className="request-state">
+          <span className="request-state" role="status">
             {busy ? (
               <>
                 <span className="spinner" /> Asking server…
@@ -270,18 +321,24 @@ function JudgmentView({
           </span>
         </div>
       </div>
-      <ErrorNote
-        error={error}
-        onDismiss={() => window.dispatchEvent(new Event('aporia:clear-score-error'))}
-      />
+      {error && (
+        <ActionNotice
+          kind="error"
+          message={`Scoring failed: ${error}`}
+          action="Retry score"
+          onAction={onRetry}
+        />
+      )}
       <div className="table-panel">
         <div className="panel-header">
           <div>
             <span className="section-kicker">CANDIDATE DECISION TABLE</span>
             <h2>Score breakdown</h2>
+            <p className="score-key">
+              s<sub>u</sub> independent · s<sub>c</sub> human-aligned · Δ change · s<sub>g</sub> guided
+            </p>
           </div>
           <div className="panel-meta">
-            <ModeBadge />
             <StatusBadge status={policy?.status || (busy ? 'pending' : 'unavailable')} />
           </div>
         </div>
@@ -315,7 +372,9 @@ function JudgmentView({
                         className={`${isSelected ? 'selected-row' : ''} ${!score.feasible ? 'infeasible-row' : ''}`}
                       >
                         <td className="candidate-cell">
-                          <span className="candidate-name">{score.label}</span>
+                          <span className="candidate-name" title={score.label}>
+                            {displayLabel(score.label)}
+                          </span>
                           <small>{shortId(score.candidate_id)}</small>
                           {isSelected && (
                             <span className="choice-tag">
@@ -362,7 +421,9 @@ function JudgmentView({
             detail={
               busy
                 ? 'Waiting for the backend to return the candidate table.'
-                : 'The candidate table appears when the backend completes a policy score.'
+                : error
+                  ? 'Retry the score request to load the candidate table.'
+                  : 'The candidate table appears when the backend completes a policy score.'
             }
           />
         )}
@@ -373,12 +434,21 @@ function JudgmentView({
         </div>
         <div>
           <span className="section-kicker">SERVER ARGMAX</span>
-          <h3>{selected ? selected.label : policy?.selected_label || 'No candidate selected'}</h3>
+          <h3>
+            {selected
+              ? displayLabel(selected.label)
+              : policy?.selected_label
+                ? displayLabel(policy.selected_label)
+                : 'No candidate selected'}
+          </h3>
           <p>
-            {policy?.fallback_reason ||
-              (selected
-                ? `Selected by the backend at w = ${policy?.w.toFixed(2)}. This is a prediction, not an executed experiment.`
-                : 'A selection will appear when the server returns a feasible candidate.')}
+            {guidanceInert
+              ? 'Unguided selection. Approve a principle to enable human-aligned scoring. Predicted selection — not yet executed.'
+              : policy?.fallback_reason
+                ? readable(policy.fallback_reason)
+                : selected
+                  ? `Selected by the backend at w = ${policy?.w.toFixed(2)}. This is a prediction, not an executed experiment.`
+                  : 'A selection will appear when the server returns a feasible candidate.'}
           </p>
         </div>
         <span className="selection-aside">
@@ -397,6 +467,7 @@ function ProfileView({
   loadError,
   refresh,
   onApproved,
+  onOpenJudgments,
 }: {
   projectId: string
   principles: Principle[]
@@ -405,20 +476,29 @@ function ProfileView({
   loadError: string | null
   refresh: () => Promise<void>
   onApproved: () => void
+  onOpenJudgments: () => void
 }) {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [approving, setApproving] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [failedPrinciple, setFailedPrinciple] = useState<string | null>(null)
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     if (!text.trim()) return
     setBusy(true)
     setError(null)
+    setSuccess(null)
     try {
       await submitJudgment(projectId, text.trim())
       setText('')
-      await refresh()
+      setSuccess('Judgment submitted. It is pending until you approve it below.')
+      try {
+        await refresh()
+      } catch {
+        setError('Judgment submitted, but the profile could not be refreshed. Retry loading profile.')
+      }
     } catch (cause) {
       setError(messageOf(cause))
     } finally {
@@ -428,12 +508,20 @@ function ProfileView({
   async function approve(id: string) {
     setApproving(id)
     setError(null)
+    setSuccess(null)
+    setFailedPrinciple(null)
     try {
       await approvePrinciple(projectId, id)
+      setSuccess('Principle approved. The server is updating the decision preview.')
       onApproved()
-      await refresh()
+      try {
+        await refresh()
+      } catch {
+        setError('Principle approved, but the profile could not be refreshed. Retry loading profile.')
+      }
     } catch (cause) {
       setError(messageOf(cause))
+      setFailedPrinciple(id)
     } finally {
       setApproving(null)
     }
@@ -447,17 +535,43 @@ function ProfileView({
           <span className="eyebrow">
             <ShieldCheck size={14} /> RESEARCHER / PROFILE
           </span>
-          <h1>Human judgment, with an approval trail.</h1>
+          <h1>Teach the policy what matters.</h1>
           <p>
-            Raw feedback starts pending. Only approved principles can shape server-side conditioned scoring.
+            Write one research preference, then approve it. Only approved principles affect the server's
+            human-aligned score.
           </p>
         </div>
-        <span className="intro-mark">02 / 04</span>
+        <span className="intro-mark">01 / 04</span>
       </div>
       {loadError && (
-        <p className="inline-error" role="alert">
-          {loadError}
-        </p>
+        <ActionNotice
+          kind="error"
+          message={loadError}
+          action="Retry loading profile"
+          onAction={() => {
+            refresh().catch(() => {})
+          }}
+        />
+      )}
+      {success ? (
+        <ActionNotice
+          kind="success"
+          message={success}
+          action={active.length ? 'Compare decisions' : undefined}
+          onAction={active.length ? onOpenJudgments : undefined}
+        />
+      ) : active.length > 0 ? (
+        <ActionNotice
+          kind="success"
+          message={`${active.length} approved principle${active.length === 1 ? '' : 's'} can guide the next decision.`}
+          action="Compare decisions"
+          onAction={onOpenJudgments}
+        />
+      ) : (
+        <ActionNotice
+          kind="warning"
+          message="Guidance is inactive until you submit and approve a judgment."
+        />
       )}
       <form className="editor-panel" onSubmit={submit}>
         <div className="panel-header">
@@ -465,7 +579,7 @@ function ProfileView({
             <span className="section-kicker">NEW JUDGMENT</span>
             <h2>Capture a research preference</h2>
           </div>
-          <ModeBadge />
+          <span className="status-badge amber">Approval required</span>
         </div>
         <label htmlFor="judgment-text">What should the agent consider?</label>
         <textarea
@@ -480,7 +594,7 @@ function ProfileView({
           <span>Submission creates a pending principle.</span>
           <button className="primary-button" type="submit" disabled={busy || !text.trim()}>
             <Send size={15} />
-            {busy ? 'Submitting…' : 'Submit judgment'}
+            {busy ? 'Submitting…' : error && text.trim() ? 'Retry submission' : 'Submit judgment'}
           </button>
         </div>
       </form>
@@ -516,7 +630,12 @@ function ProfileView({
                     onClick={() => approve(item.id)}
                     disabled={approving === item.id}
                   >
-                    {approving === item.id ? 'Approving…' : 'Approve'} <ArrowRight size={14} />
+                    {approving === item.id
+                      ? 'Approving…'
+                      : failedPrinciple === item.id
+                        ? 'Retry approval'
+                        : 'Approve'}{' '}
+                    <ArrowRight size={14} />
                   </button>
                 </div>
               </article>
@@ -592,26 +711,46 @@ function ForkView({
   w,
   fork,
   forks,
+  loading,
   loadError,
   onCreated,
   onSelect,
+  onReload,
 }: {
   projectId: string
   w: number
   fork: Fork | null
   forks: ForkSummary[]
+  loading: boolean
   loadError: string | null
   onCreated: (fork: Fork) => void
   onSelect: (id: string) => Promise<void>
+  onReload: () => Promise<void>
 }) {
   const [busy, setBusy] = useState(false)
   const [selecting, setSelecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectError, setSelectError] = useState<string | null>(null)
+  const [failedSelectionId, setFailedSelectionId] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [retryKey, setRetryKey] = useState<string | null>(null)
+  useEffect(() => {
+    setRetryKey(null)
+    setError(null)
+  }, [w])
   async function create() {
     setBusy(true)
     setError(null)
+    setSuccess(null)
+    const key = retryKey ?? crypto.randomUUID()
+    setRetryKey(key)
     try {
-      onCreated(await createFork(projectId, w))
+      const result = await createFork(projectId, w, key)
+      onCreated(result)
+      setSuccess(
+        `Fork ${shortId(result.id)} created. Comparison status: ${readable(result.comparison.status)}.`,
+      )
+      setRetryKey(null)
     } catch (cause) {
       setError(messageOf(cause))
     } finally {
@@ -620,11 +759,13 @@ function ForkView({
   }
   async function select(id: string) {
     setSelecting(true)
-    setError(null)
+    setSelectError(null)
     try {
       await onSelect(id)
+      setFailedSelectionId(null)
     } catch (cause) {
-      setError(messageOf(cause))
+      setSelectError(messageOf(cause))
+      setFailedSelectionId(id)
     } finally {
       setSelecting(false)
     }
@@ -646,6 +787,13 @@ function ForkView({
         },
       ]
     : []
+  const delta = comparison?.coverage_delta
+  const deltaText = delta == null ? 'Awaiting results' : `${delta > 0 ? '+' : ''}${(delta * 100).toFixed(2)}%`
+  const winnerText = !comparison?.winner
+    ? 'No winner reported'
+    : comparison.winner === 'tie'
+      ? 'Tie'
+      : `${displayLabel(comparison.winner)} branch leads`
   return (
     <section className="view-stack">
       <div className="view-intro">
@@ -653,18 +801,21 @@ function ForkView({
           <span className="eyebrow">
             <GitFork size={14} /> EVIDENCE / FORKS
           </span>
-          <h1>Two branches. One honest comparison.</h1>
+          <h1>See what changed in the fork.</h1>
           <p>
-            Create a counterfactual fork at the current guidance weight and inspect reported coverage when
-            each branch is evaluated.
+            The backend runs independent and guided branches from the same checkpoint, then reports coverage
+            and the limits of the comparison.
           </p>
         </div>
         <span className="intro-mark">03 / 04</span>
       </div>
       {loadError && (
-        <p className="inline-error" role="alert">
-          {loadError}
-        </p>
+        <ActionNotice
+          kind="error"
+          message={loadError}
+          action="Retry loading forks"
+          onAction={() => onReload().catch(() => {})}
+        />
       )}
       <div className="fork-toolbar">
         <div>
@@ -674,16 +825,28 @@ function ForkView({
         </div>
         <button className="primary-button" type="button" onClick={create} disabled={busy}>
           <GitFork size={16} />
-          {busy ? 'Creating fork…' : 'Create fork'}
+          {busy ? 'Creating fork…' : error ? 'Retry fork' : 'Create fork'}
         </button>
       </div>
-      <ErrorNote error={error} onDismiss={() => setError(null)} />
+      {error && (
+        <ActionNotice kind="error" message={`Fork failed: ${error}`} action="Retry fork" onAction={create} />
+      )}
+      {selectError && failedSelectionId && (
+        <ActionNotice
+          kind="error"
+          message={`Could not open saved fork: ${selectError}`}
+          action="Retry opening fork"
+          onAction={() => select(failedSelectionId)}
+        />
+      )}
+      {success && <ActionNotice kind="success" message={success} />}
+      {selecting && <ActionNotice kind="warning" message="Loading saved fork…" />}
       {fork && comparison && (
         <>
           <div className="fork-heading">
             <div>
               <span className="section-kicker">FORK {shortId(fork.id)}</span>
-              <h2>Coverage comparison</h2>
+              <h2>Matched branch results</h2>
             </div>
             <div className="fork-controls">
               {forks.length > 1 && (
@@ -705,62 +868,80 @@ function ForkView({
                 </label>
               )}
               <StatusBadge status={comparison.status} />
-              <ModeBadge />
             </div>
           </div>
-          <div className="branch-panel">
+          <div className="fork-outcome" role="status">
+            <div className={`fork-delta ${delta == null ? 'pending' : ''}`}>
+              <span className="section-kicker">COVERAGE DELTA</span>
+              <strong className={delta == null ? 'muted' : delta < 0 ? 'negative-text' : 'positive-text'}>
+                {deltaText}
+              </strong>
+              <small>
+                {delta == null
+                  ? 'Both branches need coverage results.'
+                  : comparison.status === 'complete'
+                    ? 'Percentage-point difference: guided minus independent.'
+                    : 'Provisional percentage-point difference; comparison incomplete.'}
+              </small>
+            </div>
+            <div className="fork-verdict">
+              <span className="section-kicker">REPORTED VERDICT</span>
+              <h3>
+                {comparison.status === 'complete'
+                  ? winnerText
+                  : comparison.winner
+                    ? `Provisional: ${winnerText}`
+                    : 'Awaiting both branches'}
+              </h3>
+              <p>
+                {comparison.status === 'complete'
+                  ? 'Both branch results are available.'
+                  : comparison.status === 'partial'
+                    ? 'Only part of the comparison is available. This is not a final result.'
+                    : 'The comparison is pending. No outcome is claimed yet.'}
+              </p>
+            </div>
+          </div>
+          <div className="branch-panel" aria-label="Branch coverage">
             {branches.map((branch) => (
-              <div className="branch-row" key={branch.kind}>
-                <div className="branch-label">
+              <div
+                className={`branch-card ${branch.data.status === 'not_evaluated' ? 'not-evaluated' : ''}`}
+                key={branch.kind}
+              >
+                <div className="branch-card-top">
                   <span className={`branch-symbol ${branch.kind}`}>
                     <FlaskConical size={17} />
                   </span>
                   <div>
                     <strong>{branch.label}</strong>
-                    <small>
-                      {branch.sub} · {branch.data.candidate_label}
-                    </small>
+                    <small>{branch.sub}</small>
                   </div>
-                </div>
-                <div className="branch-visual">
-                  <div className="bar-track">
-                    <div
-                      className={`bar-fill ${branch.kind}`}
-                      style={{
-                        width: `${Math.max(0, Math.min(100, (branch.data.coverage_fraction ?? 0) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                  <strong>{formatPercent(branch.data.coverage_fraction)}</strong>
-                </div>
-                <div className="branch-status">
                   <StatusBadge status={branch.data.status} />
+                </div>
+                <p className="branch-candidate">{displayLabel(branch.data.candidate_label)}</p>
+                <div className="branch-metric">
+                  <strong>
+                    {branch.data.status === 'evaluated'
+                      ? formatPercent(branch.data.coverage_fraction)
+                      : 'Not evaluated'}
+                  </strong>
+                  <span>coverage</span>
+                </div>
+                <div className="bar-track" aria-hidden="true">
+                  <div
+                    className={`bar-fill ${branch.kind}`}
+                    style={{
+                      width: `${branch.data.status === 'evaluated' ? Math.max(0, Math.min(100, (branch.data.coverage_fraction ?? 0) * 100)) : 0}%`,
+                    }}
+                  />
                 </div>
               </div>
             ))}
           </div>
           <div className="comparison-grid">
             <div className="verdict-panel">
-              <span className="section-kicker">COMPARISON VERDICT</span>
-              <h2>
-                {comparison.winner
-                  ? `${readable(comparison.winner)} ${comparison.winner === 'tie' ? '' : 'branch leads'}`
-                  : 'No verdict yet'}
-              </h2>
-              <p>
-                Coverage delta{' '}
-                <strong
-                  className={
-                    comparison.coverage_delta != null && comparison.coverage_delta < 0
-                      ? 'negative-text'
-                      : 'positive-text'
-                  }
-                >
-                  {comparison.coverage_delta == null
-                    ? 'Not available'
-                    : `${comparison.coverage_delta >= 0 ? '+' : ''}${(comparison.coverage_delta * 100).toFixed(2)} percentage points`}
-                </strong>
-              </p>
+              <span className="section-kicker">SHARED CONTROLS</span>
+              <h2>What both branches used</h2>
               <div className="control-notes">
                 <span>Evaluator: {fork.shared_evaluator_version}</span>
                 <span>Dataset: {shortId(fork.shared_dataset_hash)}</span>
@@ -787,16 +968,24 @@ function ForkView({
             </div>
           </div>
           <p className="provenance-note">
-            Comparison status: <strong>{comparison.status}</strong>. The fork response does not include a
-            data_mode field, so the interface does not infer one.
+            Status: <strong>{comparison.status}</strong>. Fork provenance is not specified by this response;
+            event badges show their own data modes.
           </p>
         </>
       )}
-      {!fork && (
-        <EmptyState
-          title="No fork created yet"
-          detail="Create a fork to compare independent and human-guided branches at the current guidance weight."
-        />
+      {!fork && loading ? (
+        <EmptyState title="Loading forks" detail="Checking the backend for saved comparisons." />
+      ) : (
+        !fork && (
+          <EmptyState
+            title={loadError ? 'Saved forks unavailable' : 'No fork created yet'}
+            detail={
+              loadError
+                ? 'Retry loading forks, or create a new comparison at the current guidance weight.'
+                : 'Create a fork to compare independent and human-guided branches at the current guidance weight.'
+            }
+          />
+        )
       )}
     </section>
   )
@@ -888,20 +1077,24 @@ export default function App() {
   )
   const [threshold, setThreshold] = useState('0.5')
   const [seed, setSeed] = useState('42')
-  const [view, setView] = useState<View>('judgments')
+  const [view, setView] = useState<View>('profile')
   const [mobileNav, setMobileNav] = useState(false)
   const [health, setHealth] = useState<Health | null>(null)
   const [healthError, setHealthError] = useState(false)
   const [runs, setRuns] = useState<Run[]>([])
+  const [runsLoading, setRunsLoading] = useState(false)
+  const [runLoadError, setRunLoadError] = useState<string | null>(null)
   const [goal, setGoal] = useState<GoalResult | null>(null)
   const [hasGoal, setHasGoal] = useState(false)
   const [projectBusy, setProjectBusy] = useState(false)
   const [goalBusy, setGoalBusy] = useState(false)
   const [setupError, setSetupError] = useState<string | null>(null)
+  const [setupSuccess, setSetupSuccess] = useState<string | null>(null)
   const [w, setW] = useState(1)
   const [policy, setPolicy] = useState<PolicyRun | null>(null)
   const [scoreBusy, setScoreBusy] = useState(false)
   const [scoreError, setScoreError] = useState<string | null>(null)
+  const [scoreAttempt, setScoreAttempt] = useState(0)
   const [profileRevision, setProfileRevision] = useState(0)
   const [principles, setPrinciples] = useState<Principle[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -909,6 +1102,7 @@ export default function App() {
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null)
   const [forks, setForks] = useState<ForkSummary[]>([])
   const [fork, setFork] = useState<Fork | null>(null)
+  const [forksLoading, setForksLoading] = useState(false)
   const [forkLoadError, setForkLoadError] = useState<string | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [nextSequence, setNextSequence] = useState<number | null>(null)
@@ -916,29 +1110,21 @@ export default function App() {
   const [eventsError, setEventsError] = useState<string | null>(null)
   const [agenda, setAgenda] = useState<AgendaItem[]>([])
 
-  useEffect(() => {
-    let live = true
-    async function check() {
-      try {
-        const result = await getHealth()
-        if (live) {
-          setHealth(result)
-          setHealthError(false)
-        }
-      } catch {
-        if (live) {
-          setHealth(null)
-          setHealthError(true)
-        }
-      }
-    }
-    check()
-    const timer = window.setInterval(check, 30000)
-    return () => {
-      live = false
-      window.clearInterval(timer)
+  const refreshHealth = useCallback(async () => {
+    try {
+      const result = await getHealth()
+      setHealth(result)
+      setHealthError(false)
+    } catch {
+      setHealth(null)
+      setHealthError(true)
     }
   }, [])
+  useEffect(() => {
+    refreshHealth()
+    const timer = window.setInterval(refreshHealth, 30000)
+    return () => window.clearInterval(timer)
+  }, [refreshHealth])
 
   const refreshProfile = useCallback(async () => {
     if (!project) return
@@ -982,6 +1168,36 @@ export default function App() {
     [project],
   )
 
+  async function retryRuns() {
+    if (!project) return
+    setRunsLoading(true)
+    setRunLoadError(null)
+    try {
+      const result = await listRuns(project.id)
+      setRuns(result)
+      setHasGoal(result.length > 0)
+    } catch (cause) {
+      setRunLoadError(`Could not load project runs: ${messageOf(cause)}`)
+    } finally {
+      setRunsLoading(false)
+    }
+  }
+
+  async function retryForks() {
+    if (!project) return
+    setForksLoading(true)
+    setForkLoadError(null)
+    try {
+      const result = await listForks(project.id)
+      setForks(result)
+      if (result.length && !fork) setFork(await getFork(project.id, result[result.length - 1].id))
+    } catch (cause) {
+      setForkLoadError(`Could not load forks: ${messageOf(cause)}`)
+    } finally {
+      setForksLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!project) return
     let live = true
@@ -989,9 +1205,12 @@ export default function App() {
     setHasGoal(false)
     setGoal(null)
     setRuns([])
+    setRunsLoading(true)
+    setRunLoadError(null)
     setPolicy(null)
     setFork(null)
     setForks([])
+    setForksLoading(true)
     setPrinciples([])
     setProfile(null)
     setHistory([])
@@ -1005,10 +1224,14 @@ export default function App() {
         if (live) {
           setRuns(result)
           setHasGoal(result.length > 0)
+          setRunLoadError(null)
         }
       })
       .catch((cause) => {
-        if (live) setSetupError(`Could not load project runs: ${messageOf(cause)}`)
+        if (live) setRunLoadError(`Could not load project runs: ${messageOf(cause)}`)
+      })
+      .finally(() => {
+        if (live) setRunsLoading(false)
       })
     listAgenda(id)
       .then((result) => {
@@ -1031,6 +1254,9 @@ export default function App() {
       .catch((cause) => {
         if (live) setForkLoadError(`Could not load forks: ${messageOf(cause)}`)
       })
+      .finally(() => {
+        if (live) setForksLoading(false)
+      })
     refreshProfile().catch(() => {})
     loadEventPage(0, true)
     return () => {
@@ -1048,7 +1274,10 @@ export default function App() {
     const timer = window.setTimeout(async () => {
       try {
         const result = await scorePolicy(project.id, w, controller.signal)
-        if (live) setPolicy(result)
+        if (live) {
+          setPolicy(result)
+          loadEventPage(0, true)
+        }
       } catch (cause) {
         if (live && !controller.signal.aborted) setScoreError(messageOf(cause))
       } finally {
@@ -1060,25 +1289,21 @@ export default function App() {
       controller.abort()
       window.clearTimeout(timer)
     }
-  }, [project?.id, hasGoal, w, profileRevision])
-
-  useEffect(() => {
-    const clear = () => setScoreError(null)
-    window.addEventListener('aporia:clear-score-error', clear)
-    return () => window.removeEventListener('aporia:clear-score-error', clear)
-  }, [])
+  }, [project?.id, hasGoal, w, profileRevision, scoreAttempt, loadEventPage])
 
   async function create(event: React.FormEvent) {
     event.preventDefault()
     if (!projectTitle.trim()) return
     setProjectBusy(true)
     setSetupError(null)
+    setSetupSuccess(null)
     try {
       const created = await createProject(projectTitle.trim(), objective.trim())
       const shortcut = { id: created.id, title: created.title }
       localStorage.setItem(storageKey, JSON.stringify(shortcut))
       setProject(shortcut)
-      setView('judgments')
+      setView('profile')
+      setSetupSuccess('Project created. Set a coverage goal to begin the research flow.')
     } catch (cause) {
       setSetupError(messageOf(cause))
     } finally {
@@ -1102,12 +1327,14 @@ export default function App() {
     }
     setGoalBusy(true)
     setSetupError(null)
+    setSetupSuccess(null)
     try {
       const result = await submitGoal(project.id, numericThreshold, numericSeed)
       setGoal(result)
       setRuns(result.runs)
       setHasGoal(true)
-      setView('judgments')
+      setView('profile')
+      setSetupSuccess('Goal run returned. Next, submit and approve a researcher judgment.')
       listAgenda(project.id)
         .then(setAgenda)
         .catch(() => {})
@@ -1122,12 +1349,16 @@ export default function App() {
   function startNewProject() {
     localStorage.removeItem(storageKey)
     setProject(null)
-    setView('judgments')
+    setView('profile')
+    setSetupSuccess(null)
     setHasGoal(false)
     setGoal(null)
     setPolicy(null)
     setFork(null)
+    setForksLoading(false)
     setEvents([])
+    setRunsLoading(false)
+    setRunLoadError(null)
   }
 
   function onForkCreated(result: Fork) {
@@ -1149,6 +1380,14 @@ export default function App() {
   const latestEvents = useMemo(() => events.slice(-5), [events])
   const providerSummary = health?.providers ?? []
   const reportedCoverage = goal?.best_coverage ?? runs[runs.length - 1]?.coverage_fraction ?? null
+  const selectedPolicyLabel =
+    policy?.selected_label ??
+    policy?.scores.find((item) => item.candidate_id === policy.selected_candidate_id)?.label
+  const policyModeEvent = eventForEntity(events, policy?.id)
+  const coverageRunId = goal
+    ? goal.runs.find((run) => run.coverage_fraction === goal.best_coverage)?.id
+    : runs[runs.length - 1]?.id
+  const coverageModeEvent = eventForEntity(events, coverageRunId)
 
   return (
     <div className="app-shell">
@@ -1187,15 +1426,15 @@ export default function App() {
             )}
           </div>
           <div className="rail-section">
-            <div className="rail-label">WORKSPACE</div>
+            <div className="rail-label">RESEARCH FLOW</div>
             {(
               [
-                ['judgments', Scale, 'Judgments'],
                 ['profile', ShieldCheck, 'Researcher profile'],
+                ['judgments', Scale, 'Judgments'],
                 ['forks', GitFork, 'Fork comparison'],
                 ['events', Activity, 'Event log'],
               ] as const
-            ).map(([target, Icon, label]) => (
+            ).map(([target, Icon, label], index) => (
               <button
                 key={target}
                 type="button"
@@ -1203,10 +1442,12 @@ export default function App() {
                 disabled={!project || !hasGoal}
                 onClick={() => {
                   setView(target)
+                  setSetupSuccess(null)
                   setMobileNav(false)
                 }}
               >
                 <Icon size={17} />
+                <small className="nav-step">{index + 1}</small>
                 <span>{label}</span>
                 {view === target && <span className="nav-indicator" />}
               </button>
@@ -1264,15 +1505,30 @@ export default function App() {
             </strong>
           </div>
           <div className="top-status">
-            <span className={`api-pill ${healthError || !health ? 'offline' : 'online'}`}>
+            <button
+              className={`api-pill ${healthError || !health ? 'offline' : /^(ok|healthy)$/i.test(health.status) ? 'online' : 'degraded'}`}
+              type="button"
+              onClick={refreshHealth}
+              title="Refresh backend status"
+            >
               <span className="connection-dot" />
               {healthError ? 'Backend offline' : health ? `Backend ${readable(health.status)}` : 'Connecting'}
-            </span>
+              <RefreshCw size={12} />
+            </button>
             {health && <ModeBadge mode={health.database_mode} />}
           </div>
         </header>
         <div className="work-content">
           <main className="main-content">
+            {healthError && project && (
+              <ActionNotice
+                kind="warning"
+                message="Backend unreachable. Showing the last fetched project data; new actions may fail."
+                action="Retry connection"
+                onAction={refreshHealth}
+              />
+            )}
+            {setupSuccess && <ActionNotice kind="success" message={setupSuccess} />}
             {!project ? (
               <section className="setup-view">
                 <span className="eyebrow">
@@ -1306,10 +1562,28 @@ export default function App() {
                     type="submit"
                     disabled={projectBusy || !projectTitle.trim()}
                   >
-                    {projectBusy ? 'Creating…' : 'Create project'} <ArrowRight size={16} />
+                    {projectBusy ? 'Creating…' : setupError ? 'Retry create project' : 'Create project'}{' '}
+                    <ArrowRight size={16} />
                   </button>
                   <ErrorNote error={setupError} onDismiss={() => setSetupError(null)} />
                 </form>
+              </section>
+            ) : runsLoading ? (
+              <section className="setup-view">
+                <EmptyState
+                  title="Loading project"
+                  detail="Checking the backend for prior runs before showing the next step."
+                />
+              </section>
+            ) : runLoadError ? (
+              <section className="setup-view">
+                <h1>Project could not be loaded.</h1>
+                <ActionNotice
+                  kind="error"
+                  message={runLoadError}
+                  action="Retry loading project"
+                  onAction={retryRuns}
+                />
               </section>
             ) : !hasGoal ? (
               <section className="setup-view">
@@ -1360,13 +1634,22 @@ export default function App() {
                     </div>
                   </div>
                   <button className="primary-button" type="submit" disabled={goalBusy}>
-                    {goalBusy ? 'Running goal…' : 'Submit goal'} <ArrowRight size={16} />
+                    {goalBusy ? 'Running goal…' : setupError ? 'Retry goal' : 'Submit goal'}{' '}
+                    <ArrowRight size={16} />
                   </button>
                   <ErrorNote error={setupError} onDismiss={() => setSetupError(null)} />
                 </form>
               </section>
             ) : view === 'judgments' ? (
-              <JudgmentView policy={policy} w={w} setW={setW} busy={scoreBusy} error={scoreError} />
+              <JudgmentView
+                policy={policy}
+                w={w}
+                setW={setW}
+                busy={scoreBusy}
+                error={scoreError}
+                onRetry={() => setScoreAttempt((attempt) => attempt + 1)}
+                onOpenProfile={() => setView('profile')}
+              />
             ) : view === 'profile' ? (
               <ProfileView
                 projectId={project.id}
@@ -1379,6 +1662,10 @@ export default function App() {
                   setProfileRevision((n) => n + 1)
                   loadEventPage(0, true)
                 }}
+                onOpenJudgments={() => {
+                  setView('judgments')
+                  setSetupSuccess(null)
+                }}
               />
             ) : view === 'forks' ? (
               <ForkView
@@ -1386,9 +1673,11 @@ export default function App() {
                 w={w}
                 fork={fork}
                 forks={forks}
+                loading={forksLoading}
                 loadError={forkLoadError}
                 onCreated={onForkCreated}
                 onSelect={selectFork}
+                onReload={retryForks}
               />
             ) : (
               <EventsView
@@ -1408,7 +1697,7 @@ export default function App() {
           </main>
           <aside className="insights">
             <div className="insight-title">
-              <span className="section-kicker">LIVE RESEARCH INSIGHTS</span>
+              <span className="section-kicker">RESEARCH SUMMARY</span>
               <span className={`live-indicator ${health ? '' : 'offline'}`}>
                 <span />
                 {health ? 'Connected' : 'Offline'}
@@ -1422,16 +1711,24 @@ export default function App() {
                 <span>Decision readout</span>
               </div>
               <strong className="insight-big">
-                {policy?.selected_label ||
-                  policy?.scores.find((item) => item.candidate_id === policy.selected_candidate_id)?.label ||
-                  'Awaiting score'}
+                {selectedPolicyLabel ? displayLabel(selectedPolicyLabel) : 'Awaiting score'}
               </strong>
               <p>
                 {policy
                   ? `Predicted at w = ${policy.w.toFixed(2)}. No experiment has been executed by this slider.`
                   : 'The server-selected experiment appears after a goal and policy score.'}
               </p>
-              <ModeBadge />
+              {policy && (
+                <small className="result-source">
+                  Policy run {shortId(policy.id)} · {timeLabel(policy.computed_at)}
+                </small>
+              )}
+              {policyModeEvent && (
+                <div className="matched-mode">
+                  <ModeBadge mode={policyModeEvent.data_mode} />
+                  <small>Matching event #{policyModeEvent.sequence}</small>
+                </div>
+              )}
             </div>
             <div className="insight-section">
               <div className="insight-heading">
@@ -1446,9 +1743,19 @@ export default function App() {
                   ? goal.threshold_met
                     ? 'Submitted threshold met.'
                     : 'Submitted threshold not met.'
-                  : 'Best coverage returned by the goal run.'}
+                  : reportedCoverage == null
+                    ? 'No coverage result returned yet.'
+                    : 'Coverage reported by the latest run.'}
               </p>
-              <ModeBadge />
+              <small className="result-source">
+                {goal ? 'Goal result from backend' : 'Latest run from backend'}
+              </small>
+              {coverageModeEvent && (
+                <div className="matched-mode">
+                  <ModeBadge mode={coverageModeEvent.data_mode} />
+                  <small>Matching run event #{coverageModeEvent.sequence}</small>
+                </div>
+              )}
             </div>
             <div className="insight-section">
               <div className="insight-heading">
@@ -1501,11 +1808,15 @@ export default function App() {
               ) : (
                 <p>
                   {healthError
-                    ? 'Cannot reach http://localhost:8000. Start the backend and refresh.'
+                    ? 'The API is unreachable. Retry connection or check the backend on the Vite host.'
                     : 'Checking /api/v1/health…'}
                 </p>
               )}
             </div>
+            <p className="rail-provenance">
+              Result badges use events matching the policy or run ID. Without a matching event, the response
+              provides no record-level data mode.
+            </p>
           </aside>
         </div>
         <section className="timeline-dock">

@@ -54,36 +54,49 @@ const run = {
   status: 'completed',
   coverage_fraction: 0.1667,
 }
-const makeEvent = (sequence, type) => ({
+const makeEvent = (sequence, type, entityId = null) => ({
   id: `event-${sequence}`,
   sequence,
   type,
-  entity_id: null,
+  entity_id: entityId,
   payload: null,
-  data_mode: 'demo_fixture',
+  data_mode: 'measured',
   occurred_at: iso,
 })
-const events = [
-  makeEvent(1, 'project.created'),
-  makeEvent(2, 'goal.evaluated'),
-  makeEvent(3, 'principle.approved'),
-]
+const events = []
+function addEvent(type, entityId = null) {
+  events.push(makeEvent(events.length + 1, type, entityId))
+}
 let created = false
 let goalSubmitted = false
 let approved = false
 let principle = null
 let fork = null
+let forkCount = 0
+const forkHistory = []
 const scoreBodies = []
+const forkBodies = []
+let healthUnavailable = false
+const failOnce = {
+  project: true,
+  runs: true,
+  goal: true,
+  score: true,
+  judgment: true,
+  approve: true,
+  fork: true,
+}
 const url = (path) => `/api/v1${path}`
 
 function policy(w) {
+  const inert = !approved
   const a = {
     candidate_id: 'A',
     label: 'Experiment A · appearance',
     s_u: 0.8,
-    s_c: 0.5,
-    delta: -0.3,
-    s_guided: w === 0 ? 0.8 : 0.5,
+    s_c: inert ? 0.8 : 0.5,
+    delta: inert ? 0 : -0.3,
+    s_guided: inert || w === 0 ? 0.8 : 0.5,
     feasible: true,
     infeasibility_reason: null,
     rubric_u: { rationale: 'Strong independent baseline' },
@@ -93,9 +106,9 @@ function policy(w) {
     candidate_id: 'B',
     label: 'Experiment B · geometry',
     s_u: 0.6,
-    s_c: 0.9,
-    delta: 0.3,
-    s_guided: w === 0 ? 0.6 : 0.9,
+    s_c: inert ? 0.6 : 0.9,
+    delta: inert ? 0 : 0.3,
+    s_guided: inert || w === 0 ? 0.6 : 0.9,
     feasible: true,
     infeasibility_reason: null,
     rubric_u: { rationale: 'Moderate baseline' },
@@ -118,18 +131,21 @@ function policy(w) {
     snapshot_id: 'snapshot-1',
     project_id: project.id,
     w,
-    selected_candidate_id: w === 0 ? 'A' : 'B',
-    selected_label: w === 0 ? a.label : b.label,
+    selected_candidate_id: inert || w === 0 ? 'A' : 'B',
+    selected_label: inert || w === 0 ? a.label : b.label,
     scores: [a, b, f],
-    status: 'scored',
-    fallback_reason: null,
+    status: inert ? 'unguided_only' : 'scored',
+    fallback_reason: inert ? 'no_human_context' : null,
     computed_at: iso,
   }
 }
 
-function forkResult(w) {
+function forkResult(w, sequence) {
+  const state = sequence === 1 ? 'complete' : sequence === 2 ? 'partial' : 'pending'
+  const guidedEvaluated = state === 'complete'
+  const independentEvaluated = state !== 'pending'
   return {
-    id: 'fork-1',
+    id: `fork-${sequence}`,
     project_id: project.id,
     checkpoint_snapshot_id: 'snapshot-1',
     w_unguided: 0,
@@ -138,24 +154,24 @@ function forkResult(w) {
       candidate_id: 'A',
       candidate_label: 'Experiment A · appearance',
       run_id: 'run-a',
-      coverage_fraction: 0.1667,
+      coverage_fraction: independentEvaluated ? 0.1667 : null,
       visible_count: 1,
       total_count: 6,
-      status: 'evaluated',
+      status: independentEvaluated ? 'evaluated' : 'not_evaluated',
     },
     branch_guided: {
       candidate_id: 'B',
       candidate_label: 'Experiment B · geometry',
       run_id: 'run-b',
-      coverage_fraction: 0.5,
+      coverage_fraction: guidedEvaluated ? 0.5 : null,
       visible_count: 3,
       total_count: 6,
-      status: 'evaluated',
+      status: guidedEvaluated ? 'evaluated' : 'not_evaluated',
     },
     comparison: {
-      coverage_delta: 0.3333,
-      winner: 'guided',
-      status: 'complete',
+      coverage_delta: guidedEvaluated ? 0.3333 : null,
+      winner: guidedEvaluated ? 'guided' : null,
+      status: state,
       confounds: ['Small fixture sample'],
       limitations: ['No confidence interval'],
     },
@@ -171,6 +187,47 @@ async function respond(route) {
   const address = new URL(request.url())
   const path = address.pathname
   const method = request.method()
+  const action =
+    method === 'GET' && path === url('/projects/project-demo/runs')
+      ? 'runs'
+      : method !== 'POST'
+        ? null
+        : path === url('/projects')
+          ? 'project'
+          : path === url('/projects/project-demo/goals')
+            ? 'goal'
+            : path === url('/projects/project-demo/policy/score')
+              ? 'score'
+              : path === url('/projects/project-demo/judgments')
+                ? 'judgment'
+                : path === url('/projects/project-demo/principles/principle-1/approve')
+                  ? 'approve'
+                  : path === url('/projects/project-demo/forks')
+                    ? 'fork'
+                    : null
+  if (action === 'score') {
+    const body = request.postDataJSON()
+    scoreBodies.push(body)
+    assert.deepEqual(Object.keys(body), ['w'])
+  }
+  if (action === 'fork') forkBodies.push(request.postDataJSON())
+  if (action && failOnce[action]) {
+    failOnce[action] = false
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'TEMPORARY', message: `Temporary ${action} failure` }),
+    })
+    return
+  }
+  if (path === url('/health') && method === 'GET' && healthUnavailable) {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'OFFLINE', message: 'Health unavailable' }),
+    })
+    return
+  }
   let data
   let status = 200
   if (path === url('/health') && method === 'GET')
@@ -192,12 +249,15 @@ async function respond(route) {
     }
   else if (path === url('/projects') && method === 'POST') {
     created = true
+    addEvent('project.created', project.id)
     status = 201
     data = project
   } else if (path === url('/projects/project-demo/runs') && method === 'GET')
     data = goalSubmitted ? [run] : []
   else if (path === url('/projects/project-demo/goals') && method === 'POST') {
     goalSubmitted = true
+    addEvent('run.completed', run.id)
+    addEvent('goal.evaluated', project.id)
     data = {
       project_id: project.id,
       runs: [run],
@@ -207,10 +267,8 @@ async function respond(route) {
     }
   } else if (path === url('/projects/project-demo/agenda') && method === 'GET') data = []
   else if (path === url('/projects/project-demo/policy/score') && method === 'POST') {
-    const body = request.postDataJSON()
-    scoreBodies.push(body)
-    assert.deepEqual(Object.keys(body), ['w'])
-    data = policy(body.w)
+    data = policy(request.postDataJSON().w)
+    addEvent('policy.scored', data.id)
   } else if (path === url('/projects/project-demo/principles') && method === 'GET')
     data = principle ? [principle] : []
   else if (path === url('/projects/project-demo/judgments') && method === 'POST') {
@@ -227,10 +285,12 @@ async function respond(route) {
       weight_adjustments: {},
       created_at: iso,
     }
+    addEvent('judgment.submitted', principle.id)
     data = principle
   } else if (path === url('/projects/project-demo/principles/principle-1/approve') && method === 'POST') {
     approved = true
     principle = { ...principle, approved: true, approved_at: iso }
+    addEvent('principle.approved', principle.id)
     data = principle
   } else if (path === url('/projects/project-demo/profile') && method === 'GET')
     data = {
@@ -247,31 +307,34 @@ async function respond(route) {
       created_at: iso,
     }))
   else if (path === url('/projects/project-demo/forks') && method === 'GET')
-    data = fork
-      ? [
-          {
-            id: fork.id,
-            project_id: project.id,
-            candidate_id_unguided: 'A',
-            candidate_id_guided: 'B',
-            w_guided: fork.w_guided,
-            winner: 'guided',
-            comparison_status: 'complete',
-            created_at: iso,
-          },
-        ]
-      : []
+    data = forkHistory.map((item) => ({
+      id: item.id,
+      project_id: project.id,
+      candidate_id_unguided: 'A',
+      candidate_id_guided: 'B',
+      w_guided: item.w_guided,
+      winner: item.comparison.winner,
+      comparison_status: item.comparison.status,
+      created_at: iso,
+    }))
   else if (path === url('/projects/project-demo/forks') && method === 'POST') {
     status = 201
-    fork = forkResult(request.postDataJSON().w)
+    forkCount++
+    fork = forkResult(request.postDataJSON().w, forkCount)
+    forkHistory.push(fork)
+    addEvent('fork.created', fork.id)
     data = fork
-  } else if (path === url('/projects/project-demo/forks/fork-1') && method === 'GET') data = fork
+  } else if (path.startsWith(url('/projects/project-demo/forks/fork-')) && method === 'GET')
+    data = forkHistory.find((item) => path.endsWith(item.id))
   else if (path === url('/projects/project-demo/events') && method === 'GET') {
     const after = Number(address.searchParams.get('after') || 0)
-    data =
-      after === 0
-        ? { events: events.slice(0, 2), next_sequence: 2 }
-        : { events: events.filter((item) => item.sequence > after), next_sequence: null }
+    const page = events.filter((item) => item.sequence > after).slice(0, 10)
+    data = {
+      events: page,
+      next_sequence: events.some((item) => item.sequence > (page.at(-1)?.sequence ?? after))
+        ? page.at(-1).sequence
+        : null,
+    }
   } else {
     status = 404
     data = { code: 'NOT_FOUND', message: `${method} ${path} was not part of the smoke fixture` }
@@ -286,53 +349,95 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 })
   await page.route('**/api/v1/**', respond)
   await page.goto(base)
+  await mkdir(resolve(root, 'artifacts'), { recursive: true })
   await page.getByRole('button', { name: /Create project/ }).click()
+  await page.getByText('Temporary project failure').waitFor()
+  await page.getByRole('button', { name: 'Retry create project' }).click()
+  await page.getByText('Project created. Set a coverage goal to begin the research flow.').waitFor()
+  await page.getByText('Temporary runs failure').waitFor()
+  await page.getByRole('button', { name: 'Retry loading project' }).click()
   await page.getByRole('button', { name: /Submit goal/ }).click()
-  await page.locator('.selected-row .candidate-name').getByText('Experiment B · geometry').waitFor()
+  await page.getByText('Temporary goal failure').waitFor()
+  await page.getByRole('button', { name: 'Retry goal' }).click()
+  await page.getByRole('heading', { name: 'Teach the policy what matters.' }).waitFor()
   assert.equal(created, true)
   assert.equal(goalSubmitted, true)
+  await page.locator('.nav-item').getByText('Judgments').click()
+  await page.getByText(/Scoring failed: Temporary score failure/).waitFor()
+  await page.getByRole('button', { name: 'Retry score' }).click()
+  await page.getByText(/Guidance inert — no approved principles yet/).waitFor()
+  assert.equal(await page.getByRole('slider', { name: 'Guidance weight w' }).isDisabled(), true)
+  await page.locator('.selected-row .candidate-name').getByText('Experiment A · appearance').waitFor()
+  await page.screenshot({ path: resolve(root, 'artifacts/guidance-inert.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Open researcher profile' }).click()
+  await page.getByLabel('What should the agent consider?').fill('Favor geometric consistency.')
+  await page.getByRole('button', { name: 'Submit judgment' }).click()
+  await page.getByText('Temporary judgment failure').waitFor()
+  await page.getByRole('button', { name: 'Retry submission' }).click()
+  await page.getByText('Pending approval').waitFor()
+  await page.getByRole('button', { name: /^Approve/ }).click()
+  await page.getByText('Temporary approve failure').waitFor()
+  await page.getByRole('button', { name: 'Retry approval' }).click()
+  await page.getByText('Version 3').waitFor()
+  for (const version of ['v1', 'v2', 'v3'])
+    await page.locator('.version-node').getByText(version, { exact: true }).waitFor()
+  await page.screenshot({ path: resolve(root, 'artifacts/profile.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Compare decisions' }).click()
+  await page.locator('.selected-row .candidate-name').getByText('Experiment B · geometry').waitFor()
   assert.match(await page.locator('.infeasible-row').innerText(), /Exceeds experiment budget/)
   const slider = page.getByRole('slider', { name: 'Guidance weight w' })
+  assert.equal(await slider.isEnabled(), true)
   await slider.focus()
   await slider.press('Home')
   await page.locator('.selected-row .candidate-name').getByText('Experiment A · appearance').waitFor()
   for (let i = 0; i < 20; i++) await slider.press('ArrowRight')
   await page.locator('.selected-row .candidate-name').getByText('Experiment B · geometry').waitFor()
   assert.equal(await slider.inputValue(), '1')
-  await mkdir(resolve(root, 'artifacts'), { recursive: true })
+  await page.locator('.insight-section').nth(0).getByText('Measured').waitFor()
+  await page.locator('.insight-section').nth(1).getByText('Measured').waitFor()
   await page.screenshot({ path: resolve(root, 'artifacts/judgments.png'), fullPage: true })
-
-  await page.getByRole('button', { name: /Researcher profile/ }).click()
-  await page.getByLabel('What should the agent consider?').fill('Favor geometric consistency.')
-  await page.getByRole('button', { name: 'Submit judgment' }).click()
-  await page.getByText('Pending approval').waitFor()
-  await page.getByRole('button', { name: /^Approve/ }).click()
-  await page.getByText('Version 3').waitFor()
-  for (const version of ['v1', 'v2', 'v3'])
-    await page.locator('.version-node').getByText(version, { exact: true }).waitFor()
-  await page.screenshot({ path: resolve(root, 'artifacts/profile.png'), fullPage: true })
-
+  healthUnavailable = true
+  await page.locator('.api-pill').click()
+  await page.getByText(/Backend unreachable. Showing the last fetched project data/).waitFor()
+  healthUnavailable = false
+  await page.getByRole('button', { name: 'Retry connection' }).click()
+  await page.locator('.api-pill').getByText('Backend ok').waitFor()
   await page.getByRole('button', { name: /Fork comparison/ }).click()
   await page.getByRole('button', { name: 'Create fork' }).click()
+  await page.getByText('Temporary fork failure').waitFor()
+  await page.locator('.fork-toolbar').getByRole('button', { name: 'Retry fork' }).click()
+  assert.equal(forkBodies[0].idempotency_key, forkBodies[1].idempotency_key)
   await page.locator('.branch-panel').getByText('16.67%').waitFor()
   await page.locator('.branch-panel').getByText('50.00%').waitFor()
+  await page.locator('.fork-delta').getByText('+33.33%').waitFor()
+  await page.locator('.fork-verdict').getByText('Guided branch leads').waitFor()
   await page.getByText('Small fixture sample').waitFor()
   await page.getByText('No confidence interval').waitFor()
   await page.screenshot({ path: resolve(root, 'artifacts/forks.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Create fork' }).click()
+  await page.locator('.fork-controls .status-badge').getByText('partial').waitFor()
+  assert.equal(await page.locator('.branch-card.not-evaluated').count(), 1)
+  await page.locator('.fork-verdict').getByText('Awaiting both branches').waitFor()
+  await page.screenshot({ path: resolve(root, 'artifacts/fork-partial.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Create fork' }).click()
+  await page.locator('.fork-controls .status-badge').getByText('pending').waitFor()
+  assert.equal(await page.locator('.branch-card.not-evaluated').count(), 2)
 
-  await page.getByRole('button', { name: 'Event log', exact: true }).click()
-  await page.getByRole('button', { name: /Load more after #2/ }).click()
+  await page.locator('.nav-item').getByText('Event log').click()
+  await page.getByRole('button', { name: /Load more after #10/ }).click()
   await page.getByText('principle · approved').first().waitFor()
-  assert.equal(await page.locator('.event-row .mode-badge').count(), 3)
+  assert.equal(await page.locator('.event-row .mode-badge').count(), events.length)
   await page.screenshot({ path: resolve(root, 'artifacts/events.png'), fullPage: true })
   assert.ok(scoreBodies.some((body) => body.w === 0))
   assert.ok(scoreBodies.some((body) => body.w === 1))
   assert.ok(scoreBodies.every((body) => Object.keys(body).length === 1 && 'w' in body))
   console.log(
-    'PASS project → goal → policy A→B, infeasible F, pending → approved v1–v3, fork coverage, event cursor and mode badges',
+    'PASS action retries, profile-first flow, inert guidance, policy A→B, fork complete/partial/pending, event cursor and mode badges',
   )
   console.log(`PASS ${scoreBodies.length} score requests contained only { w }`)
-  console.log('Screenshots: artifacts/judgments.png, profile.png, forks.png, events.png')
+  console.log(
+    'Screenshots: artifacts/guidance-inert.png, profile.png, judgments.png, forks.png, fork-partial.png, events.png',
+  )
 } finally {
   await browser?.close()
   server.kill()

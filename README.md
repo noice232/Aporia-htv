@@ -26,6 +26,8 @@ Open the local URL printed by Vite. The development server proxies `/api` to `ht
 
 The policy slider sends `POST /api/v1/projects/{project_id}/policy/score` with only `{ "w": number }`. The backend supplies all candidate scores and the selected candidate.
 
+The frozen `PolicyRunOut`, `GoalResult`, and `ForkOut` schemas do not expose `data_mode`; only `EventOut` does. Result cards show a data-mode badge only when a loaded event has an exact matching policy-run or experiment-run `entity_id`. `PolicyRunOut` also does not expose `conditioned_context_status`; the guidance-inert banner is driven by the contracted `fallback_reason: "no_human_context"`.
+
 ### Contract gap: cosmograph
 
 The frozen contract has no corpus or graph endpoint supplying semantic paper IDs, positions, neighborhoods, or relationships. The requested interactive cosmograph cannot be built from the available project, policy, profile, fork, and event responses without fabricating research nodes. Its implementation is held until a graph/corpus read contract is added.

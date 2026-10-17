@@ -93,11 +93,11 @@ export const getFork = async (projectId: string, forkId: string) =>
       params: { path: { project_id: projectId, fork_id: forkId } },
     }),
   )
-export const createFork = async (projectId: string, w: number) =>
+export const createFork = async (projectId: string, w: number, idempotencyKey: string) =>
   unwrap(
     await api.POST('/api/v1/projects/{project_id}/forks', {
       params: { path: { project_id: projectId } },
-      body: { w },
+      body: { w, idempotency_key: idempotencyKey },
     }),
   )
 
