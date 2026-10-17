@@ -8,6 +8,7 @@ from app.routers.health import router as health_router
 from app.routers.projects import router as projects_router
 from app.routers.policy import router as policy_router
 from app.routers.profile import router as profile_router
+from app.routers.fork import router as fork_router
 
 
 @asynccontextmanager
@@ -21,3 +22,4 @@ app.include_router(health_router)
 app.include_router(projects_router)
 app.include_router(policy_router)
 app.include_router(profile_router)
+app.include_router(fork_router)
