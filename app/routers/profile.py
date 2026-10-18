@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -11,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.profile import ProfileVersion, ResearcherPrinciple, ResearcherProfile
 from app.models.project import Project, ResearchEvent
+from app.papiers import PapiersAdapter, PapiersUnavailable, PapiersInvalidResponse
 from app.policy.profile import (
     build_human_context,
     bump_version,
@@ -86,10 +88,29 @@ def submit_judgment(project_id: str, body: JudgmentRequest, db: Session = Depend
                 detail="Invalid source_id format. Expected DOI, UUID, or papiers:<identifier>",
             )
 
+    data_mode = "manual"
+    source = "manual"
+
+    if body.source_id:
+        source = "papiers"
+        access_key = os.getenv("APORIA_PAPIERS_ACCESS_KEY")
+        if access_key:
+            # Verification enabled: call PapiersAdapter to verify the source
+            adapter = PapiersAdapter.from_environment()
+            try:
+                adapter.read(body.source_id)
+                data_mode = "verified"
+            except (PapiersUnavailable, PapiersInvalidResponse, ValueError):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Source not verified by Papiers",
+                )
+        else:
+            # No access key configured: skip verification, mark as unverified
+            data_mode = "unverified"
+
     profile = _get_or_create_profile(db, project_id)
     adjustments = compile_judgment(body.text)
-
-    source = "papiers" if body.source_id else "manual"
 
     principle = ResearcherPrinciple(
         profile_id=profile.id,

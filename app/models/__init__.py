@@ -10,6 +10,8 @@ from app.models.parallax import Claim, ClaimEvidence, Dispute
 from app.models.skill import CandidateSkill, SkillReview
 from app.models.portfolio import AgendaPriority, PortfolioComparison, PortfolioStrategy, StrategyVersion
 from app.models.workspace import User, Workspace, WorkspaceMember
+from app.models.paper import Paper
+from app.models.source import SourceContext
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -24,4 +26,6 @@ __all__ = [
     "CandidateSkill", "SkillReview",
     "PortfolioStrategy", "StrategyVersion", "PortfolioComparison", "AgendaPriority",
     "User", "Workspace", "WorkspaceMember",
+    "Paper",
+    "SourceContext",
 ]
