@@ -88,6 +88,7 @@ export default function Judgments() {
       setDataMode(comp.data_mode ?? 'mock')
       if (comp.with_cfg?.w != null) {
         setServerW(comp.with_cfg.w)
+        setW(comp.with_cfg.w)
       }
 
       setPrinciples((principleResult as ApiPrinciple[]).map(mapPrinciple))

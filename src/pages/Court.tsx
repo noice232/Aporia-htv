@@ -29,6 +29,66 @@ interface Test {
   resolves: string;
 }
 
+const MOCK_DISPUTES: Dispute[] = [
+  {
+    id: 'disp-001',
+    title: 'NeRF vs Gaussian Splatting: Novel-View Quality',
+    status: 'active',
+    date: '2024-11-15',
+    claimant: 'NeRF Baseline Agent',
+    respondent: '3DGS Optimization Agent',
+    claim: 'NeRF achieves higher PSNR (28.2 dB) on sparse views vs. Gaussian Splatting (27.8 dB)',
+    evidenceCount: 4,
+  },
+  {
+    id: 'disp-002',
+    title: 'Training Time Benchmark Validity',
+    status: 'escalated',
+    date: '2024-11-14',
+    claimant: 'Benchmark Validator',
+    respondent: 'GPU Pipeline Agent',
+    claim: 'Reported 18-minute 3DGS training used non-standard batch sizes, invalidating comparison with 74-minute NeRF baseline',
+    evidenceCount: 6,
+  },
+  {
+    id: 'disp-003',
+    title: 'Perceptual Quality Metric Selection',
+    status: 'resolved',
+    date: '2024-11-12',
+    claimant: 'Human Researcher',
+    respondent: 'Evaluation Agent',
+    claim: 'LPIPS better correlates with human preference than PSNR for rendered novel views; evaluation should weight perceptual metrics higher',
+    evidenceCount: 3,
+  },
+  {
+    id: 'disp-004',
+    title: 'Real-time Rendering Threshold',
+    status: 'active',
+    date: '2024-11-16',
+    claimant: 'Application Agent',
+    respondent: 'Quality Assurance Agent',
+    claim: '30 FPS is sufficient for interactive viewing vs. requirement of 60 FPS for VR applications',
+    evidenceCount: 2,
+  },
+];
+
+const MOCK_TESTS: Test[] = [
+  {
+    name: 'Controlled PSNR Comparison',
+    hypothesis: 'Under identical batch size and learning rate, 3DGS matches NeRF PSNR within 0.5 dB',
+    metric: 'PSNR delta < 0.5 dB',
+    cost: '~2 GPU-hours',
+    resolves: 'disp-001',
+  },
+  {
+    name: 'Standardized Training Benchmark',
+    hypothesis: 'With equal batch sizes, 3DGS trains in under 25 minutes vs NeRF 74 minutes',
+    metric: 'Wall-clock time',
+    cost: '~4 GPU-hours',
+    resolves: 'disp-002',
+  },
+];
+
 const PROTOCOL_STEPS = [
   'Claimant files dispute with quantitative claim and supporting evidence.',
   'Respondent submits counter-evidence within 48 hours.',
@@ -90,7 +150,7 @@ export default function Court() {
           })),
         ];
 
-        setDisputes(mapped);
+        setDisputes(mapped.length > 0 ? mapped : MOCK_DISPUTES);
 
         const testItems: Test[] = courtData
           .filter((d: any) => d.discriminating_experiment_json)
@@ -106,7 +166,7 @@ export default function Court() {
               resolves: d.id.slice(0, 8),
             };
           });
-        setTests(testItems);
+        setTests(testItems.length > 0 ? testItems : MOCK_TESTS);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load court data');
       } finally {

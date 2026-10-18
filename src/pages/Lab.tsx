@@ -400,8 +400,8 @@ export default function Lab() {
             >
               <span className="lab-launch-icon">&#9654;</span>
               <div>
-                <div className="lab-launch-btn-title">Demo Research (3DGS)</div>
-                <div className="lab-launch-btn-desc">3D Gaussian Splatting research session</div>
+                <div className="lab-launch-btn-title">Quick Start</div>
+                <div className="lab-launch-btn-desc">Launch a guided research session</div>
               </div>
             </button>
             <button

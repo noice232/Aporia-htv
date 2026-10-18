@@ -157,11 +157,11 @@ export default function Frontier() {
       const data = await fetchFrontierData(currentId!)
       if (cancelled) return
       const fallback = (!data || data.nodes.length === 0) ? make3DGSFallback() : null
-      const controls = initCosmos(
-        canvas!,
-        (node, x, y) => { setTooltip(node ? { node, x, y } : null) },
-        data ?? fallback ?? undefined,
-      )
+      const controls = initCosmos(canvas!, {
+        onPick: (node, x, y) => { setTooltip(node ? { node, x, y } : null) },
+        dark: false,
+        externalData: data ?? fallback ?? undefined,
+      })
       if (!controls || cancelled) { controls?.destroy(); return }
       controlsRef.current = controls
       setReady(true)
