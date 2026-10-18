@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
-<<<<<<< HEAD
 import { getPolicyComparison, listPrinciples, compileJudgment } from '../api/client'
 import type { PolicyComparison, Principle as ApiPrinciple } from '../api/client'
-=======
-import { scorePolicy, listPrinciples, compileJudgment } from '../api/client'
-import type { Candidate as ApiCandidate, Principle as ApiPrinciple } from '../api/client'
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 import '../styles/judgments.css'
 
 interface Candidate {
@@ -22,18 +17,6 @@ interface Principle {
   status: 'approved' | 'pending'
 }
 
-<<<<<<< HEAD
-=======
-function mapCandidate(c: ApiCandidate): Candidate {
-  return {
-    id: c.candidate_id,
-    action: c.label,
-    s_u: c.s_u ?? 0,
-    s_c: c.s_c ?? 0,
-  }
-}
-
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 function mapPrinciple(p: ApiPrinciple): Principle {
   return {
     id: p.id,
@@ -74,11 +57,8 @@ export default function Judgments() {
   const [judgment, setJudgment] = useState('')
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [principles, setPrinciples] = useState<Principle[]>([])
-<<<<<<< HEAD
   const [dataMode, setDataMode] = useState<string>('mock')
   const [serverW, setServerW] = useState<number | null>(null)
-=======
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -88,7 +68,6 @@ export default function Judgments() {
     setLoading(true)
     setError(null)
     try {
-<<<<<<< HEAD
       const [comparison, principleResult] = await Promise.all([
         getPolicyComparison(projectId),
         listPrinciples(projectId),
@@ -112,25 +91,13 @@ export default function Judgments() {
         setW(comp.with_cfg.w)
       }
 
-=======
-      const [policyResult, principleResult] = await Promise.all([
-        scorePolicy(projectId, w),
-        listPrinciples(projectId),
-      ])
-      const scores = (policyResult as { scores?: ApiCandidate[] }).scores
-      if (scores) setCandidates(scores.map(mapCandidate))
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
       setPrinciples((principleResult as ApiPrinciple[]).map(mapPrinciple))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load judgment data')
     } finally {
       setLoading(false)
     }
-<<<<<<< HEAD
   }, [projectId])
-=======
-  }, [projectId, w])
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 
   useEffect(() => { fetchData() }, [fetchData])
 

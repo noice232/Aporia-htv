@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-<<<<<<< HEAD
 import {
   startResearch, listResearchSteps, getResearchStatus,
   controlResearch, listExperiments, listRuns,
@@ -21,11 +20,6 @@ interface ResearchStep {
   human_influenced: boolean
 }
 
-=======
-import { listExperiments, listRuns } from '../api/client'
-import '../styles/lab.css'
-
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 interface ExperimentRun {
   id: string
   runNum: number
@@ -37,7 +31,6 @@ interface ExperimentRun {
   config: Record<string, number | string>
 }
 
-<<<<<<< HEAD
 type ResearchState = 'idle' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed'
 
 // ── API helpers not in openapi client ──
@@ -65,36 +58,6 @@ async function sendFeedback(projectId: string, stepId: string, action: string, t
 
 // ── Reusable components (kept from original) ──
 
-=======
-function toExperimentRun(exp: Record<string, unknown>, idx: number): ExperimentRun {
-  const metrics: ExperimentRun['metrics'] = []
-  const results = exp.results as Record<string, unknown> | null
-  if (results && results.metrics && typeof results.metrics === 'object') {
-    const m = results.metrics as Record<string, unknown>
-    for (const [name, val] of Object.entries(m)) {
-      if (typeof val === 'number') {
-        metrics.push({ name, value: val, unit: name === 'PSNR' ? 'dB' : '', sparkline: [val] })
-      }
-    }
-  }
-  const created = exp.created_at as string || new Date().toISOString()
-  const updated = exp.updated_at as string || created
-  const diffMs = new Date(updated).getTime() - new Date(created).getTime()
-  const mins = Math.floor(diffMs / 60000)
-  const secs = Math.floor((diffMs % 60000) / 1000)
-  return {
-    id: exp.id as string,
-    runNum: idx + 1,
-    hypothesis: (exp.hypothesis as string) || (exp.method as string) || 'Experiment',
-    status: (exp.status as ExperimentRun['status']) || 'queued',
-    metrics,
-    startedAt: created,
-    duration: `${mins}m ${secs.toString().padStart(2, '0')}s`,
-    config: (exp.config as Record<string, number | string>) || {},
-  }
-}
-
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 function Sparkline({ data, color, width = 140, height = 32 }: { data: number[]; color: string; width?: number; height?: number }) {
   const min = Math.min(...data)
   const max = Math.max(...data)
@@ -131,11 +94,10 @@ function Sparkline({ data, color, width = 140, height = 32 }: { data: number[]; 
   )
 }
 
-function StatusBadge({ status }: { status: ExperimentRun['status'] }) {
+function StatusBadge({ status }: { status: string }) {
   return <span className={`lab-badge lab-badge-${status}`}>{status}</span>
 }
 
-<<<<<<< HEAD
 const PHASE_LABELS: Record<string, string> = {
   scan: 'Scan',
   hypothesize: 'Hypothesis',
@@ -150,19 +112,12 @@ const PHASE_COLORS: Record<string, string> = {
   experiment: 'var(--accent-mint)',
   evaluate: 'var(--accent-amber, #d97706)',
   plan: 'var(--accent-icy, #57DDF6)',
-=======
-function formatMetricValue(value: number, name: string): string {
-  if (name === 'Loss') return value.toFixed(4)
-  if (name === 'SSIM') return value.toFixed(3)
-  return value.toFixed(2)
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 }
 
 const SPARKLINE_COLORS: Record<string, string> = {
   PSNR: '#57DDF6',
   SSIM: '#4EE8BA',
   Loss: '#E790EE',
-<<<<<<< HEAD
   coverage_fraction: '#4EE8BA',
   visible_count: '#57DDF6',
 }
@@ -232,71 +187,9 @@ function StepFeedback({ projectId, stepId, onDone }: { projectId: string; stepId
             {a.charAt(0).toUpperCase() + a.slice(1)}
           </button>
         ))}
-=======
-}
-
-export default function Lab() {
-  const { projectId } = useParams()
-  const [lr, setLr] = useState('0.0005')
-  const [epochs, setEpochs] = useState('80')
-  const [batchSize, setBatchSize] = useState('4096')
-  const [runs, setRuns] = useState<ExperimentRun[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchData = useCallback(async () => {
-    if (!projectId) return
-    setLoading(true)
-    setError(null)
-    try {
-      const exps = await listExperiments(projectId)
-      const mapped = (exps as Record<string, unknown>[]).map((e, i) => toExperimentRun(e, i)).reverse()
-      setRuns(mapped)
-    } catch (err) {
-      try {
-        const runData = await listRuns(projectId)
-        const mapped = (runData as Record<string, unknown>[]).map((r, i) => ({
-          id: (r as { id: string }).id,
-          runNum: i + 1,
-          hypothesis: `Run ${i + 1}`,
-          status: ((r as { status: string }).status || 'completed') as ExperimentRun['status'],
-          metrics: [],
-          startedAt: (r as { started_at?: string }).started_at || new Date().toISOString(),
-          duration: '—',
-          config: {},
-        }))
-        setRuns(mapped)
-      } catch {
-        setError(err instanceof Error ? err.message : 'Failed to load experiments')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId])
-
-  useEffect(() => { fetchData() }, [fetchData])
-
-  if (!projectId) {
-    return (
-      <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'var(--fg-dim)' }}>
-          <div style={{ fontSize: 13 }}>Select a project to view the Research Lab</div>
-        </div>
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
       </div>
     )
   }
-
-  if (loading && runs.length === 0) {
-    return (
-      <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--fg-dim)', fontSize: 13 }}>Loading experiments...</div>
-      </div>
-    )
-  }
-
-  const activeRun = runs.find((r) => r.status === 'running') || runs[0]
-  const historyRuns = activeRun ? runs.filter((r) => r.id !== activeRun.id) : runs
 
   return (
     <div className="lab-step-feedback-input">
@@ -471,7 +364,6 @@ export default function Lab() {
       {error && (
         <div style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid var(--accent-red)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 13, color: 'var(--accent-red)', marginBottom: 16 }}>
           {error}
-<<<<<<< HEAD
         </div>
       )}
 
@@ -514,15 +406,12 @@ export default function Lab() {
               <div className="lab-launch-btn-desc">Real evaluator + Gemini AI iterations</div>
             </div>
           </button>
-=======
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
         </div>
       )}
 
       <div className="lab-layout">
         {/* Left: Research Steps Feed */}
         <div>
-<<<<<<< HEAD
           {steps.length > 0 ? (
             <>
               <div className="lab-history-title">Research Steps ({steps.length})</div>
@@ -600,112 +489,23 @@ export default function Lab() {
                 ))}
               </div>
             </div>
-=======
-          {activeRun ? (
-            <>
-              {/* Active Experiment */}
-              <div className="lab-active-card">
-                <div className="lab-active-header">
-                  <div className="lab-active-title">Run #{activeRun.runNum}</div>
-                  <StatusBadge status={activeRun.status} />
-                </div>
-                <div className="lab-active-hypothesis">{activeRun.hypothesis}</div>
-                <div className="lab-active-meta">
-                  <div>Started <span>{new Date(activeRun.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
-                  <div>Elapsed <span>{activeRun.duration}</span></div>
-                  <div>Config <span style={{ color: 'var(--accent-lavender)' }}>
-                    {Object.entries(activeRun.config).map(([k, v]) => `${k}=${v}`).join(' ')}
-                  </span></div>
-                </div>
-                {activeRun.metrics.length > 0 && (
-                  <div className="lab-sparklines">
-                    {activeRun.metrics.map((m) => (
-                      <div key={m.name} className="lab-sparkline-card">
-                        <div className="lab-sparkline-label">{m.name}</div>
-                        <div className="lab-sparkline-value" style={{ color: SPARKLINE_COLORS[m.name] || 'var(--fg)' }}>
-                          {formatMetricValue(m.value, m.name)}
-                          {m.unit && <span style={{ fontSize: 11, color: 'var(--fg-dim)', marginLeft: 3 }}>{m.unit}</span>}
-                        </div>
-                        <Sparkline data={m.sparkline} color={SPARKLINE_COLORS[m.name] || '#57DDF6'} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 40, textAlign: 'center', color: 'var(--fg-dim)', fontSize: 13, marginBottom: 16 }}>
-              No experiments yet. Launch one to get started.
-            </div>
-          )}
-
-          {/* Run History */}
-          {historyRuns.length > 0 && (
-            <>
-              <div className="lab-history-title">Run History</div>
-              <div className="lab-history-wrapper">
-                <div className="lab-history-scroll">
-                  <table className="lab-history-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Hypothesis</th>
-                        <th>Status</th>
-                        <th>PSNR</th>
-                        <th>Duration</th>
-                        <th>Time</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historyRuns.map((run) => {
-                        const psnr = run.metrics.find((m) => m.name === 'PSNR')
-                        return (
-                          <tr key={run.id}>
-                            <td className="lab-run-num">{run.runNum}</td>
-                            <td className="lab-run-hypothesis">{run.hypothesis}</td>
-                            <td><StatusBadge status={run.status} /></td>
-                            <td className="lab-run-metric">
-                              {psnr ? `${psnr.value.toFixed(2)} ${psnr.unit}` : '—'}
-                            </td>
-                            <td className="lab-run-duration">{run.duration}</td>
-                            <td className="lab-run-time">
-                              {new Date(run.startedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}{' '}
-                              {new Date(run.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
           )}
         </div>
 
         {/* Right: Controls Sidebar */}
         <div className="lab-controls">
-<<<<<<< HEAD
           {isRunning && (
             <div className="lab-agent-status">
               <div className="lab-agent-dot" />
               Agent autonomously iterating
             </div>
           )}
-=======
-          <div className="lab-agent-status">
-            <div className="lab-agent-dot" />
-            Agent autonomously iterating
-          </div>
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
 
           <div className="lab-control-card">
             <div className="lab-control-title">Research Status</div>
             <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 8 }}>
               <strong>{steps.length}</strong> steps &middot; <strong>{experiments.length}</strong> experiments
             </div>
-<<<<<<< HEAD
             {researchState === 'completed' && (
               <div style={{ fontSize: 12, color: 'var(--accent-green)', marginBottom: 8 }}>
                 Research loop completed successfully.
@@ -723,25 +523,6 @@ export default function Lab() {
               <div style={{ fontSize: 11, color: 'var(--fg-dim)', lineHeight: 1.5, marginTop: 4 }}>
                 Aborting cancels running experiments and stops the research loop.
               </div>
-=======
-            <div className="lab-control-field">
-              <label>Epochs</label>
-              <input value={epochs} onChange={(e) => setEpochs(e.target.value)} />
-            </div>
-            <div className="lab-control-field">
-              <label>Batch Size</label>
-              <input value={batchSize} onChange={(e) => setBatchSize(e.target.value)} />
-            </div>
-            <button className="lab-btn-primary">Launch Experiment</button>
-          </div>
-
-          <div className="lab-control-card">
-            <div className="lab-control-title">Run Control</div>
-            <button className="lab-btn-danger">Abort Current Run</button>
-            <hr className="lab-control-divider" />
-            <div style={{ fontSize: 11, color: 'var(--fg-dim)', lineHeight: 1.5, marginTop: 4 }}>
-              Aborting saves a checkpoint. The agent will skip to the next hypothesis in the queue.
->>>>>>> 1885cb979ca2f151ae096480fa49370200518445
             </div>
           )}
 
