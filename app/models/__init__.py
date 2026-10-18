@@ -13,6 +13,8 @@ from app.models.workspace import User, Workspace, WorkspaceMember
 from app.models.paper import Paper
 from app.models.source import SourceContext
 from app.models.question import HumanQuestion
+from app.models.team import TeamComment, TeamParticipant, TeamSession
+from app.models.lesson import ResearchLesson
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -30,4 +32,6 @@ __all__ = [
     "Paper",
     "SourceContext",
     "HumanQuestion",
+    "TeamSession", "TeamParticipant", "TeamComment",
+    "ResearchLesson",
 ]

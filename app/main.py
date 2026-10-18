@@ -26,6 +26,8 @@ from app.routers.corpus import router as corpus_router
 from app.routers.sources import router as sources_router
 from app.routers.questions import router as questions_router
 from app.routers.judgments import router as judgments_router
+from app.routers.team import router as team_router
+from app.routers.lessons import router as lessons_router
 
 
 @asynccontextmanager
@@ -57,3 +59,5 @@ app.include_router(corpus_router)
 app.include_router(sources_router)
 app.include_router(questions_router)
 app.include_router(judgments_router)
+app.include_router(team_router)
+app.include_router(lessons_router)
