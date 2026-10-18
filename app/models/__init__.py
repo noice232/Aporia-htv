@@ -9,6 +9,7 @@ from app.models.plan import PlanHypothesis, PlanProtocol, PlanVersion, ResearchP
 from app.models.parallax import Claim, ClaimEvidence, Dispute
 from app.models.skill import CandidateSkill, SkillReview
 from app.models.portfolio import AgendaPriority, PortfolioComparison, PortfolioStrategy, StrategyVersion
+from app.models.workspace import User, Workspace, WorkspaceMember
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -22,4 +23,5 @@ __all__ = [
     "Claim", "ClaimEvidence", "Dispute",
     "CandidateSkill", "SkillReview",
     "PortfolioStrategy", "StrategyVersion", "PortfolioComparison", "AgendaPriority",
+    "User", "Workspace", "WorkspaceMember",
 ]

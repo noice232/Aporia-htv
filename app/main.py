@@ -20,6 +20,7 @@ from app.routers.portfolio import router as portfolio_router
 from app.routers.court import router as court_router
 from app.routers.runs import router as runs_router
 from app.routers.research_control import router as research_control_router
+from app.routers.workspace import router as workspace_router
 
 
 @asynccontextmanager
@@ -45,3 +46,4 @@ app.include_router(portfolio_router)
 app.include_router(court_router)
 app.include_router(runs_router)
 app.include_router(research_control_router)
+app.include_router(workspace_router)
