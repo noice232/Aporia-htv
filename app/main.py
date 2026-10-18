@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.database import init_db
 import app.models  # noqa: F401 — register ORM models so init_db creates tables
 from app.routers.health import router as health_router
@@ -44,6 +46,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="APORIA", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(health_router)
 app.include_router(projects_router)
 app.include_router(policy_router)
