@@ -1,0 +1,420 @@
+.court-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.court-header {
+  margin-bottom: 24px;
+}
+
+.court-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent-amber);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.court-header h1 {
+  margin-bottom: 6px;
+}
+
+.court-subtitle {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+.court-subtitle code {
+  color: var(--accent-icy);
+}
+
+/* ── Stats Bar ── */
+.court-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.court-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.court-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.court-stat-icon.active { background: rgba(245, 166, 35, 0.12); color: var(--accent-amber); }
+.court-stat-icon.resolved { background: rgba(102, 187, 106, 0.12); color: var(--accent-green); }
+.court-stat-icon.evidence { background: rgba(87, 221, 246, 0.12); color: var(--accent-cyan); }
+.court-stat-icon.escalated { background: rgba(239, 83, 80, 0.12); color: var(--accent-red); }
+
+.court-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.court-stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.court-stat-label {
+  font-size: 10px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── Body Layout ── */
+.court-body {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Dispute Cards ── */
+.court-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.court-section-title .count {
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--accent-amber);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.court-disputes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dispute-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  transition: border-color 0.15s;
+}
+
+.dispute-card:hover {
+  border-color: var(--border-active);
+}
+
+.dispute-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.dispute-status {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.dispute-status.active {
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--accent-amber);
+}
+
+.dispute-status.resolved {
+  background: rgba(102, 187, 106, 0.12);
+  color: var(--accent-green);
+}
+
+.dispute-status.escalated {
+  background: rgba(239, 83, 80, 0.12);
+  color: var(--accent-red);
+}
+
+.dispute-date {
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+}
+
+.dispute-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.dispute-parties {
+  font-size: 11px;
+  color: var(--fg-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dispute-vs {
+  font-weight: 700;
+  color: var(--accent-amber);
+  font-size: 10px;
+}
+
+.dispute-claim {
+  font-size: 12px;
+  color: var(--fg-dim);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.dispute-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.dispute-evidence-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(87, 221, 246, 0.08);
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.dispute-propose-btn {
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  color: var(--accent-amber);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.dispute-propose-btn:hover {
+  background: rgba(245, 166, 35, 0.2);
+}
+
+/* ── Resolved Section ── */
+.court-resolved-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+}
+
+.court-resolved-toggle:hover {
+  color: var(--fg);
+}
+
+.court-resolved-toggle .chevron {
+  transition: transform 0.2s;
+}
+
+.court-resolved-toggle .chevron.open {
+  transform: rotate(180deg);
+}
+
+.court-resolved {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.court-resolved .dispute-card {
+  opacity: 0.7;
+}
+
+/* ── Discriminating Tests Sidebar ── */
+.court-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+}
+
+.tests-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.tests-panel-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 14px;
+}
+
+.test-item {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+}
+
+.test-item:last-child {
+  border-bottom: none;
+}
+
+.test-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.test-hypothesis {
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+
+.test-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.test-meta-item {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(151, 180, 220, 0.06);
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+}
+
+.test-meta-item.metric {
+  background: rgba(78, 232, 186, 0.08);
+  color: var(--accent-mint);
+}
+
+/* ── Protocol Panel ── */
+.protocol-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.protocol-panel-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 12px;
+}
+
+.protocol-step {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.protocol-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--accent-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.protocol-text {
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+/* ── Responsive ── */
+@media (max-width: 840px) {
+  .court-body {
+    grid-template-columns: 1fr;
+  }
+
+  .court-sidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .court-sidebar > * {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .court-stats {
+    flex-wrap: wrap;
+  }
+
+  .court-stat {
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 520px) {
+  .court-stats {
+    flex-direction: column;
+  }
+}

@@ -5,7 +5,7 @@ const CLUSTERS: Record<string, {
   papers: string[]
   paperCount: number
 }> = {
-  computer_vision: {
+  'Computer Vision': {
     color: 'rgba(87, 221, 246, 0.9)',
     paperCount: 214302,
     papers: [
@@ -26,7 +26,7 @@ const CLUSTERS: Record<string, {
       'BEVFormer: Learning Bird Eye View Representation',
     ],
   },
-  generative_models: {
+  'Generative Models': {
     color: 'rgba(233, 144, 238, 0.9)',
     paperCount: 387611,
     papers: [
@@ -45,7 +45,7 @@ const CLUSTERS: Record<string, {
       'Imagen 3: Better Photorealism with DeepMind',
     ],
   },
-  nlp: {
+  'Natural Language Processing': {
     color: 'rgba(78, 232, 186, 0.9)',
     paperCount: 298421,
     papers: [
@@ -65,7 +65,7 @@ const CLUSTERS: Record<string, {
       'Command R+: Scalable RAG-Optimized LLM',
     ],
   },
-  reinforcement_learning: {
+  'Reinforcement Learning': {
     color: 'rgba(185, 154, 255, 0.9)',
     paperCount: 176843,
     papers: [
@@ -81,7 +81,7 @@ const CLUSTERS: Record<string, {
       'Gato: A Generalist Agent',
     ],
   },
-  multimodal: {
+  'Multimodal': {
     color: 'rgba(245, 166, 35, 0.9)',
     paperCount: 298421,
     papers: [
@@ -108,27 +108,20 @@ function seededRandom(seed: number) {
   }
 }
 
-function gaussian(rand: () => number): number {
-  let u = 0, v = 0
-  while (u === 0) u = rand()
-  while (v === 0) v = rand()
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
-}
-
 export const CLUSTER_LABELS: Record<string, string> = {
-  computer_vision: 'Computer Vision',
-  generative_models: 'Generative Models',
-  nlp: 'Natural Language Processing',
-  reinforcement_learning: 'Reinforcement Learning',
-  multimodal: 'Multimodal',
+  'Computer Vision': 'Computer Vision',
+  'Generative Models': 'Generative Models',
+  'Natural Language Processing': 'Natural Language Processing',
+  'Reinforcement Learning': 'Reinforcement Learning',
+  'Multimodal': 'Multimodal',
 }
 
 export const CLUSTER_COLORS: Record<string, string> = {
-  computer_vision: 'rgba(87, 221, 246, 0.9)',
-  generative_models: 'rgba(233, 144, 238, 0.9)',
-  nlp: 'rgba(78, 232, 186, 0.9)',
-  reinforcement_learning: 'rgba(185, 154, 255, 0.9)',
-  multimodal: 'rgba(245, 166, 35, 0.9)',
+  'Computer Vision': 'rgba(87, 221, 246, 0.9)',
+  'Generative Models': 'rgba(233, 144, 238, 0.9)',
+  'Natural Language Processing': 'rgba(78, 232, 186, 0.9)',
+  'Reinforcement Learning': 'rgba(185, 154, 255, 0.9)',
+  'Multimodal': 'rgba(245, 166, 35, 0.9)',
 }
 
 export const CLUSTER_PAPER_COUNTS: Record<string, number> = Object.fromEntries(
@@ -158,34 +151,32 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
   const points: CosmographPoint[] = []
   const links: CosmographLink[] = []
 
-  const venues = ['NeurIPS', 'ICML', 'ICLR', 'CVPR', 'ECCV', 'ACL', 'EMNLP']
+  const venues = ['NeurIPS', 'ICML', 'ICLR', 'CVPR', 'ECCV', 'ACL', 'EMNLP', 'SIGGRAPH', 'AAAI', 'IJCAI']
 
   for (const [cluster, data] of Object.entries(CLUSTERS)) {
-    // Named papers as larger anchor nodes
     for (let i = 0; i < data.papers.length; i++) {
       points.push({
         id: `${cluster}_named_${i}`,
         label: data.papers[i],
         cluster,
         color: data.color,
-        size: 3 + rand() * 5,
+        size: 2 + rand() * 4,
         venue: venues[Math.floor(rand() * venues.length)],
         year: 2023 + Math.floor(rand() * 2),
         citations: Math.floor(rand() * 800) + 50,
       })
     }
 
-    // Fill with many smaller unlabeled particles to create density
-    const fillCount = 120 + Math.floor(rand() * 80)
+    const fillCount = 900 + Math.floor(rand() * 200)
     for (let i = 0; i < fillCount; i++) {
       points.push({
         id: `${cluster}_fill_${i}`,
         label: '',
         cluster,
-        color: data.color,
-        size: 0.5 + rand() * 2,
+        color: data.color.replace('0.9)', `${(0.25 + rand() * 0.65).toFixed(2)})`),
+        size: 0.3 + rand() * 1.2,
         venue: venues[Math.floor(rand() * venues.length)],
-        year: 2020 + Math.floor(rand() * 5),
+        year: 2018 + Math.floor(rand() * 7),
         citations: Math.floor(rand() * 100),
       })
     }
@@ -194,8 +185,26 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
   // Intra-cluster links (dense)
   for (const cluster of Object.keys(CLUSTERS)) {
     const clusterPoints = points.filter((p) => p.cluster === cluster)
+    const namedPoints = clusterPoints.filter((p) => p.label)
+    // Each named node links to 3-5 others
+    for (const np of namedPoints) {
+      const linkCount = 3 + Math.floor(rand() * 3)
+      for (let j = 0; j < linkCount; j++) {
+        const target = clusterPoints[Math.floor(rand() * clusterPoints.length)]
+        if (target.id !== np.id) {
+          links.push({
+            source: np.id,
+            target: target.id,
+            type: 'citation',
+            weight: 0.4 + rand() * 0.6,
+          })
+        }
+      }
+    }
+    // Fill nodes get 1-2 links each (sparse web)
     for (let i = 0; i < clusterPoints.length; i++) {
-      const linkCount = 1 + Math.floor(rand() * 3)
+      if (clusterPoints[i].label) continue
+      const linkCount = 1 + Math.floor(rand() * 2)
       for (let j = 0; j < linkCount; j++) {
         const target = clusterPoints[Math.floor(rand() * clusterPoints.length)]
         if (target.id !== clusterPoints[i].id) {
@@ -203,16 +212,16 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
             source: clusterPoints[i].id,
             target: target.id,
             type: 'citation',
-            weight: 0.3 + rand() * 0.7,
+            weight: 0.1 + rand() * 0.4,
           })
         }
       }
     }
   }
 
-  // Inter-cluster links (sparse)
+  // Inter-cluster links (more substantial bridging)
   const allClusters = Object.keys(CLUSTERS)
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 150; i++) {
     const c1 = allClusters[Math.floor(rand() * allClusters.length)]
     const c2 = allClusters[Math.floor(rand() * allClusters.length)]
     if (c1 === c2) continue
@@ -222,14 +231,14 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
       source: p1[Math.floor(rand() * p1.length)].id,
       target: p2[Math.floor(rand() * p2.length)].id,
       type: 'citation',
-      weight: 0.1 + rand() * 0.3,
+      weight: 0.05 + rand() * 0.25,
     })
   }
 
   return { points, links }
 }
 
-// Legacy types for stores (keep backward compat)
+// Legacy types for stores
 export function generateMockGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const { points, links } = generateCosmographData()
   const nodes: GraphNode[] = points.filter((p) => p.label).map((p) => ({

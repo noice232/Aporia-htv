@@ -1,0 +1,378 @@
+.team-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.team-header {
+  margin-bottom: 24px;
+}
+
+.team-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent-mint);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.team-header h1 {
+  margin-bottom: 6px;
+}
+
+.team-subtitle {
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+
+/* ── Roster Grid ── */
+.team-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-section-title .count {
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(78, 232, 186, 0.15);
+  color: var(--accent-mint);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.team-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.member-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.member-card:hover {
+  border-color: var(--border-active);
+}
+
+.member-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bg);
+  position: relative;
+}
+
+.member-status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-card);
+}
+
+.member-status-dot.online { background: var(--accent-green); }
+.member-status-dot.away { background: var(--accent-amber); }
+.member-status-dot.busy { background: var(--accent-red); }
+
+.member-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.member-role {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.member-role.lead {
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--accent-amber);
+}
+
+.member-role.agent {
+  background: rgba(87, 221, 246, 0.12);
+  color: var(--accent-cyan);
+}
+
+.member-role.reviewer {
+  background: rgba(185, 154, 255, 0.12);
+  color: var(--accent-lavender);
+}
+
+.member-role.observer {
+  background: rgba(85, 101, 119, 0.18);
+  color: var(--fg-dim);
+}
+
+.member-spec {
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+.member-contributions {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
+/* ── Sessions List ── */
+.team-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.session-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: border-color 0.15s;
+}
+
+.session-card:hover {
+  border-color: var(--border-active);
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.session-meta {
+  font-size: 11px;
+  color: var(--fg-dim);
+  display: flex;
+  gap: 12px;
+}
+
+.session-participants {
+  display: flex;
+  gap: -4px;
+}
+
+.session-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--bg);
+  border: 2px solid var(--bg-card);
+  margin-left: -6px;
+}
+
+.session-avatar:first-child {
+  margin-left: 0;
+}
+
+.session-status {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.session-status.live {
+  background: rgba(102, 187, 106, 0.12);
+  color: var(--accent-green);
+}
+
+.session-status.paused {
+  background: rgba(245, 166, 35, 0.12);
+  color: var(--accent-amber);
+}
+
+.session-status.archived {
+  background: rgba(85, 101, 119, 0.18);
+  color: var(--fg-dim);
+}
+
+.session-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.session-status.live .session-status-dot {
+  background: var(--accent-green);
+  animation: team-pulse 1.5s ease-in-out infinite;
+}
+
+.session-status.paused .session-status-dot { background: var(--accent-amber); }
+.session-status.archived .session-status-dot { background: var(--fg-dim); }
+
+@keyframes team-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Skill Library ── */
+.team-skills {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  color: var(--fg-muted);
+  transition: all 0.15s;
+}
+
+.skill-chip:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-active);
+}
+
+.skill-proficiency {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.skill-proficiency.expert {
+  background: rgba(78, 232, 186, 0.12);
+  color: var(--accent-mint);
+}
+
+.skill-proficiency.advanced {
+  background: rgba(87, 221, 246, 0.12);
+  color: var(--accent-cyan);
+}
+
+.skill-proficiency.intermediate {
+  background: rgba(185, 154, 255, 0.12);
+  color: var(--accent-lavender);
+}
+
+/* ── Activity Feed ── */
+.team-activity {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text {
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: 1.45;
+}
+
+.activity-text strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.activity-time {
+  font-size: 10px;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .team-roster {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+
+  .session-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

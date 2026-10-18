@@ -10,6 +10,10 @@
   inset: 0;
 }
 
+.frontier-canvas a[href*="cosmograph"] {
+  display: none !important;
+}
+
 .frontier-hud {
   position: absolute;
   inset: 0;
@@ -45,6 +49,13 @@
   color: var(--fg);
   text-transform: uppercase;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.frontier-title-icon {
+  color: var(--accent-cyan);
 }
 
 .frontier-subtitle {
@@ -138,6 +149,14 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  max-width: calc(100% - 48px);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.frontier-cluster-filter.expanded {
+  opacity: 1;
+  bottom: 60px;
 }
 
 .frontier-cluster-chip {
@@ -179,6 +198,13 @@
 .frontier-cluster-chip.active .frontier-cluster-chip-dot {
   opacity: 1;
   box-shadow: 0 0 8px var(--chip-color);
+}
+
+.frontier-cluster-chip-count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--fg-dim);
+  opacity: 0.6;
 }
 
 /* ── Cluster tooltip / detail panel ── */
@@ -261,56 +287,39 @@
   letter-spacing: 0.08em;
 }
 
-.frontier-tooltip-section-title {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fg-dim);
-  margin-bottom: 8px;
-}
+/* ── Stats bar (bottom-left) ── */
 
-.frontier-tooltip-papers {
-  margin-bottom: 14px;
-}
-
-.frontier-tooltip-paper {
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.frontier-tooltip-paper:last-child {
-  border-bottom: none;
-}
-
-.frontier-tooltip-paper-title {
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.35;
-  margin-bottom: 3px;
-}
-
-.frontier-tooltip-paper-meta {
+.frontier-stats-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 24px;
   display: flex;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--fg-dim);
+  gap: 16px;
+  background: rgba(11, 17, 27, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 16px;
+  backdrop-filter: blur(12px);
 }
 
-.frontier-tooltip-keywords {
+.frontier-stat {
   display: flex;
+  align-items: baseline;
   gap: 4px;
-  flex-wrap: wrap;
 }
 
-.frontier-tooltip-kw {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(87, 221, 246, 0.07);
-  color: var(--fg-dim);
+.frontier-stat-value {
   font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+.frontier-stat-label {
+  font-size: 10px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* ── Hint bar ── */
@@ -396,6 +405,11 @@
     left: 12px;
     right: 12px;
     bottom: 40px;
+  }
+
+  .frontier-stats-bar {
+    left: 12px;
+    bottom: 8px;
   }
 
   .frontier-hint {

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { Cosmograph } from '@cosmograph/react'
 import type { CosmographRef, CosmographInputData } from '@cosmograph/react'
-import { Search } from 'lucide-react'
+import { Search, Rocket } from 'lucide-react'
 import { useGraphStore } from '../stores/graph'
 import {
   generateCosmographData,
@@ -12,6 +12,8 @@ import {
 } from '../data/mockGraph'
 import type { CosmographPoint, CosmographLink } from '../data/mockGraph'
 import '../styles/frontier.css'
+
+type ViewMode = 'explore' | 'fly' | 'focus' | 'filters'
 
 export default function Frontier() {
   const setNodes = useGraphStore((s) => s.setNodes)
@@ -28,6 +30,8 @@ export default function Frontier() {
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null)
   const [points, setPoints] = useState<CosmographPoint[]>([])
   const [links, setLinks] = useState<CosmographLink[]>([])
+  const [viewMode, setViewMode] = useState<ViewMode>('explore')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     const { points: p, links: l } = generateCosmographData()
@@ -46,7 +50,7 @@ export default function Frontier() {
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      filtered = filtered.filter((p) => p.label.toLowerCase().includes(q) || p.cluster.includes(q))
+      filtered = filtered.filter((p) => p.label.toLowerCase().includes(q) || p.cluster.toLowerCase().includes(q))
     }
     return filtered
   }, [points, visibleClusters, searchQuery])
@@ -64,6 +68,39 @@ export default function Frontier() {
 
   const cosmographPointsData = useMemo(() => filteredPoints as unknown as CosmographInputData, [filteredPoints])
   const cosmographLinksData = useMemo(() => filteredLinks as unknown as CosmographInputData, [filteredLinks])
+
+  const handleViewMode = useCallback((mode: ViewMode) => {
+    setViewMode(mode)
+    const ref = cosmographRef.current
+    if (!ref) return
+
+    switch (mode) {
+      case 'explore':
+        setShowFilters(false)
+        ref.start(0.3)
+        ref.fitView(1000, 0.1)
+        break
+      case 'fly':
+        setShowFilters(false)
+        ref.fitView(2000, 0.05)
+        ref.start(1)
+        break
+      case 'focus': {
+        setShowFilters(false)
+        const labeledIndices: number[] = []
+        filteredPoints.forEach((p, i) => {
+          if (p.label) labeledIndices.push(i)
+        })
+        if (labeledIndices.length > 0) {
+          ref.fitViewByIndices(labeledIndices, 1500, 0.15)
+        }
+        break
+      }
+      case 'filters':
+        setShowFilters((prev) => !prev)
+        break
+    }
+  }, [filteredPoints])
 
   if (loading) {
     return (
@@ -88,28 +125,49 @@ export default function Frontier() {
           pointIdBy="id"
           pointColorBy="color"
           pointSizeBy="size"
-          pointSizeRange={[2, 12]}
           pointLabelBy="label"
           pointClusterBy="cluster"
           linkSourceBy="source"
           linkTargetBy="target"
           pointIncludeColumns={['venue', 'year', 'citations', 'cluster']}
-          showLabels
-          showDynamicLabels
-          showDynamicLabelsLimit={20}
-          showTopLabels
-          showTopLabelsLimit={15}
-          showClusterLabels
+          /* 3D orbit camera like cosmograph.app demo */
+          spaceDimensions={3}
+          /* Curved gradient links */
+          curvedLinks
+          linkColorInterpolateFromEndpoints
+          linkBlending
+          linkOpacity={0.8}
+          linkWidthScale={2.95}
+          renderLinks
+          /* Simulation params from demo */
+          enableSimulation
+          simulationGravity={0.21}
+          simulationRepulsion={1.55}
+          simulationLinkSpring={0.24}
+          simulationLinkDistance={8}
+          simulationFriction={0.96}
+          simulationCluster={0.1}
+          simulationCollision={0}
+          /* Point sizing */
+          pointSizeRange={[6, 10]}
+          scalePointsOnZoom
+          /* Labels: off by default, show on hover */
+          showLabels={false}
           showHoveredPointLabel
-          pointLabelColor="rgba(229, 239, 250, 0.9)"
-          pointLabelFontSize={11}
-          clusterLabelFontSize={14}
+          showClusterLabels
+          clusterLabelFontSize={16}
+          pointLabelColor="rgba(229, 239, 250, 0.95)"
+          pointLabelFontSize={12}
           selectPointOnClick="single"
           focusPointOnClick
-          enableSimulation
+          spaceSize={8192}
+          backgroundColor="#050710"
+          fitViewOnInit
+          fitViewDelay={600}
+          fitViewPadding={0.1}
           disableLogging
           statusIndicatorMode={false}
-          style={{ width: '100%', height: '100%', background: '#050710' }}
+          style={{ width: '100%', height: '100%' }}
           className="cosmograph-instance"
         />
       </div>
@@ -117,17 +175,25 @@ export default function Frontier() {
       <div className="frontier-hud">
         <div className="frontier-top-bar">
           <div className="frontier-title-block">
-            <h2 className="frontier-title">FRONTIER</h2>
+            <h2 className="frontier-title">
+              <Rocket size={16} className="frontier-title-icon" />
+              FRONTIER
+            </h2>
             <span className="frontier-subtitle">
               {totalPapers.toLocaleString()} papers &middot; {clusters.length || Object.keys(CLUSTER_LABELS).length} research domains
             </span>
           </div>
 
           <div className="frontier-view-modes">
-            <button className="frontier-view-btn active">Explore</button>
-            <button className="frontier-view-btn">Fly</button>
-            <button className="frontier-view-btn">Focus</button>
-            <button className="frontier-view-btn">Filters</button>
+            {(['explore', 'fly', 'focus', 'filters'] as const).map((mode) => (
+              <button
+                key={mode}
+                className={`frontier-view-btn ${viewMode === mode ? 'active' : ''}`}
+                onClick={() => handleViewMode(mode)}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -142,7 +208,7 @@ export default function Frontier() {
           <kbd className="frontier-search-kbd">⌘K</kbd>
         </div>
 
-        <div className="frontier-cluster-filter">
+        <div className={`frontier-cluster-filter ${showFilters ? 'expanded' : ''}`}>
           {Object.entries(CLUSTER_LABELS).map(([id, label]) => {
             const active = visibleClusters.has(id)
             return (
@@ -153,7 +219,10 @@ export default function Frontier() {
                 style={{ '--chip-color': CLUSTER_COLORS[id] } as React.CSSProperties}
               >
                 <span className="frontier-cluster-chip-dot" />
-                {label.length > 12 ? label.split(' ')[0] : label}
+                {label}
+                <span className="frontier-cluster-chip-count">
+                  {(CLUSTER_PAPER_COUNTS[id] ?? 0).toLocaleString()}
+                </span>
               </button>
             )
           })}
@@ -177,8 +246,23 @@ export default function Frontier() {
           </div>
         )}
 
+        <div className="frontier-stats-bar">
+          <span className="frontier-stat">
+            <span className="frontier-stat-value">{filteredPoints.length.toLocaleString()}</span>
+            <span className="frontier-stat-label">nodes</span>
+          </span>
+          <span className="frontier-stat">
+            <span className="frontier-stat-value">{filteredLinks.length.toLocaleString()}</span>
+            <span className="frontier-stat-label">edges</span>
+          </span>
+          <span className="frontier-stat">
+            <span className="frontier-stat-value">{Object.keys(CLUSTER_LABELS).length}</span>
+            <span className="frontier-stat-label">clusters</span>
+          </span>
+        </div>
+
         <div className="frontier-hint">
-          Drag to pan &middot; Scroll to zoom &middot; Click a node to explore
+          Drag to orbit &middot; Scroll to zoom &middot; Shift+drag to pan &middot; Click a node to explore
         </div>
       </div>
     </div>
