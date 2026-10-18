@@ -141,7 +141,7 @@ void main(){
  float perspective=34.0/(34.0-p.z*.52);
  float aspect=uResolution.x/uResolution.y;
  gl_Position=vec4(p.x*perspective*uZoom/(21.5*aspect),p.y*perspective*uZoom/21.5,0.0,1.0);
- gl_PointSize=max(1.0,aSize * uDpr * (uGlow>0.5?6.0:2.05)*pow(perspective,1.2)*pow(uZoom,.32));
+ gl_PointSize=max(1.5,aSize * uDpr * (uGlow>0.5?7.5:3.0)*pow(perspective,1.2)*pow(uZoom,.32));
  vShow=(uFilter<0||abs(aTopic-float(uFilter))<.1)?1.0:0.0;
  float depth=clamp(.85+.14*p.z/15.0,.42,1.0);
  vColor=vec4(aColor.rgb,aColor.a*depth);
@@ -150,15 +150,17 @@ void main(){
 const FRAG = `#version 300 es
 precision highp float;
 in vec4 vColor; in float vShow;
-uniform float uGlow,uPoints; out vec4 frag;
+uniform float uGlow,uPoints,uDark; out vec4 frag;
 void main(){
  if(vShow<.5)discard;
  if(uPoints>.5){
  float r=length(gl_PointCoord-.5)*2.0;
  if(r>1.0)discard;
- float a=uGlow>.5 ? pow(1.0-r,1.6)*.17 : smoothstep(1.0,.25,r)*.96;
+ float glowA=uDark>.5?.17:.14;
+ float solidA=uDark>.5?.96:.94;
+ float a=uGlow>.5 ? pow(1.0-r,1.6)*glowA : smoothstep(1.0,.25,r)*solidA;
  frag=vec4(vColor.rgb,a*vColor.a);
- } else {frag=vec4(vColor.rgb,vColor.a*.13);}
+ } else {float la=uDark>.5?.13:.18; frag=vec4(vColor.rgb,vColor.a*la);}
 }`
 
 interface VAOData {
@@ -186,6 +188,7 @@ export interface ExternalData {
 
 export interface CosmosOptions {
   onPick?: PickCallback
+  onHover?: PickCallback
   externalData?: ExternalData
   dark?: boolean
 }
@@ -199,6 +202,7 @@ export function initCosmos(
     ? { onPick: onPickOrOpts, externalData }
     : (onPickOrOpts ?? {})
   const onPick = opts.onPick
+  const onHover = opts.onHover
   const darkMode = opts.dark ?? false
   if (typeof onPickOrOpts !== 'function' && !onPickOrOpts) {
     // called with no opts — externalData stays from the parameter
@@ -208,11 +212,52 @@ export function initCosmos(
   const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: false })
   if (!gl) return null
 
+  const CV_PAPERS = [
+    'ImageNet Classification with Deep Convolutional Neural Networks',
+    'Very Deep Convolutional Networks for Large-Scale Image Recognition',
+    'Going Deeper with Convolutions',
+    'Deep Residual Learning for Image Recognition',
+    'Faster R-CNN: Towards Real-Time Object Detection',
+    'You Only Look Once: Unified Real-Time Object Detection',
+    'SSD: Single Shot MultiBox Detector',
+    'Feature Pyramid Networks for Object Detection',
+    'Mask R-CNN',
+    'Generative Adversarial Networks',
+    'Image Style Transfer Using Convolutional Neural Networks',
+    'Spatial Transformer Networks',
+    'U-Net: Convolutional Networks for Biomedical Image Segmentation',
+    'An Image is Worth 16x16 Words: Transformers for Image Recognition',
+    'DETR: End-to-End Object Detection with Transformers',
+    'CLIP: Learning Transferable Visual Models from Natural Language',
+    'Denoising Diffusion Probabilistic Models',
+    'High-Resolution Image Synthesis with Latent Diffusion Models',
+    'Segment Anything',
+    'DINOv2: Learning Robust Visual Features without Supervision',
+    'NeRF: Representing Scenes as Neural Radiance Fields',
+    '3D Gaussian Splatting for Real-Time Radiance Field Rendering',
+    'EfficientNet: Rethinking Model Scaling for CNNs',
+    'MobileNets: Efficient CNNs for Mobile Vision Applications',
+    'CycleGAN: Unpaired Image-to-Image Translation',
+    'Batch Normalization: Accelerating Deep Network Training',
+    'Dropout: A Simple Way to Prevent Overfitting',
+    'DenseNet: Densely Connected Convolutional Networks',
+    'ShuffleNet: An Efficient CNN for Mobile Devices',
+    'YOLO9000: Better, Faster, Stronger',
+  ]
   const atlas = externalData ? null : createAtlas(42, .87)
   const nodes = externalData ? externalData.nodes : atlas!.points
+  if (!externalData) {
+    let pi = 0
+    for (let i = 0; i < nodes.length && pi < CV_PAPERS.length; i++) {
+      if (nodes[i].topic === 0 && nodes[i].size > 1.2) {
+        nodes[i].title = CV_PAPERS[pi++]
+      }
+    }
+  }
   const edges = externalData ? externalData.links : atlas!.links
   const n = nodes.length
-  const colors = TOPICS.map(t => rgba(t.color))
+  const LIGHT_PALETTE = ['#d4382b', '#d49a1a', '#1a8fa3', '#3d9e1e', '#a83db8', '#3060cc', '#c46520', '#6db020']
+  const colors = darkMode ? TOPICS.map(t => rgba(t.color)) : LIGHT_PALETTE.map(c => rgba(c))
 
   function compileShader(type: number, source: string) {
     const s = gl!.createShader(type)!
@@ -230,7 +275,7 @@ export function initCosmos(
   gl.useProgram(program)
 
   const loc: Record<string, WebGLUniformLocation | null> = {}
-  for (const k of ['uResolution', 'uYaw', 'uPitch', 'uZoom', 'uDpr', 'uGlow', 'uPoints', 'uFilter']) {
+  for (const k of ['uResolution', 'uYaw', 'uPitch', 'uZoom', 'uDpr', 'uGlow', 'uPoints', 'uFilter', 'uDark']) {
     loc[k] = gl.getUniformLocation(program, k)
   }
 
@@ -365,7 +410,7 @@ export function initCosmos(
     activeLinks = bufferVAO(linkBuffers(filter), gl!.LINES)
   }
 
-  const initial = { yaw: .06, pitch: -.1, zoom: .99 }
+  const initial = { yaw: .06, pitch: -.1, zoom: 2.4 }
   let yaw = initial.yaw, pitch = initial.pitch, zoom = initial.zoom
   let dragging = false, moved = false, lastX = 0, lastY = 0, dpr = 1
 
@@ -381,7 +426,7 @@ export function initCosmos(
 
   function draw() {
     resize()
-    const bg = darkMode ? [10 / 255, 13 / 255, 20 / 255] : [247 / 255, 248 / 255, 250 / 255]
+    const bg = darkMode ? [10 / 255, 13 / 255, 20 / 255] : [240 / 255, 236 / 255, 228 / 255]
     gl!.clearColor(bg[0], bg[1], bg[2], 1)
     gl!.clear(gl!.COLOR_BUFFER_BIT)
     gl!.enable(gl!.BLEND)
@@ -392,6 +437,7 @@ export function initCosmos(
     gl!.uniform1f(loc.uZoom!, zoom)
     gl!.uniform1f(loc.uDpr!, dpr)
     gl!.uniform1i(loc.uFilter!, filter)
+    gl!.uniform1f(loc.uDark!, darkMode ? 1 : 0)
     if (linksVisible) {
       gl!.uniform1f(loc.uPoints!, 0)
       gl!.uniform1f(loc.uGlow!, 0)
@@ -425,13 +471,19 @@ export function initCosmos(
     stage.classList.add('dragging')
     stage.setPointerCapture(e.pointerId)
   }
+  let hoverRaf = 0
   function onPointerMove(e: PointerEvent) {
-    if (!dragging) return
-    const dx = e.clientX - lastX, dy = e.clientY - lastY
-    if (Math.abs(dx) + Math.abs(dy) > 1) moved = true
-    yaw += dx * .006
-    pitch = Math.max(-1.5, Math.min(1.5, pitch + dy * .005))
-    lastX = e.clientX; lastY = e.clientY
+    if (dragging) {
+      const dx = e.clientX - lastX, dy = e.clientY - lastY
+      if (Math.abs(dx) + Math.abs(dy) > 1) moved = true
+      yaw += dx * .006
+      pitch = Math.max(-1.5, Math.min(1.5, pitch + dy * .005))
+      lastX = e.clientX; lastY = e.clientY
+    } else if (onHover) {
+      const mx = e.clientX, my = e.clientY
+      cancelAnimationFrame(hoverRaf)
+      hoverRaf = requestAnimationFrame(() => hoverPick(mx, my))
+    }
   }
   function onPointerUp(e: PointerEvent) {
     dragging = false
@@ -463,9 +515,33 @@ export function initCosmos(
     onPick?.(best >= 0 ? nodes[best] : null, mx, my)
   }
 
+  function hoverPick(mx: number, my: number) {
+    let best = -1, dist = 14 * 14
+    const rect = canvas.getBoundingClientRect()
+    const cw = rect.width, ch = rect.height
+    const aspect = cw / ch
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch)
+    for (let i = 0; i < n; i++) {
+      const p = nodes[i]
+      if (filter !== -1 && p.topic !== filter) continue
+      const rx = cy * p.x + sy * p.z, rz = -sy * p.x + cy * p.z
+      const ry = cp * p.y - sp * rz, rz2 = sp * p.y + cp * rz
+      const per = 34 / (34 - rz2 * .52)
+      const sx = (rx * per * zoom / (21.5 * aspect) * .5 + .5) * cw + rect.left
+      const syy = (-ry * per * zoom / 21.5 * .5 + .5) * ch + rect.top
+      const d = (sx - mx) ** 2 + (syy - my) ** 2
+      if (d < dist) { dist = d; best = i }
+    }
+    onHover?.(best >= 0 ? nodes[best] : null, mx, my)
+    canvas.style.cursor = best >= 0 ? 'pointer' : ''
+  }
+
+  function onPointerLeave() { onHover?.(null, 0, 0); canvas.style.cursor = '' }
+
   stage.addEventListener('pointerdown', onPointerDown)
   stage.addEventListener('pointermove', onPointerMove)
   stage.addEventListener('pointerup', onPointerUp)
+  stage.addEventListener('pointerleave', onPointerLeave)
   stage.addEventListener('wheel', onWheel, { passive: false })
 
   function getFilteredStats() {
@@ -489,6 +565,7 @@ export function initCosmos(
       stage.removeEventListener('pointerdown', onPointerDown)
       stage.removeEventListener('pointermove', onPointerMove)
       stage.removeEventListener('pointerup', onPointerUp)
+      stage.removeEventListener('pointerleave', onPointerLeave)
       stage.removeEventListener('wheel', onWheel)
     },
   }

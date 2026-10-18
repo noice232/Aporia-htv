@@ -3,16 +3,16 @@
   inset: 0;
   z-index: 1000;
   background: #f0ece4;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .landing-cosmos-wrapper {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
 }
 
 .landing-cosmos {
@@ -23,10 +23,28 @@
   opacity: 0.55;
 }
 
+.landing-scroll-track {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-cosmos-section {
+  height: 100vh;
+  pointer-events: none;
+}
+
+.landing-content-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .landing-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(240, 236, 228, 0.05) 0%, rgba(240, 236, 228, 0.5) 55%, rgba(240, 236, 228, 0.92) 100%);
+  background: radial-gradient(ellipse at center, rgba(240, 236, 228, 0.3) 0%, rgba(240, 236, 228, 0.75) 40%, rgba(240, 236, 228, 0.95) 100%);
   pointer-events: none;
 }
 
@@ -35,7 +53,7 @@
   z-index: 2;
   text-align: center;
   max-width: 720px;
-  padding: 0 24px;
+  padding: 60px 24px;
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 1.2s ease, transform 1.2s ease;
@@ -58,8 +76,8 @@
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(60, 50, 40, 0.4);
-  border: 1px solid rgba(60, 50, 40, 0.1);
+  color: rgba(60, 50, 40, 0.7);
+  border: 1px solid rgba(60, 50, 40, 0.18);
   padding: 6px 16px;
   border-radius: 20px;
   margin-bottom: 32px;
@@ -79,7 +97,7 @@
 
 .landing-tagline {
   font-size: clamp(15px, 2vw, 17px);
-  color: rgba(60, 50, 40, 0.5);
+  color: rgba(60, 50, 40, 0.75);
   line-height: 1.7;
   margin-bottom: 44px;
   font-weight: 400;
@@ -161,8 +179,34 @@
 
 .landing-pillar p {
   font-size: 12px;
-  color: rgba(60, 50, 40, 0.45);
+  color: rgba(60, 50, 40, 0.72);
   line-height: 1.55;
+}
+
+/* ── Cosmos Tooltip ── */
+.cosmos-tooltip {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  transform: translate(-50%, -120%);
+  background: rgba(26, 23, 20, 0.88);
+  color: #f0ece4;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(26, 23, 20, 0.2);
+  animation: tooltipIn 0.15s ease;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translate(-50%, -110%); }
+  to { opacity: 1; transform: translate(-50%, -120%); }
 }
 
 @keyframes fadeUp {
@@ -183,5 +227,10 @@
   .landing-enter {
     width: 100%;
     justify-content: center;
+  }
+
+  .cosmos-tooltip {
+    font-size: 11px;
+    max-width: 260px;
   }
 }
