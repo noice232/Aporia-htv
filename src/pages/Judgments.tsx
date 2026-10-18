@@ -63,7 +63,6 @@ export default function Judgments() {
   const [judgment, setJudgment] = useState('')
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [principles, setPrinciples] = useState<Principle[]>([])
-  const [dataMode, setDataMode] = useState<string>('mock')
   const [serverW, setServerW] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,7 +91,6 @@ export default function Judgments() {
           })),
         )
       }
-      setDataMode(comp.data_mode ?? 'mock')
       if (comp.with_cfg?.w != null) {
         setServerW(comp.with_cfg.w)
       }
@@ -178,16 +176,10 @@ export default function Judgments() {
         <div>
           <div className="judgments-label">
             Judgment Compiler
-            <span className={`data-mode-badge ${dataMode}`}>{dataMode}</span>
           </div>
           <h1 className="judgments-title">CFG Dual-Score Policy</h1>
           <p className="judgments-project">
             Project: <code>{projectId}</code>
-            {serverW != null && (
-              <span style={{ marginLeft: 12, fontSize: 12, color: 'var(--fg-dim)' }}>
-                Server w={serverW.toFixed(1)}
-              </span>
-            )}
           </p>
         </div>
 
