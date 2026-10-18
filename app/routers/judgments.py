@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,12 +12,15 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.profile import ResearcherPrinciple, ResearcherProfile
 from app.models.project import Project
+from app.papiers import PapiersAdapter, PapiersUnavailable, PapiersInvalidResponse
 from app.policy.profile import (
     _get_or_create_profile,
     bump_version,
     compile_judgment,
 )
 from app.schemas.profile import PrincipleOut
+
+_PAPIERS_TYPED_ID = re.compile(r"^(?:doc|pas|hl|nte|eq|cnv)_[A-Za-z0-9_-]+$")
 
 
 router = APIRouter(prefix="/api/v1", tags=["judgments"])
@@ -41,6 +46,7 @@ def _principle_out(p: ResearcherPrinciple) -> PrincipleOut:
         enabled=p.enabled,
         approved=p.approved,
         approved_at=p.approved_at,
+        data_mode=p.data_mode,
         weight_adjustments=json.loads(p.weight_adjustments_json),
         created_at=p.created_at,
     )
@@ -59,12 +65,33 @@ def compile_judgment_endpoint(
     profile = _get_or_create_profile(db, project_id)
     adjustments = compile_judgment(body.context_text)
 
-    source = "papiers" if body.source_context_id else "compiled"
+    source = "compiled"
+    data_mode = "manual"
+
+    if body.source_context_id:
+        source = "papiers"
+        if _PAPIERS_TYPED_ID.fullmatch(body.source_context_id):
+            access_key = os.getenv("APORIA_PAPIERS_ACCESS_KEY")
+            if access_key:
+                adapter = PapiersAdapter.from_environment()
+                try:
+                    adapter.read(body.source_context_id)
+                    data_mode = "verified"
+                except (PapiersUnavailable, PapiersInvalidResponse, ValueError):
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Source not verified by Papiers",
+                    )
+            else:
+                data_mode = "unverified"
+        else:
+            data_mode = "unverified"
 
     principle = ResearcherPrinciple(
         profile_id=profile.id,
         text=body.context_text,
         source=source,
+        data_mode=data_mode,
         weight_adjustments_json=json.dumps(adjustments),
     )
     db.add(principle)

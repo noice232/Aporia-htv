@@ -40,6 +40,7 @@ def _principle_out(p: ResearcherPrinciple) -> PrincipleOut:
         enabled=p.enabled,
         approved=p.approved,
         approved_at=p.approved_at,
+        data_mode=p.data_mode,
         weight_adjustments=json.loads(p.weight_adjustments_json),
         created_at=p.created_at,
     )
@@ -71,7 +72,7 @@ def _emit(db: Session, project_id: str, event_type: str,
 
 
 _PAPIERS_SOURCE_ID_PATTERN = re.compile(
-    r"^(10\.\d{4,9}/[^\s]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|papiers:[A-Za-z0-9._-]+)$"
+    r"^(10\.\d{4,9}/[^\s]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|papiers:[A-Za-z0-9._-]+|(?:doc|pas|hl|nte|eq|cnv)_[A-Za-z0-9_-]+)$"
 )
 
 
@@ -116,6 +117,7 @@ def submit_judgment(project_id: str, body: JudgmentRequest, db: Session = Depend
         profile_id=profile.id,
         text=body.text,
         source=source,
+        data_mode=data_mode,
         weight_adjustments_json=json.dumps(adjustments),
     )
     db.add(principle)

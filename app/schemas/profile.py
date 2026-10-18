@@ -26,6 +26,7 @@ class PrincipleOut(BaseModel):
     enabled: bool
     approved: bool
     approved_at: datetime | None = None
+    data_mode: str = "manual"
     weight_adjustments: dict[str, float]
     created_at: datetime
 

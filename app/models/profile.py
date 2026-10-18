@@ -31,6 +31,7 @@ class ResearcherPrinciple(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    data_mode: Mapped[str] = mapped_column(String(32), default="manual")
     weight_adjustments_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
