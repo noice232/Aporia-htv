@@ -13,6 +13,7 @@ from app.routers.research_session import router as research_session_router
 from app.routers.papiers import router as papiers_router
 from app.routers.frontier import router as frontier_router
 from app.routers.artifact import router as artifact_router
+from app.routers.plan import router as plan_router
 
 
 @asynccontextmanager
@@ -31,3 +32,4 @@ app.include_router(research_session_router)
 app.include_router(papiers_router)
 app.include_router(frontier_router)
 app.include_router(artifact_router)
+app.include_router(plan_router)

@@ -5,6 +5,7 @@ from app.models.fork import ResearchFork
 from app.models.research_session import HumanCheckpoint, ResearchSession, SessionStep
 from app.models.frontier import FrontierEdge, FrontierNode
 from app.models.artifact import ArtifactBlob, ExperimentSpec
+from app.models.plan import PlanHypothesis, PlanProtocol, PlanVersion, ResearchPlan
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -14,4 +15,5 @@ __all__ = [
     "ResearchSession", "SessionStep", "HumanCheckpoint",
     "FrontierNode", "FrontierEdge",
     "ArtifactBlob", "ExperimentSpec",
+    "ResearchPlan", "PlanHypothesis", "PlanProtocol", "PlanVersion",
 ]
