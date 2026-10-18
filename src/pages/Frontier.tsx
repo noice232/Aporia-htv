@@ -1,9 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { TOPICS, initCosmos } from '../engine/cosmos'
 import type { CosmosControls, AtlasNode } from '../engine/cosmos'
+import { useProjectStore } from '../stores/projects'
 import '../styles/frontier.css'
 
 export default function Frontier() {
+  const currentId = useProjectStore((s) => s.currentId)
+
   const stageRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const controlsRef = useRef<CosmosControls | null>(null)
@@ -14,9 +17,16 @@ export default function Frontier() {
   const [linksVisible, setLinksVisible] = useState(true)
   const [curvesOn, setCurvesOn] = useState(true)
   const [tooltip, setTooltip] = useState<{ node: AtlasNode; x: number; y: number } | null>(null)
-  const [stats, setStats] = useState({ points: 0, links: 0 })
 
   useEffect(() => {
+    if (!currentId) {
+      if (controlsRef.current) {
+        controlsRef.current.destroy()
+        controlsRef.current = null
+      }
+      setReady(false)
+      return
+    }
     const canvas = canvasRef.current
     if (!canvas) return
     const controls = initCosmos(canvas, (node, x, y) => {
@@ -24,16 +34,14 @@ export default function Frontier() {
     })
     if (!controls) return
     controlsRef.current = controls
-    setStats(controls.getStats())
     setReady(true)
     return () => { controls.destroy(); controlsRef.current = null }
-  }, [])
+  }, [currentId])
 
   const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = Number(e.target.value)
     setFilter(val)
     controlsRef.current?.setFilter(val)
-    setStats(controlsRef.current?.getStats() ?? { points: 0, links: 0 })
     setTooltip(null)
   }, [])
 
@@ -56,6 +64,21 @@ export default function Frontier() {
     controlsRef.current?.resetView()
     setTooltip(null)
   }, [])
+
+  if (!currentId) {
+    return (
+      <div className="cosmos-root">
+        <div className="cosmos-top">
+          <div className="cosmos-brand">APORIA / COSMOS</div>
+          <div className="cosmos-sub">Experimental research atlas &middot; interactive 3D</div>
+        </div>
+        <div className="cosmos-empty">
+          <div className="cosmos-empty-title">Select a research project to explore the paper universe</div>
+          <div className="cosmos-empty-hint">Papers will appear here based on your research scope</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="cosmos-root">
@@ -81,23 +104,7 @@ export default function Frontier() {
         <button onClick={handleReset}>Reset view</button>
       </div>
 
-      <div className="cosmos-side">
-        <div className="cosmos-legend-label">RESEARCH DOMAINS</div>
-        <div className="cosmos-legend">
-          {TOPICS.map((t, i) => (
-            <div key={i} className="cosmos-legend-item">
-              <span className="cosmos-dot" style={{ '--glow': t.color } as React.CSSProperties} />
-              <span>{t.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="cosmos-instructions">Drag to orbit &middot; Scroll to zoom &middot; Click a paper</div>
-
-      <div className="cosmos-stats">
-        {ready && `${stats.points.toLocaleString()} synthetic papers · ${stats.links.toLocaleString()} simulated links · 3D curved bundles`}
-      </div>
 
       {tooltip && (
         <div

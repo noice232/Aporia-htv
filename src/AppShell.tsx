@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { AppHeader } from './components/shell/AppHeader'
 import { SideRail } from './components/shell/SideRail'
 import { Inspector } from './components/shell/Inspector'
@@ -48,12 +48,12 @@ export default function AppShell() {
               <Route path="/library" element={<Library />} />
               <Route path="/settings" element={<SettingsPage />} />
 
-              {/* Legacy routes */}
-              <Route path="/lab" element={<Navigate to="/" replace />} />
-              <Route path="/agenda" element={<Navigate to="/" replace />} />
-              <Route path="/judgments" element={<Navigate to="/" replace />} />
-              <Route path="/forks" element={<Navigate to="/" replace />} />
-              <Route path="/court" element={<Navigate to="/" replace />} />
+              {/* Non-project routes — render the page with no projectId */}
+              <Route path="/lab" element={<Lab />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/judgments" element={<Judgments />} />
+              <Route path="/forks" element={<ForkExplorer />} />
+              <Route path="/court" element={<Court />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

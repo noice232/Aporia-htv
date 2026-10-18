@@ -85,8 +85,8 @@
 }
 
 .agenda-filter-btn.active {
-  background: rgba(87, 221, 246, 0.1);
-  border-color: rgba(87, 221, 246, 0.3);
+  background: rgba(8, 145, 178, 0.08);
+  border-color: rgba(8, 145, 178, 0.25);
   color: var(--accent-cyan);
 }
 
@@ -95,16 +95,16 @@
   font-weight: 600;
   padding: 5px 14px;
   border-radius: 100px;
-  border: 1px solid rgba(78, 232, 186, 0.3);
+  border: 1px solid rgba(15, 175, 130, 0.25);
   color: var(--accent-mint);
-  background: rgba(78, 232, 186, 0.06);
+  background: rgba(15, 175, 130, 0.06);
   margin-left: auto;
   transition: all 0.15s ease;
 }
 
 .agenda-add-btn:hover {
-  background: rgba(78, 232, 186, 0.12);
-  border-color: rgba(78, 232, 186, 0.5);
+  background: rgba(15, 175, 130, 0.10);
+  border-color: rgba(15, 175, 130, 0.4);
 }
 
 .agenda-group {
@@ -183,17 +183,17 @@
 
 .agenda-card-priority-badge.p0 {
   color: var(--accent-cyan);
-  background: rgba(87, 221, 246, 0.12);
+  background: rgba(8, 145, 178, 0.10);
 }
 
 .agenda-card-priority-badge.p1 {
   color: var(--accent-amber);
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba(217, 119, 6, 0.10);
 }
 
 .agenda-card-priority-badge.p2 {
   color: var(--fg-dim);
-  background: rgba(85, 101, 119, 0.2);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .agenda-card-id {
@@ -244,20 +244,20 @@
 
 .agenda-card-agent.scanner {
   color: var(--accent-mint);
-  background: rgba(78, 232, 186, 0.1);
-  border: 1px solid rgba(78, 232, 186, 0.2);
+  background: rgba(15, 175, 130, 0.08);
+  border: 1px solid rgba(15, 175, 130, 0.18);
 }
 
 .agenda-card-agent.experimenter {
   color: var(--accent-lavender);
-  background: rgba(185, 154, 255, 0.1);
-  border: 1px solid rgba(185, 154, 255, 0.2);
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.18);
 }
 
 .agenda-card-agent.evaluator {
   color: var(--accent-fuchsia);
-  background: rgba(231, 144, 238, 0.1);
-  border: 1px solid rgba(231, 144, 238, 0.2);
+  background: rgba(192, 38, 211, 0.08);
+  border: 1px solid rgba(192, 38, 211, 0.18);
 }
 
 .agenda-card-dep {
@@ -266,8 +266,8 @@
   padding: 2px 6px;
   border-radius: 4px;
   color: var(--fg-dim);
-  background: rgba(151, 180, 220, 0.08);
-  border: 1px solid rgba(151, 180, 220, 0.1);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .agenda-card-time {
@@ -295,27 +295,27 @@
 
 .agenda-card-status.completed {
   color: var(--accent-green);
-  background: rgba(102, 187, 106, 0.1);
-  border: 1px solid rgba(102, 187, 106, 0.2);
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.18);
 }
 
 .agenda-card-status.in_progress {
   color: var(--accent-cyan);
-  background: rgba(87, 221, 246, 0.1);
-  border: 1px solid rgba(87, 221, 246, 0.2);
+  background: rgba(8, 145, 178, 0.08);
+  border: 1px solid rgba(8, 145, 178, 0.18);
   animation: agenda-pulse 2s ease-in-out infinite;
 }
 
 .agenda-card-status.queued {
   color: var(--fg-dim);
-  background: rgba(85, 101, 119, 0.15);
-  border: 1px solid rgba(85, 101, 119, 0.2);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .agenda-card-status.blocked {
   color: var(--accent-red);
-  background: rgba(239, 83, 80, 0.1);
-  border: 1px solid rgba(239, 83, 80, 0.2);
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.18);
 }
 
 @keyframes agenda-pulse {
@@ -326,7 +326,7 @@
 .agenda-progress-bar {
   width: 100%;
   height: 3px;
-  background: rgba(151, 180, 220, 0.1);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 2px;

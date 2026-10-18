@@ -55,7 +55,7 @@
 
 .library-search-input {
   flex: 1;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 12px 9px 34px;
@@ -84,7 +84,7 @@
 }
 
 .library-sort-select {
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 12px;
@@ -116,8 +116,8 @@
 }
 
 .library-chip.active {
-  background: rgba(87, 221, 246, 0.12);
-  border-color: rgba(87, 221, 246, 0.3);
+  background: rgba(8, 145, 178, 0.10);
+  border-color: rgba(8, 145, 178, 0.25);
   color: var(--accent-cyan);
 }
 
@@ -151,12 +151,12 @@
 
 .sync-dot.connected {
   background: var(--accent-green);
-  box-shadow: 0 0 6px rgba(102, 187, 106, 0.5);
+  box-shadow: 0 0 6px rgba(22, 163, 74, 0.4);
 }
 
 .sync-dot.disconnected {
   background: var(--accent-red);
-  box-shadow: 0 0 6px rgba(239, 83, 80, 0.4);
+  box-shadow: 0 0 6px rgba(220, 38, 38, 0.3);
 }
 
 .sync-meta {
@@ -170,14 +170,14 @@
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
-  background: rgba(78, 232, 186, 0.1);
-  border: 1px solid rgba(78, 232, 186, 0.25);
+  background: rgba(15, 175, 130, 0.08);
+  border: 1px solid rgba(15, 175, 130, 0.20);
   color: var(--accent-mint);
   transition: all 0.15s;
 }
 
 .sync-btn:hover {
-  background: rgba(78, 232, 186, 0.18);
+  background: rgba(15, 175, 130, 0.14);
 }
 
 /* Main Layout */
@@ -234,15 +234,15 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  background: rgba(87, 221, 246, 0.08);
-  border: 1px solid rgba(87, 221, 246, 0.2);
+  background: rgba(8, 145, 178, 0.06);
+  border: 1px solid rgba(8, 145, 178, 0.15);
   color: var(--accent-cyan);
   white-space: nowrap;
   transition: all 0.15s;
 }
 
 .paper-add-btn:hover {
-  background: rgba(87, 221, 246, 0.16);
+  background: rgba(8, 145, 178, 0.12);
 }
 
 .paper-authors {
@@ -268,17 +268,17 @@
 }
 
 .paper-badge.year {
-  background: rgba(151, 180, 220, 0.1);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--fg-muted);
 }
 
 .paper-badge.venue {
-  background: rgba(180, 242, 255, 0.08);
+  background: rgba(2, 132, 199, 0.06);
   color: var(--accent-icy);
 }
 
 .paper-badge.citations {
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--fg-dim);
   font-family: var(--font-mono);
   font-size: 10px;
@@ -290,23 +290,23 @@
 }
 
 .paper-badge.provenance-arxiv {
-  background: rgba(239, 83, 80, 0.12);
-  color: #EF5350;
+  background: rgba(220, 38, 38, 0.10);
+  color: #DC2626;
 }
 
 .paper-badge.provenance-papier {
-  background: rgba(78, 232, 186, 0.12);
-  color: #4EE8BA;
+  background: rgba(15, 175, 130, 0.10);
+  color: #0FAF82;
 }
 
 .paper-badge.provenance-openalex {
-  background: rgba(245, 166, 35, 0.12);
-  color: #F5A623;
+  background: rgba(217, 119, 6, 0.10);
+  color: #D97706;
 }
 
 .paper-badge.provenance-manual {
-  background: rgba(85, 101, 119, 0.2);
-  color: #556577;
+  background: rgba(0, 0, 0, 0.06);
+  color: #8F99A8;
 }
 
 .paper-badge.cluster-tag {
@@ -417,7 +417,7 @@
 .year-bar-track {
   flex: 1;
   height: 6px;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }

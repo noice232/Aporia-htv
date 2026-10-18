@@ -1,6 +1,9 @@
 .rp-page {
+  padding: 28px 32px;
   max-width: 960px;
   margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .rp-header {
@@ -167,7 +170,7 @@
   flex-direction: column;
   gap: 6px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .priority-item:last-child {
@@ -197,7 +200,7 @@
 
 .priority-bar {
   height: 4px;
-  background: rgba(151, 180, 220, 0.08);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -222,7 +225,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .rule-item:last-child {
@@ -242,12 +245,12 @@
 }
 
 .rule-status.approved {
-  background: rgba(102, 187, 106, 0.15);
+  background: rgba(22, 163, 74, 0.12);
   color: var(--accent-green);
 }
 
 .rule-status.pending {
-  background: rgba(245, 166, 35, 0.15);
+  background: rgba(217, 119, 6, 0.12);
   color: var(--accent-amber);
 }
 
@@ -270,7 +273,7 @@
   display: flex;
   gap: 14px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .intervention-item:last-child {
@@ -353,7 +356,7 @@
 .metric-bar {
   flex: 1;
   height: 8px;
-  background: rgba(151, 180, 220, 0.08);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -376,6 +379,10 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .rp-page {
+    padding: 20px 16px;
+  }
+
   .rp-grid {
     grid-template-columns: 1fr;
   }

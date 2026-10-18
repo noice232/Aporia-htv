@@ -1,6 +1,9 @@
 .court-page {
+  padding: 28px 32px;
   max-width: 1100px;
   margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .court-header {
@@ -57,10 +60,10 @@
   flex-shrink: 0;
 }
 
-.court-stat-icon.active { background: rgba(245, 166, 35, 0.12); color: var(--accent-amber); }
-.court-stat-icon.resolved { background: rgba(102, 187, 106, 0.12); color: var(--accent-green); }
-.court-stat-icon.evidence { background: rgba(87, 221, 246, 0.12); color: var(--accent-cyan); }
-.court-stat-icon.escalated { background: rgba(239, 83, 80, 0.12); color: var(--accent-red); }
+.court-stat-icon.active { background: rgba(217, 119, 6, 0.10); color: var(--accent-amber); }
+.court-stat-icon.resolved { background: rgba(22, 163, 74, 0.10); color: var(--accent-green); }
+.court-stat-icon.evidence { background: rgba(8, 145, 178, 0.10); color: var(--accent-cyan); }
+.court-stat-icon.escalated { background: rgba(220, 38, 38, 0.10); color: var(--accent-red); }
 
 .court-stat-info {
   display: flex;
@@ -106,7 +109,7 @@
 .court-section-title .count {
   font-size: 10px;
   font-weight: 600;
-  background: rgba(245, 166, 35, 0.15);
+  background: rgba(217, 119, 6, 0.12);
   color: var(--accent-amber);
   padding: 2px 8px;
   border-radius: 10px;
@@ -149,17 +152,17 @@
 }
 
 .dispute-status.active {
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba(217, 119, 6, 0.10);
   color: var(--accent-amber);
 }
 
 .dispute-status.resolved {
-  background: rgba(102, 187, 106, 0.12);
+  background: rgba(22, 163, 74, 0.10);
   color: var(--accent-green);
 }
 
 .dispute-status.escalated {
-  background: rgba(239, 83, 80, 0.12);
+  background: rgba(220, 38, 38, 0.10);
   color: var(--accent-red);
 }
 
@@ -215,7 +218,7 @@
   font-size: 10px;
   font-weight: 600;
   color: var(--accent-cyan);
-  background: rgba(87, 221, 246, 0.08);
+  background: rgba(8, 145, 178, 0.06);
   padding: 4px 10px;
   border-radius: 10px;
 }
@@ -225,15 +228,15 @@
   border-radius: var(--radius-sm);
   font-size: 11px;
   font-weight: 600;
-  background: rgba(245, 166, 35, 0.1);
-  border: 1px solid rgba(245, 166, 35, 0.25);
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid rgba(217, 119, 6, 0.20);
   color: var(--accent-amber);
   transition: all 0.15s;
   cursor: pointer;
 }
 
 .dispute-propose-btn:hover {
-  background: rgba(245, 166, 35, 0.2);
+  background: rgba(217, 119, 6, 0.15);
 }
 
 /* ── Resolved Section ── */
@@ -303,7 +306,7 @@
 
 .test-item {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .test-item:last-child {
@@ -334,13 +337,13 @@
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--fg-dim);
   font-family: var(--font-mono);
 }
 
 .test-meta-item.metric {
-  background: rgba(78, 232, 186, 0.08);
+  background: rgba(15, 175, 130, 0.06);
   color: var(--accent-mint);
 }
 
@@ -371,7 +374,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba(217, 119, 6, 0.10);
   color: var(--accent-amber);
   display: flex;
   align-items: center;
@@ -389,6 +392,10 @@
 
 /* ── Responsive ── */
 @media (max-width: 840px) {
+  .court-page {
+    padding: 20px 16px;
+  }
+
   .court-body {
     grid-template-columns: 1fr;
   }

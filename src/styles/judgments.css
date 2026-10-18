@@ -1,6 +1,9 @@
 .judgments-page {
+  padding: 28px 32px;
   max-width: 960px;
   margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -136,9 +139,9 @@
 .cfg-slider-label:nth-child(2) { color: var(--accent-lavender); }
 .cfg-slider-label:last-child { color: var(--accent-fuchsia); }
 
-.cfg-slider-label:first-child.active { background: rgba(87, 221, 246, 0.15); }
-.cfg-slider-label:nth-child(2).active { background: rgba(185, 154, 255, 0.15); }
-.cfg-slider-label:last-child.active { background: rgba(231, 144, 238, 0.15); }
+.cfg-slider-label:first-child.active { background: rgba(8, 145, 178, 0.12); }
+.cfg-slider-label:nth-child(2).active { background: rgba(124, 58, 237, 0.12); }
+.cfg-slider-label:last-child.active { background: rgba(192, 38, 211, 0.12); }
 
 .cfg-slider {
   -webkit-appearance: none;
@@ -236,7 +239,7 @@
 .score-table td {
   padding: 12px 16px;
   font-size: 13px;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   transition: background 0.2s;
 }
 
@@ -267,9 +270,9 @@
   font-weight: 700;
 }
 
-.score-rank.rank-1 { background: rgba(78, 232, 186, 0.15); color: var(--accent-mint); }
-.score-rank.rank-2 { background: rgba(87, 221, 246, 0.12); color: var(--accent-cyan); }
-.score-rank.rank-3 { background: rgba(185, 154, 255, 0.12); color: var(--accent-lavender); }
+.score-rank.rank-1 { background: rgba(15, 175, 130, 0.12); color: var(--accent-mint); }
+.score-rank.rank-2 { background: rgba(8, 145, 178, 0.10); color: var(--accent-cyan); }
+.score-rank.rank-3 { background: rgba(124, 58, 237, 0.10); color: var(--accent-lavender); }
 
 .score-action {
   max-width: 280px;
@@ -312,7 +315,7 @@
 .principles-panel h2 .count {
   font-size: 10px;
   font-weight: 600;
-  background: rgba(185, 154, 255, 0.15);
+  background: rgba(124, 58, 237, 0.12);
   color: var(--accent-lavender);
   padding: 2px 8px;
   border-radius: 10px;
@@ -323,7 +326,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .principle-item:last-child {
@@ -343,12 +346,12 @@
 }
 
 .principle-badge.approved {
-  background: rgba(102, 187, 106, 0.15);
+  background: rgba(22, 163, 74, 0.12);
   color: var(--accent-green);
 }
 
 .principle-badge.pending {
-  background: rgba(245, 166, 35, 0.15);
+  background: rgba(217, 119, 6, 0.12);
   color: var(--accent-amber);
 }
 
@@ -374,7 +377,7 @@
 
 .judgment-textarea {
   width: 100%;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -458,7 +461,7 @@
 .dist-bar-track {
   flex: 1;
   height: 14px;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -481,6 +484,10 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
+  .judgments-page {
+    padding: 20px 16px;
+  }
+
   .cfg-hero {
     padding: 20px 16px;
   }

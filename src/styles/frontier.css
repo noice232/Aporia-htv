@@ -5,14 +5,14 @@
   inset: 0;
   overflow: hidden;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  color: #eff4f7;
-  background: #171f25;
+  color: #1A1D23;
+  background: #F0F2F5;
 }
 
 .cosmos-stage {
   position: fixed;
   inset: 0;
-  background: #171f25;
+  background: #F0F2F5;
   cursor: grab;
 }
 
@@ -40,12 +40,12 @@
   font-size: 12px;
   letter-spacing: 0.28em;
   font-weight: 750;
-  color: #e9f3f4;
+  color: #1A1D23;
 }
 
 .cosmos-sub {
   font-size: 11px;
-  color: #81939f;
+  color: #5F6B7A;
   letter-spacing: 0.04em;
   margin-top: 8px;
 }
@@ -64,10 +64,10 @@
 
 .cosmos-tools select,
 .cosmos-tools button {
-  background: rgba(31, 43, 51, 0.89);
-  border: 1px solid #364852;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   outline: 0;
-  color: #dce8eb;
+  color: #1A1D23;
   border-radius: 6px;
   padding: 9px 11px;
   font-size: 12px;
@@ -77,12 +77,12 @@
 
 .cosmos-tools button:hover,
 .cosmos-tools select:hover {
-  background: #344551;
-  border-color: #5b737f;
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 .cosmos-tools option {
-  background: #1b252c;
+  background: #FFFFFF;
 }
 
 /* ── Side legend ── */
@@ -98,7 +98,7 @@
 .cosmos-legend-label {
   font-size: 10px;
   letter-spacing: 0.19em;
-  color: #718490;
+  color: #8F99A8;
   margin-bottom: 11px;
 }
 
@@ -106,7 +106,7 @@
   display: grid;
   gap: 7px;
   font-size: 11px;
-  color: #a6b5bd;
+  color: #5F6B7A;
 }
 
 .cosmos-legend-item {
@@ -123,29 +123,43 @@
   background: var(--glow);
 }
 
-/* ── Stats ── */
-
-.cosmos-stats {
-  position: absolute;
-  right: 21px;
-  bottom: 19px;
-  z-index: 4;
-  font-size: 11px;
-  color: #8194a0;
-  letter-spacing: 0.025em;
-  pointer-events: none;
-}
-
 /* ── Instructions ── */
 
 .cosmos-instructions {
   position: absolute;
-  left: 23px;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 16px;
   z-index: 4;
-  color: #667f8d;
+  color: #8F99A8;
   font-size: 10px;
   pointer-events: none;
+}
+
+/* ── Empty state ── */
+
+.cosmos-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  z-index: 3;
+}
+
+.cosmos-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg, #1A1D23);
+}
+
+.cosmos-empty-hint {
+  font-size: 13px;
+  color: var(--fg-muted, #5F6B7A);
+  max-width: 320px;
 }
 
 /* ── Tooltip ── */
@@ -156,13 +170,13 @@
   min-width: 250px;
   max-width: 320px;
   padding: 14px;
-  background: rgba(25, 37, 45, 0.95);
-  border: 1px solid #3a5864;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 9px;
-  box-shadow: 0 8px 32px #0b1118b9;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   pointer-events: none;
   font-size: 12px;
-  color: #e1edf1;
+  color: #1A1D23;
 }
 
 .cosmos-tooltip-tag {
@@ -179,7 +193,7 @@
 
 .cosmos-tooltip-info {
   font-size: 11px;
-  color: #9dafb9;
+  color: #5F6B7A;
 }
 
 /* ── Responsive ── */

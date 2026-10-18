@@ -1,22 +1,22 @@
 :root {
-  --bg: #05070C;
-  --bg-surface: #0B111B;
-  --bg-panel: rgba(11, 17, 27, 0.92);
-  --bg-card: rgba(16, 24, 38, 0.85);
-  --bg-hover: rgba(30, 42, 62, 0.6);
-  --border: rgba(151, 180, 220, 0.14);
-  --border-active: rgba(151, 180, 220, 0.28);
-  --fg: #E5EFFA;
-  --fg-muted: #8898AF;
-  --fg-dim: #556577;
-  --accent-mint: #4EE8BA;
-  --accent-cyan: #57DDF6;
-  --accent-icy: #B4F2FF;
-  --accent-lavender: #B99AFF;
-  --accent-fuchsia: #E790EE;
-  --accent-amber: #F5A623;
-  --accent-red: #EF5350;
-  --accent-green: #66BB6A;
+  --bg: #FFFFFF;
+  --bg-surface: #F7F8FA;
+  --bg-panel: rgba(247, 248, 250, 0.95);
+  --bg-card: rgba(255, 255, 255, 0.90);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --border: rgba(0, 0, 0, 0.10);
+  --border-active: rgba(0, 0, 0, 0.20);
+  --fg: #1A1D23;
+  --fg-muted: #5F6B7A;
+  --fg-dim: #8F99A8;
+  --accent-mint: #0FAF82;
+  --accent-cyan: #0891B2;
+  --accent-icy: #0284C7;
+  --accent-lavender: #7C3AED;
+  --accent-fuchsia: #C026D3;
+  --accent-amber: #D97706;
+  --accent-red: #DC2626;
+  --accent-green: #16A34A;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --radius-sm: 6px;
@@ -26,7 +26,7 @@
   --inspector-width: 320px;
   --header-height: 52px;
   --timeline-height: 120px;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -108,7 +108,7 @@ code, pre {
 }
 
 ::selection {
-  background: rgba(87, 221, 246, 0.25);
+  background: rgba(8, 145, 178, 0.20);
 }
 
 ::-webkit-scrollbar {
@@ -121,10 +121,10 @@ code, pre {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(151, 180, 220, 0.18);
+  background: rgba(0, 0, 0, 0.18);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(151, 180, 220, 0.3);
+  background: rgba(0, 0, 0, 0.3);
 }

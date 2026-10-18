@@ -6,7 +6,7 @@ const CLUSTERS: Record<string, {
   paperCount: number
 }> = {
   'Computer Vision': {
-    color: 'rgba(87, 221, 246, 0.9)',
+    color: 'rgba(8, 145, 178, 0.9)',
     paperCount: 214302,
     papers: [
       'DINOv2: Learning Robust Visual Features',
@@ -27,7 +27,7 @@ const CLUSTERS: Record<string, {
     ],
   },
   'Generative Models': {
-    color: 'rgba(233, 144, 238, 0.9)',
+    color: 'rgba(192, 38, 211, 0.9)',
     paperCount: 387611,
     papers: [
       'Stable Diffusion 3: Scaling Rectified Flow Transformers',
@@ -46,7 +46,7 @@ const CLUSTERS: Record<string, {
     ],
   },
   'Natural Language Processing': {
-    color: 'rgba(78, 232, 186, 0.9)',
+    color: 'rgba(15, 175, 130, 0.9)',
     paperCount: 298421,
     papers: [
       'LLaMA 3: Open Foundation and Fine-Tuned Models',
@@ -66,7 +66,7 @@ const CLUSTERS: Record<string, {
     ],
   },
   'Reinforcement Learning': {
-    color: 'rgba(185, 154, 255, 0.9)',
+    color: 'rgba(124, 58, 237, 0.9)',
     paperCount: 176843,
     papers: [
       'Decision Transformer: Reinforcement Learning via Seq',
@@ -82,7 +82,7 @@ const CLUSTERS: Record<string, {
     ],
   },
   'Multimodal': {
-    color: 'rgba(245, 166, 35, 0.9)',
+    color: 'rgba(217, 119, 6, 0.9)',
     paperCount: 298421,
     papers: [
       'LLaVA-1.5: Improved Baselines with Visual Instruction',
@@ -117,11 +117,11 @@ export const CLUSTER_LABELS: Record<string, string> = {
 }
 
 export const CLUSTER_COLORS: Record<string, string> = {
-  'Computer Vision': 'rgba(87, 221, 246, 0.9)',
-  'Generative Models': 'rgba(233, 144, 238, 0.9)',
-  'Natural Language Processing': 'rgba(78, 232, 186, 0.9)',
-  'Reinforcement Learning': 'rgba(185, 154, 255, 0.9)',
-  'Multimodal': 'rgba(245, 166, 35, 0.9)',
+  'Computer Vision': 'rgba(8, 145, 178, 0.9)',
+  'Generative Models': 'rgba(192, 38, 211, 0.9)',
+  'Natural Language Processing': 'rgba(15, 175, 130, 0.9)',
+  'Reinforcement Learning': 'rgba(124, 58, 237, 0.9)',
+  'Multimodal': 'rgba(217, 119, 6, 0.9)',
 }
 
 export const CLUSTER_PAPER_COUNTS: Record<string, number> = Object.fromEntries(

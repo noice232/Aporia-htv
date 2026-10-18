@@ -1,6 +1,9 @@
 .team-page {
+  padding: 28px 32px;
   max-width: 1100px;
   margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .team-header {
@@ -41,7 +44,7 @@
 .team-section-title .count {
   font-size: 10px;
   font-weight: 600;
-  background: rgba(78, 232, 186, 0.15);
+  background: rgba(15, 175, 130, 0.12);
   color: var(--accent-mint);
   padding: 2px 8px;
   border-radius: 10px;
@@ -114,22 +117,22 @@
 }
 
 .member-role.lead {
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba(217, 119, 6, 0.10);
   color: var(--accent-amber);
 }
 
 .member-role.agent {
-  background: rgba(87, 221, 246, 0.12);
+  background: rgba(8, 145, 178, 0.10);
   color: var(--accent-cyan);
 }
 
 .member-role.reviewer {
-  background: rgba(185, 154, 255, 0.12);
+  background: rgba(124, 58, 237, 0.10);
   color: var(--accent-lavender);
 }
 
 .member-role.observer {
-  background: rgba(85, 101, 119, 0.18);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--fg-dim);
 }
 
@@ -223,17 +226,17 @@
 }
 
 .session-status.live {
-  background: rgba(102, 187, 106, 0.12);
+  background: rgba(22, 163, 74, 0.10);
   color: var(--accent-green);
 }
 
 .session-status.paused {
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba(217, 119, 6, 0.10);
   color: var(--accent-amber);
 }
 
 .session-status.archived {
-  background: rgba(85, 101, 119, 0.18);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--fg-dim);
 }
 
@@ -298,17 +301,17 @@
 }
 
 .skill-proficiency.expert {
-  background: rgba(78, 232, 186, 0.12);
+  background: rgba(15, 175, 130, 0.10);
   color: var(--accent-mint);
 }
 
 .skill-proficiency.advanced {
-  background: rgba(87, 221, 246, 0.12);
+  background: rgba(8, 145, 178, 0.10);
   color: var(--accent-cyan);
 }
 
 .skill-proficiency.intermediate {
-  background: rgba(185, 154, 255, 0.12);
+  background: rgba(124, 58, 237, 0.10);
   color: var(--accent-lavender);
 }
 
@@ -325,7 +328,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(151, 180, 220, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .activity-item:last-child {
@@ -365,6 +368,10 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .team-page {
+    padding: 20px 16px;
+  }
+
   .team-roster {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 8px;

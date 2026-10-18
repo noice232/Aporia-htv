@@ -55,7 +55,7 @@ export default function Home() {
             placeholder="e.g. 3D Reconstruction Coverage Analysis"
             style={{
               width: '100%',
-              background: 'rgba(151,180,220,0.06)',
+              background: 'rgba(0,0,0,0.04)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-sm)',
               padding: '10px 12px',
@@ -74,7 +74,7 @@ export default function Home() {
             rows={4}
             style={{
               width: '100%',
-              background: 'rgba(151,180,220,0.06)',
+              background: 'rgba(0,0,0,0.04)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-sm)',
               padding: '10px 12px',

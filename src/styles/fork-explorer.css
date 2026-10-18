@@ -1,6 +1,9 @@
 .fe-page {
+  padding: 28px 32px;
   max-width: 1100px;
   margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .fe-header {
@@ -227,7 +230,7 @@
 }
 
 .fe-status-completed {
-  background: rgba(102, 187, 106, 0.12);
+  background: rgba(22, 163, 74, 0.10);
   color: var(--accent-green);
 }
 .fe-status-completed .fe-status-dot {
@@ -235,7 +238,7 @@
 }
 
 .fe-status-running {
-  background: rgba(87, 221, 246, 0.12);
+  background: rgba(8, 145, 178, 0.10);
   color: var(--accent-cyan);
 }
 .fe-status-running .fe-status-dot {
@@ -244,7 +247,7 @@
 }
 
 .fe-status-queued {
-  background: rgba(85, 101, 119, 0.18);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--fg-dim);
 }
 .fe-status-queued .fe-status-dot {
@@ -403,7 +406,7 @@
 .fe-bar-track {
   flex: 1;
   height: 16px;
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -493,7 +496,7 @@
 }
 
 .fe-diff-diverged {
-  background: rgba(185, 154, 255, 0.04);
+  background: rgba(124, 58, 237, 0.04);
 }
 
 .fe-diff-diverged .fe-diff-step-col {
@@ -555,7 +558,7 @@
   height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(151, 180, 220, 0.14);
+  background: rgba(0, 0, 0, 0.10);
   border-radius: 2px;
   outline: none;
 }
@@ -602,12 +605,12 @@
 }
 
 .fe-btn-secondary {
-  background: rgba(151, 180, 220, 0.1);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--fg);
   border: 1px solid var(--border);
 }
 .fe-btn-secondary:hover {
-  background: rgba(151, 180, 220, 0.18);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .fe-btn-ghost {
@@ -616,11 +619,15 @@
 }
 .fe-btn-ghost:hover {
   color: var(--fg);
-  background: rgba(151, 180, 220, 0.06);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .fe-page {
+    padding: 20px 16px;
+  }
+
   .fe-cards {
     grid-template-columns: 1fr;
   }

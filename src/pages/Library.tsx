@@ -38,11 +38,11 @@ const PROVENANCE_LABELS: Record<string, string> = {
 }
 
 const CLUSTER_META: Record<string, { label: string; color: string }> = {
-  computer_vision: { label: 'Computer Vision', color: '#57DDF6' },
-  generative_models: { label: 'Generative Models', color: '#E790EE' },
-  nlp: { label: 'NLP', color: '#4EE8BA' },
-  reinforcement_learning: { label: 'RL', color: '#B99AFF' },
-  multimodal: { label: 'Multimodal', color: '#F5A623' },
+  computer_vision: { label: 'Computer Vision', color: '#0891B2' },
+  generative_models: { label: 'Generative Models', color: '#C026D3' },
+  nlp: { label: 'NLP', color: '#0FAF82' },
+  reinforcement_learning: { label: 'RL', color: '#7C3AED' },
+  multimodal: { label: 'Multimodal', color: '#D97706' },
 }
 
 type SortKey = 'relevance' | 'year' | 'citations'
@@ -112,10 +112,10 @@ export default function Library() {
   }, [])
 
   const provenanceBadgeColors: Record<string, string> = {
-    arxiv: '#EF5350',
-    papier: '#4EE8BA',
-    openalex: '#F5A623',
-    manual: '#556577',
+    arxiv: '#DC2626',
+    papier: '#0FAF82',
+    openalex: '#D97706',
+    manual: '#8F99A8',
   }
 
   return (
