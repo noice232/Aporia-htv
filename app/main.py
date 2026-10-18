@@ -9,6 +9,9 @@ from app.routers.projects import router as projects_router
 from app.routers.policy import router as policy_router
 from app.routers.profile import router as profile_router
 from app.routers.fork import router as fork_router
+from app.routers.research_session import router as research_session_router
+from app.routers.papiers import router as papiers_router
+from app.routers.frontier import router as frontier_router
 
 
 @asynccontextmanager
@@ -23,3 +26,6 @@ app.include_router(projects_router)
 app.include_router(policy_router)
 app.include_router(profile_router)
 app.include_router(fork_router)
+app.include_router(research_session_router)
+app.include_router(papiers_router)
+app.include_router(frontier_router)
