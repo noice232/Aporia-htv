@@ -167,14 +167,15 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
       })
     }
 
-    const fillCount = 900 + Math.floor(rand() * 200)
+    const fillCount = 2800 + Math.floor(rand() * 400)
     for (let i = 0; i < fillCount; i++) {
+      const alpha = (0.3 + rand() * 0.7).toFixed(2)
       points.push({
         id: `${cluster}_fill_${i}`,
         label: '',
         cluster,
-        color: data.color.replace('0.9)', `${(0.25 + rand() * 0.65).toFixed(2)})`),
-        size: 0.3 + rand() * 1.2,
+        color: data.color.replace('0.9)', `${alpha})`),
+        size: 0.2 + rand() * 0.8,
         venue: venues[Math.floor(rand() * venues.length)],
         year: 2018 + Math.floor(rand() * 7),
         citations: Math.floor(rand() * 100),
@@ -201,27 +202,25 @@ export function generateCosmographData(): { points: CosmographPoint[]; links: Co
         }
       }
     }
-    // Fill nodes get 1-2 links each (sparse web)
+    // Fill nodes: only ~30% get a link to keep the graph sparse
     for (let i = 0; i < clusterPoints.length; i++) {
       if (clusterPoints[i].label) continue
-      const linkCount = 1 + Math.floor(rand() * 2)
-      for (let j = 0; j < linkCount; j++) {
-        const target = clusterPoints[Math.floor(rand() * clusterPoints.length)]
-        if (target.id !== clusterPoints[i].id) {
-          links.push({
-            source: clusterPoints[i].id,
-            target: target.id,
-            type: 'citation',
-            weight: 0.1 + rand() * 0.4,
-          })
-        }
+      if (rand() > 0.3) continue
+      const target = clusterPoints[Math.floor(rand() * clusterPoints.length)]
+      if (target.id !== clusterPoints[i].id) {
+        links.push({
+          source: clusterPoints[i].id,
+          target: target.id,
+          type: 'citation',
+          weight: 0.05 + rand() * 0.2,
+        })
       }
     }
   }
 
   // Inter-cluster links (more substantial bridging)
   const allClusters = Object.keys(CLUSTERS)
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 80; i++) {
     const c1 = allClusters[Math.floor(rand() * allClusters.length)]
     const c2 = allClusters[Math.floor(rand() * allClusters.length)]
     if (c1 === c2) continue
