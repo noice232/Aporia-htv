@@ -39,12 +39,17 @@ const PAPER_TITLES = [
 export default function Landing() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const controlsRef = useRef<ReturnType<typeof initCosmos>>(null)
+  const cosmosModeRef = useRef(false)
   const navigate = useNavigate()
   const [visible, setVisible] = useState(false)
   const [exiting, setExiting] = useState(false)
   const [cosmosMode, setCosmosMode] = useState(false)
   const [tooltip, setTooltip] = useState<{ title: string; x: number; y: number } | null>(null)
   const [selectedPaper, setSelectedPaper] = useState<AtlasNode | null>(null)
+
+  useEffect(() => {
+    cosmosModeRef.current = cosmosMode
+  }, [cosmosMode])
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -64,6 +69,7 @@ export default function Landing() {
         }
       },
       onPick: (node: AtlasNode | null) => {
+        if (!cosmosModeRef.current) return
         if (node) {
           const display = node.title.startsWith('Research paper')
             ? { ...node, title: PAPER_TITLES[Math.floor(Math.random() * PAPER_TITLES.length)] }
@@ -90,10 +96,8 @@ export default function Landing() {
 
   return (
     <div className={`landing ${visible ? 'visible' : ''} ${exiting ? 'exiting' : ''}`}>
-      {/* Cosmos canvas — full screen, always interactive */}
       <canvas ref={canvasRef} className="landing-cosmos" />
 
-      {/* Tooltip */}
       {tooltip && !selectedPaper && (
         <div
           className="cosmos-tooltip"
@@ -103,7 +107,6 @@ export default function Landing() {
         </div>
       )}
 
-      {/* Content overlaid on top — pointer-events pass through to cosmos */}
       <div className={`landing-overlay-content ${cosmosMode ? 'cosmos-mode-hidden' : ''}`}>
         <div className="landing-badge">Collaborative Autonomous Research</div>
         <h1 className="landing-title">APORIA</h1>
@@ -153,7 +156,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Cosmos mode — back button */}
       {cosmosMode && (
         <button className="landing-cosmos-back" onClick={() => { setCosmosMode(false); setSelectedPaper(null) }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -163,11 +165,10 @@ export default function Landing() {
         </button>
       )}
 
-      {/* Paper popup */}
       {selectedPaper && (
-        <div className="paper-popup-overlay" onClick={() => setSelectedPaper(null)}>
-          <div className="paper-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="paper-popup-close" onClick={() => setSelectedPaper(null)}>
+        <div className="paper-popup-overlay" onMouseDown={(e) => { e.stopPropagation(); setSelectedPaper(null) }}>
+          <div className="paper-popup" onMouseDown={(e) => e.stopPropagation()}>
+            <button className="paper-popup-close" onMouseDown={(e) => { e.stopPropagation(); setSelectedPaper(null) }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 6 6 18M6 6l12 12"/>
               </svg>
