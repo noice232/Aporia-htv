@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.policy import CandidateScore, PolicyRun, PolicySnapshot
 from app.models.project import Project
+from app.policy.candidates import DEFAULT_CANDIDATES
 from app.policy.engine import choose_action, run_policy
 from app.policy.profile import build_human_context
 from app.schemas.policy import (
@@ -16,6 +18,10 @@ from app.schemas.policy import (
     ChooseResult,
     PolicyRunOut,
     ScoreRequest,
+)
+from app.schemas.policy_extra import (
+    CreateSnapshotRequest,
+    SnapshotOut,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["policy"])
@@ -89,7 +95,6 @@ def get_policy_run(project_id: str, policy_run_id: str, db: Session = Depends(ge
         .all()
     )
 
-    from app.policy.candidates import DEFAULT_CANDIDATES
     label_map = {c.id: c.label for c in DEFAULT_CANDIDATES}
 
     scores = [
@@ -142,3 +147,48 @@ def choose_policy_action(project_id: str, body: ChooseRequest, db: Session = Dep
 
     db.commit()
     return ChooseResult(**result)
+
+
+@router.get("/projects/{project_id}/policy/snapshots/latest", response_model=SnapshotOut)
+def get_latest_snapshot(project_id: str, db: Session = Depends(get_db)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    snapshot = (
+        db.query(PolicySnapshot)
+        .filter(PolicySnapshot.project_id == project_id)
+        .order_by(PolicySnapshot.created_at.desc())
+        .first()
+    )
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="No snapshots found")
+
+    return snapshot
+
+
+@router.post("/projects/{project_id}/policy/snapshots", response_model=SnapshotOut, status_code=201)
+def create_snapshot(project_id: str, body: CreateSnapshotRequest, db: Session = Depends(get_db)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    human_context = build_human_context(db, project_id)
+    candidates = list(DEFAULT_CANDIDATES)
+    cset_hash = hashlib.sha256(
+        json.dumps(sorted(c.id for c in candidates)).encode()
+    ).hexdigest()
+
+    snapshot = PolicySnapshot(
+        project_id=project_id,
+        candidate_set_hash=cset_hash,
+        candidate_ids_json=json.dumps(sorted(c.id for c in candidates)),
+        rubric_version="1.0",
+        constraints_hash=cset_hash,
+        human_context_json=json.dumps(human_context) if human_context else None,
+        conditioned_context_status="present" if human_context else "missing",
+    )
+    db.add(snapshot)
+    db.commit()
+    db.refresh(snapshot)
+    return snapshot

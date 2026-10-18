@@ -32,6 +32,8 @@ from app.routers.ws_portfolio import router as ws_portfolio_router
 from app.routers.meta import router as meta_router
 from app.routers.analytics import router as analytics_router
 from app.routers.integrations import router as integrations_router
+from app.routers.project_state import router as project_state_router
+from app.routers.sse import router as sse_router
 
 
 @asynccontextmanager
@@ -69,3 +71,5 @@ app.include_router(ws_portfolio_router)
 app.include_router(meta_router)
 app.include_router(analytics_router)
 app.include_router(integrations_router)
+app.include_router(project_state_router)
+app.include_router(sse_router)
