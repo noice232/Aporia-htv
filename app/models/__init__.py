@@ -4,6 +4,7 @@ from app.models.profile import ProfileVersion, ResearcherPrinciple, ResearcherPr
 from app.models.fork import ResearchFork
 from app.models.research_session import HumanCheckpoint, ResearchSession, SessionStep
 from app.models.frontier import FrontierEdge, FrontierNode
+from app.models.artifact import ArtifactBlob, ExperimentSpec
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -12,4 +13,5 @@ __all__ = [
     "ResearchFork",
     "ResearchSession", "SessionStep", "HumanCheckpoint",
     "FrontierNode", "FrontierEdge",
+    "ArtifactBlob", "ExperimentSpec",
 ]
