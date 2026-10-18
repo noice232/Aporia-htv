@@ -1,8 +1,66 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { TOPICS, initCosmos } from '../engine/cosmos'
-import type { CosmosControls, AtlasNode } from '../engine/cosmos'
+import type { CosmosControls, AtlasNode, AtlasLink, ExternalData } from '../engine/cosmos'
 import { useProjectStore } from '../stores/projects'
 import '../styles/frontier.css'
+
+const BASE = import.meta.env.VITE_API_BASE_URL || ''
+
+async function fetchFrontierData(projectId: string): Promise<ExternalData | null> {
+  try {
+    const [nodesRes, edgesRes] = await Promise.all([
+      fetch(`${BASE}/api/v1/projects/${projectId}/frontier/nodes`),
+      fetch(`${BASE}/api/v1/projects/${projectId}/frontier/edges`),
+    ])
+    if (!nodesRes.ok || !edgesRes.ok) return null
+    const rawNodes: Array<{
+      id: string
+      title?: string
+      topic_index?: number
+      cluster_index?: number
+      x?: number
+      y?: number
+      z?: number
+      size?: number
+      kind?: string
+    }> = await nodesRes.json()
+    const rawEdges: Array<{
+      source_id?: string
+      target_id?: string
+      source?: string
+      target?: string
+    }> = await edgesRes.json()
+    if (!rawNodes.length) return null
+    const nodeMap = new Map<string, number>()
+    const nodes: AtlasNode[] = rawNodes.map((n, i) => {
+      nodeMap.set(n.id, i)
+      return {
+        id: n.id,
+        x: n.x ?? 0,
+        y: n.y ?? 0,
+        z: n.z ?? 0,
+        topic: n.topic_index ?? 0,
+        cluster: n.cluster_index ?? 0,
+        size: n.size ?? 1,
+        kind: n.kind ?? 'paper',
+        title: n.title ?? n.id,
+      }
+    })
+    const links: AtlasLink[] = rawEdges
+      .map((e) => {
+        const srcId = e.source_id ?? e.source ?? ''
+        const dstId = e.target_id ?? e.target ?? ''
+        const src = nodeMap.get(srcId)
+        const dst = nodeMap.get(dstId)
+        if (src === undefined || dst === undefined) return null
+        return { source: srcId, target: dstId, src, dst }
+      })
+      .filter((e): e is AtlasLink => e !== null)
+    return { nodes, links }
+  } catch {
+    return null
+  }
+}
 
 export default function Frontier() {
   const currentId = useProjectStore((s) => s.currentId)
@@ -29,13 +87,28 @@ export default function Frontier() {
     }
     const canvas = canvasRef.current
     if (!canvas) return
-    const controls = initCosmos(canvas, (node, x, y) => {
-      setTooltip(node ? { node, x, y } : null)
-    })
-    if (!controls) return
-    controlsRef.current = controls
-    setReady(true)
-    return () => { controls.destroy(); controlsRef.current = null }
+
+    let cancelled = false
+
+    async function init() {
+      const data = await fetchFrontierData(currentId!)
+      if (cancelled) return
+      const controls = initCosmos(
+        canvas!,
+        (node, x, y) => { setTooltip(node ? { node, x, y } : null) },
+        data ?? undefined,
+      )
+      if (!controls || cancelled) { controls?.destroy(); return }
+      controlsRef.current = controls
+      setReady(true)
+    }
+    init()
+
+    return () => {
+      cancelled = true
+      controlsRef.current?.destroy()
+      controlsRef.current = null
+    }
   }, [currentId])
 
   const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -119,7 +192,7 @@ export default function Frontier() {
           </div>
           <div className="cosmos-tooltip-paper">{tooltip.node.title}</div>
           <div className="cosmos-tooltip-info">
-            Synthetic paper &middot; ID {tooltip.node.id} &middot; Cluster {tooltip.node.cluster}
+            ID {tooltip.node.id} &middot; Cluster {tooltip.node.cluster}
           </div>
         </div>
       )}

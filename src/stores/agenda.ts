@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { AgendaItem } from '../api/client'
 
+const BASE = import.meta.env.VITE_API_BASE_URL || ''
+
 interface AgendaState {
   items: AgendaItem[]
   loading: boolean
@@ -10,6 +12,7 @@ interface AgendaState {
   updateItem: (id: string, patch: Partial<AgendaItem>) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
+  fetchItems: (projectId: string) => Promise<void>
 }
 
 export const useAgendaStore = create<AgendaState>((set) => ({
@@ -24,4 +27,15 @@ export const useAgendaStore = create<AgendaState>((set) => ({
     })),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error, loading: false }),
+  fetchItems: async (projectId: string) => {
+    set({ loading: true, error: null })
+    try {
+      const res = await fetch(`${BASE}/api/v1/projects/${projectId}/agenda`)
+      if (!res.ok) throw new Error(`Failed (${res.status})`)
+      const data = await res.json()
+      set({ items: data, loading: false })
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : 'Failed to fetch agenda', loading: false })
+    }
+  },
 }))

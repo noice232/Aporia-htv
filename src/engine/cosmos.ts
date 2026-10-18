@@ -179,16 +179,38 @@ export interface CosmosControls {
 
 export type PickCallback = (node: AtlasNode | null, x: number, y: number) => void
 
+export interface ExternalData {
+  nodes: AtlasNode[]
+  links: AtlasLink[]
+}
+
+export interface CosmosOptions {
+  onPick?: PickCallback
+  externalData?: ExternalData
+  dark?: boolean
+}
+
 export function initCosmos(
   canvas: HTMLCanvasElement,
-  onPick?: PickCallback,
+  onPickOrOpts?: PickCallback | CosmosOptions,
+  externalData?: ExternalData,
 ): CosmosControls | null {
+  const opts: CosmosOptions = typeof onPickOrOpts === 'function'
+    ? { onPick: onPickOrOpts, externalData }
+    : (onPickOrOpts ?? {})
+  const onPick = opts.onPick
+  const darkMode = opts.dark ?? false
+  if (typeof onPickOrOpts !== 'function' && !onPickOrOpts) {
+    // called with no opts — externalData stays from the parameter
+  } else if (typeof onPickOrOpts !== 'function') {
+    externalData = opts.externalData
+  }
   const gl = canvas.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: false })
   if (!gl) return null
 
-  const atlas = createAtlas(42, .87)
-  const nodes = atlas.points
-  const edges = atlas.links
+  const atlas = externalData ? null : createAtlas(42, .87)
+  const nodes = externalData ? externalData.nodes : atlas!.points
+  const edges = externalData ? externalData.links : atlas!.links
   const n = nodes.length
   const colors = TOPICS.map(t => rgba(t.color))
 
@@ -359,7 +381,8 @@ export function initCosmos(
 
   function draw() {
     resize()
-    gl!.clearColor(23 / 255, 31 / 255, 37 / 255, 1)
+    const bg = darkMode ? [10 / 255, 13 / 255, 20 / 255] : [247 / 255, 248 / 255, 250 / 255]
+    gl!.clearColor(bg[0], bg[1], bg[2], 1)
     gl!.clear(gl!.COLOR_BUFFER_BIT)
     gl!.enable(gl!.BLEND)
     gl!.blendFunc(gl!.SRC_ALPHA, gl!.ONE_MINUS_SRC_ALPHA)

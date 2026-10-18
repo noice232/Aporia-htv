@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppHeader } from './components/shell/AppHeader'
 import { SideRail } from './components/shell/SideRail'
 import { Inspector } from './components/shell/Inspector'
@@ -7,6 +7,7 @@ import { TimelineDock } from './components/shell/TimelineDock'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { LoadingState } from './components/shared/LoadingState'
 
+const Landing = lazy(() => import('./pages/Landing'))
 const Home = lazy(() => import('./pages/Home'))
 const Frontier = lazy(() => import('./pages/Frontier'))
 const Lab = lazy(() => import('./pages/Lab'))
@@ -20,6 +21,7 @@ const Portfolio = lazy(() => import('./pages/Portfolio'))
 const Meta = lazy(() => import('./pages/Meta'))
 const Library = lazy(() => import('./pages/Library'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const JoinProject = lazy(() => import('./pages/JoinProject'))
 
 export default function AppShell() {
   const [railOpen, setRailOpen] = useState(false)
@@ -33,7 +35,8 @@ export default function AppShell() {
         <ErrorBoundary>
           <Suspense fallback={<LoadingState />}>
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/home" element={<Home />} />
               <Route path="/frontier" element={<Frontier />} />
               <Route path="/projects/:projectId/lab" element={<Lab />} />
               <Route path="/projects/:projectId/agenda" element={<Agenda />} />
@@ -47,13 +50,14 @@ export default function AppShell() {
               <Route path="/meta" element={<Meta />} />
               <Route path="/library" element={<Library />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/join/:projectId" element={<JoinProject />} />
 
-              {/* Non-project routes — render the page with no projectId */}
-              <Route path="/lab" element={<Lab />} />
-              <Route path="/agenda" element={<Agenda />} />
-              <Route path="/judgments" element={<Judgments />} />
-              <Route path="/forks" element={<ForkExplorer />} />
-              <Route path="/court" element={<Court />} />
+              {/* Legacy routes */}
+              <Route path="/lab" element={<Navigate to="/" replace />} />
+              <Route path="/agenda" element={<Navigate to="/" replace />} />
+              <Route path="/judgments" element={<Navigate to="/" replace />} />
+              <Route path="/forks" element={<Navigate to="/" replace />} />
+              <Route path="/court" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

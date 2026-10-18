@@ -1,48 +1,35 @@
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Target, ShieldCheck, Clock, BarChart3,
   ArrowUpRight, ArrowDownRight, Minus
 } from 'lucide-react';
+import { useProjectStore } from '../stores/projects';
 import '../styles/researcher-profile.css';
 
-/* ── mock data ── */
-const PROFILE = {
-  initials: 'SC',
-  name: 'Dr. Sarah Chen',
-  role: 'Principal Investigator',
-  affiliation: 'MIT CSAIL · Neural Radiance Lab',
-  hIndex: 34,
-  interventions: 28,
-  tags: ['NeRF', '3D Gaussian Splatting', 'View Synthesis', 'Depth Estimation', 'Scene Reconstruction'],
-};
+const BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-interface Priority {
+interface ResearcherData {
+  id: string;
+  display_name: string;
+  email: string;
+  bio: string | null;
+  expertise_json: string | null;
+  created_at: string;
+}
+
+interface PriorityData {
   text: string;
   weight: number;
 }
 
-const PRIORITIES: Priority[] = [
-  { text: 'Maximize novel-view synthesis quality (PSNR, SSIM, LPIPS)', weight: 0.35 },
-  { text: 'Reduce training time below 15 min per scene on single GPU', weight: 0.25 },
-  { text: 'Maintain geometric accuracy for downstream 3D tasks', weight: 0.20 },
-  { text: 'Explore hybrid NeRF+3DGS architectures', weight: 0.12 },
-  { text: 'Minimize Gaussian count without quality regression', weight: 0.08 },
-];
-
-interface Rule {
+interface PrincipleData {
+  id: string;
   text: string;
-  status: 'approved' | 'pending';
+  approved: boolean;
 }
 
-const RULES: Rule[] = [
-  { text: 'Never discard training views — all captured data must be used or explicitly excluded with justification.', status: 'approved' },
-  { text: 'Benchmark on Mip-NeRF 360 suite before claiming improvement. Single-scene results are insufficient.', status: 'approved' },
-  { text: 'Escalate any dispute unresolved after 48 hours to PI with full evidence chain.', status: 'approved' },
-  { text: 'Agents may not modify another agent\'s hypothesis without filing a court dispute.', status: 'approved' },
-  { text: 'Allow speculative forks with CFG weight > 1.5 only during designated exploration windows.', status: 'pending' },
-];
-
-interface Intervention {
+interface InterventionData {
   action: string;
   date: string;
   impact: 'positive' | 'negative' | 'neutral';
@@ -51,35 +38,128 @@ interface Intervention {
   color: string;
 }
 
-const INTERVENTIONS: Intervention[] = [
-  { action: 'Raised CFG guidance weight from 1.2 → 1.4', date: 'Oct 16', impact: 'positive', impactLabel: '+0.6 dB avg PSNR', context: 'Exploration phase', color: 'var(--accent-mint)' },
-  { action: 'Vetoed opacity reset removal (DSP-042 pending)', date: 'Oct 15', impact: 'neutral', impactLabel: 'Pending test', context: 'Dispute mediation', color: 'var(--accent-amber)' },
-  { action: 'Approved logarithmic SH schedule (DSP-036)', date: 'Oct 12', impact: 'positive', impactLabel: '+0.3 dB PSNR', context: 'Dispute resolution', color: 'var(--accent-green)' },
-  { action: 'Added depth regularization constraint', date: 'Oct 10', impact: 'positive', impactLabel: '-12% Chamfer dist', context: 'Quality directive', color: 'var(--accent-cyan)' },
-  { action: 'Reduced ADC split threshold in low-var regions', date: 'Oct 8', impact: 'positive', impactLabel: '-30% Gaussians', context: 'Efficiency directive', color: 'var(--accent-lavender)' },
-  { action: 'Paused Agent Ω-3 during benchmark run', date: 'Oct 6', impact: 'neutral', impactLabel: 'No metric change', context: 'Resource management', color: 'var(--fg-dim)' },
-  { action: 'Overruled pose refinement LR (too aggressive)', date: 'Oct 4', impact: 'negative', impactLabel: '-0.2 dB transient', context: 'Emergency override', color: 'var(--accent-red)' },
-  { action: 'Initialized research program with 5 priority axes', date: 'Oct 1', impact: 'positive', impactLabel: 'Baseline set', context: 'Program launch', color: 'var(--accent-fuchsia)' },
-];
-
-interface StyleMetric {
-  label: string;
-  value: number;
-  color: string;
+function getInitials(name: string): string {
+  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 }
 
-const STYLE_METRICS: StyleMetric[] = [
-  { label: 'Intervention Freq', value: 72, color: 'var(--accent-fuchsia)' },
-  { label: 'Evidence Reliance', value: 91, color: 'var(--accent-mint)' },
-  { label: 'Risk Tolerance', value: 58, color: 'var(--accent-amber)' },
-  { label: 'Agent Autonomy', value: 65, color: 'var(--accent-cyan)' },
-  { label: 'Dispute Resolution', value: 84, color: 'var(--accent-lavender)' },
-  { label: 'Exploration Bias', value: 47, color: 'var(--accent-icy)' },
-];
-
-/* ── component ── */
 export default function ResearcherProfile() {
   const { researcherId } = useParams();
+  const currentId = useProjectStore((s) => s.currentId);
+
+  const [researcher, setResearcher] = useState<ResearcherData | null>(null);
+  const [priorities, setPriorities] = useState<PriorityData[]>([]);
+  const [rules, setRules] = useState<PrincipleData[]>([]);
+  const [interventions, setInterventions] = useState<InterventionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!researcherId) { setLoading(false); return; }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const res = await fetch(`${BASE}/api/v1/researchers/${researcherId}`);
+        if (!res.ok) throw new Error(`Failed to load researcher (${res.status})`);
+        const data: ResearcherData = await res.json();
+        if (!cancelled) setResearcher(data);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load researcher');
+      }
+
+      if (currentId) {
+        try {
+          const profileRes = await fetch(`${BASE}/api/v1/projects/${currentId}/profile`);
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            if (!cancelled && profile.scoring_weights) {
+              const entries = Object.entries(profile.scoring_weights as Record<string, number>);
+              const maxW = Math.max(...entries.map(([, v]) => v), 1);
+              setPriorities(entries.map(([text, weight]) => ({ text, weight: weight / maxW })));
+            }
+          }
+        } catch { /* non-critical */ }
+
+        try {
+          const principlesRes = await fetch(`${BASE}/api/v1/projects/${currentId}/principles`);
+          if (principlesRes.ok) {
+            const principles: PrincipleData[] = await principlesRes.json();
+            if (!cancelled) setRules(principles);
+          }
+        } catch { /* non-critical */ }
+
+        try {
+          const eventsRes = await fetch(`${BASE}/api/v1/projects/${currentId}/events?after=0&limit=50`);
+          if (eventsRes.ok) {
+            const page = await eventsRes.json();
+            const events = page.items ?? page.events ?? [];
+            const mapped: InterventionData[] = events
+              .filter((e: { type?: string }) => e.type === 'intervention' || e.type === 'judgment' || e.type === 'policy_change')
+              .slice(0, 10)
+              .map((e: { description?: string; created_at?: string; type?: string }, i: number) => {
+                const colors = ['var(--accent-mint)', 'var(--accent-cyan)', 'var(--accent-lavender)', 'var(--accent-amber)', 'var(--accent-fuchsia)'];
+                return {
+                  action: e.description ?? 'Research event',
+                  date: e.created_at ? new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+                  impact: 'neutral' as const,
+                  impactLabel: e.type ?? '',
+                  context: e.type ?? '',
+                  color: colors[i % colors.length],
+                };
+              });
+            if (!cancelled && mapped.length > 0) setInterventions(mapped);
+          }
+        } catch { /* non-critical */ }
+      }
+
+      if (!cancelled) setLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [researcherId, currentId]);
+
+  if (!researcherId) {
+    return (
+      <div className="rp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>Select a researcher to view their profile</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="rp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--accent-red)', fontSize: 13 }}>{error}</p>
+      </div>
+    );
+  }
+
+  const name = researcher?.display_name ?? researcherId;
+  const initials = getInitials(name);
+  const expertise: string[] = researcher?.expertise_json ? (() => { try { return JSON.parse(researcher.expertise_json); } catch { return []; } })() : [];
+  const bio = researcher?.bio ?? '';
+
+  const maxWeight = Math.max(...priorities.map(p => p.weight), 1);
+
+  const STYLE_METRICS = [
+    { label: 'Intervention Freq', value: 72, color: 'var(--accent-fuchsia)' },
+    { label: 'Evidence Reliance', value: 91, color: 'var(--accent-mint)' },
+    { label: 'Risk Tolerance', value: 58, color: 'var(--accent-amber)' },
+    { label: 'Agent Autonomy', value: 65, color: 'var(--accent-cyan)' },
+    { label: 'Dispute Resolution', value: 84, color: 'var(--accent-lavender)' },
+    { label: 'Exploration Bias', value: 47, color: 'var(--accent-icy)' },
+  ];
 
   return (
     <div className="rp-page">
@@ -87,29 +167,29 @@ export default function ResearcherProfile() {
         <div className="rp-label">Researcher</div>
         <h1>Investigator Profile</h1>
         <div className="rp-subtitle">
-          Viewing <code>{researcherId ?? 'dr-chen'}</code> — principal investigator
+          Viewing <code>{researcherId}</code>
         </div>
       </div>
 
       <div className="rp-identity">
-        <div className="rp-avatar">{PROFILE.initials}</div>
+        <div className="rp-avatar">{initials}</div>
         <div className="rp-identity-info">
-          <div className="rp-name">{PROFILE.name}</div>
-          <div className="rp-role">{PROFILE.role}</div>
-          <div className="rp-affiliation">{PROFILE.affiliation}</div>
+          <div className="rp-name">{name}</div>
+          <div className="rp-role">{bio || 'Researcher'}</div>
+          <div className="rp-affiliation">{researcher?.email ?? ''}</div>
           <div className="rp-tags">
-            {PROFILE.tags.map(t => (
+            {expertise.map((t: string) => (
               <span className="rp-tag" key={t}>{t}</span>
             ))}
           </div>
         </div>
         <div className="rp-identity-stats">
           <div className="rp-identity-stat">
-            <span className="rp-identity-stat-value">{PROFILE.hIndex}</span>
-            <span className="rp-identity-stat-label">h-index</span>
+            <span className="rp-identity-stat-value">{rules.length}</span>
+            <span className="rp-identity-stat-label">Principles</span>
           </div>
           <div className="rp-identity-stat">
-            <span className="rp-identity-stat-value">{PROFILE.interventions}</span>
+            <span className="rp-identity-stat-value">{interventions.length}</span>
             <span className="rp-identity-stat-label">Interventions</span>
           </div>
         </div>
@@ -122,7 +202,10 @@ export default function ResearcherProfile() {
             Research Priorities
           </div>
           <div className="rp-priorities">
-            {PRIORITIES.map((p, i) => (
+            {priorities.length === 0 && (
+              <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>No priorities set yet</p>
+            )}
+            {priorities.map((p, i) => (
               <div className="priority-item" key={i}>
                 <div className="priority-top">
                   <span className="priority-text">{p.text}</span>
@@ -131,7 +214,7 @@ export default function ResearcherProfile() {
                 <div className="priority-bar">
                   <div
                     className="priority-bar-fill"
-                    style={{ width: `${(p.weight / 0.35) * 100}%` }}
+                    style={{ width: `${(p.weight / maxWeight) * 100}%` }}
                   />
                 </div>
               </div>
@@ -145,9 +228,14 @@ export default function ResearcherProfile() {
             Governance Rules
           </div>
           <div className="rp-rules">
-            {RULES.map((r, i) => (
-              <div className="rule-item" key={i}>
-                <span className={`rule-status ${r.status}`}>{r.status}</span>
+            {rules.length === 0 && (
+              <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>No governance rules defined</p>
+            )}
+            {rules.map((r) => (
+              <div className="rule-item" key={r.id}>
+                <span className={`rule-status ${r.approved ? 'approved' : 'pending'}`}>
+                  {r.approved ? 'approved' : 'pending'}
+                </span>
                 <span className="rule-text">{r.text}</span>
               </div>
             ))}
@@ -160,11 +248,14 @@ export default function ResearcherProfile() {
         Intervention History
       </div>
       <div className="rp-timeline">
-        {INTERVENTIONS.map((iv, i) => (
+        {interventions.length === 0 && (
+          <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>No interventions recorded</p>
+        )}
+        {interventions.map((iv, i) => (
           <div className="intervention-item" key={i}>
             <div className="intervention-marker">
               <div className="intervention-dot" style={{ background: iv.color }} />
-              {i < INTERVENTIONS.length - 1 && <div className="intervention-line" />}
+              {i < interventions.length - 1 && <div className="intervention-line" />}
             </div>
             <div className="intervention-content">
               <div className="intervention-action">{iv.action}</div>
