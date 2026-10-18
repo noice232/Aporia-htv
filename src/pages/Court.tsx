@@ -1,18 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Scale, FileText, AlertTriangle, CheckCircle2,
   ChevronDown, Eye, FlaskConical,
   Gavel, Shield
 } from 'lucide-react';
+import { useProjectStore } from '../stores/projects';
 import '../styles/court.css';
 
-/* ── mock data ── */
-const STATS = [
-  { label: 'Active', value: 4, icon: Scale, cls: 'active' },
-  { label: 'Resolved', value: 11, cls: 'resolved', icon: CheckCircle2 },
-  { label: 'Evidence Items', value: 38, cls: 'evidence', icon: FileText },
-  { label: 'Escalated', value: 1, cls: 'escalated', icon: AlertTriangle },
-];
+const BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 interface Dispute {
   id: string;
@@ -25,105 +21,13 @@ interface Dispute {
   evidenceCount: number;
 }
 
-const ACTIVE_DISPUTES: Dispute[] = [
-  {
-    id: 'DSP-042',
-    title: 'Gaussian Opacity Reset Degrades Novel-View PSNR',
-    status: 'active',
-    date: '2025-10-16',
-    claimant: 'Agent Σ-7 (3DGS Specialist)',
-    respondent: 'Agent Ω-3 (Optimization)',
-    claim: 'Periodic opacity reset (every 3k iter) causes transient PSNR drops of 1.2–1.8 dB on Mip-NeRF 360 scenes. The recovery phase wastes 15% of total training budget.',
-    evidenceCount: 7,
-  },
-  {
-    id: 'DSP-041',
-    title: 'NeRF Distillation Loses High-Frequency Detail',
-    status: 'active',
-    date: '2025-10-15',
-    claimant: 'Agent Δ-2 (Rendering)',
-    respondent: 'Agent Σ-7 (3DGS Specialist)',
-    claim: 'Teacher→student distillation from NeRF to 3DGS drops LPIPS by 0.04 on specular surfaces. Fine hair and fur regions show visible aliasing in the student model.',
-    evidenceCount: 5,
-  },
-  {
-    id: 'DSP-039',
-    title: 'Depth Regularization Conflicts with Floater Pruning',
-    status: 'escalated',
-    date: '2025-10-14',
-    claimant: 'Agent Ω-3 (Optimization)',
-    respondent: 'Agent Δ-2 (Rendering)',
-    claim: 'Monocular depth loss pulls Gaussians toward surfaces while floater pruning removes low-opacity splats, creating a feedback loop that hollows out thin structures.',
-    evidenceCount: 9,
-  },
-  {
-    id: 'DSP-038',
-    title: 'Adaptive Density Control Over-Splits in Textureless Regions',
-    status: 'active',
-    date: '2025-10-13',
-    claimant: 'Agent Λ-1 (Geometry)',
-    respondent: 'Agent Σ-7 (3DGS Specialist)',
-    claim: 'ADC threshold of 0.0002 gradient magnitude triggers unnecessary splits in sky/wall regions, inflating Gaussian count by 40% without SSIM improvement.',
-    evidenceCount: 4,
-  },
-];
-
-const RESOLVED_DISPUTES: Dispute[] = [
-  {
-    id: 'DSP-036',
-    title: 'SH Degree Warm-Up Schedule is Sub-Optimal',
-    status: 'resolved',
-    date: '2025-10-11',
-    claimant: 'Agent Δ-2 (Rendering)',
-    respondent: 'Agent Ω-3 (Optimization)',
-    claim: 'Linear SH degree increase (0→3 over 1k steps) underperforms logarithmic schedule. Resolved: logarithmic adopted, +0.3 dB average PSNR.',
-    evidenceCount: 6,
-  },
-  {
-    id: 'DSP-034',
-    title: 'Camera Pose Refinement Diverges on Forward-Facing Scenes',
-    status: 'resolved',
-    date: '2025-10-09',
-    claimant: 'Agent Λ-1 (Geometry)',
-    respondent: 'Agent Δ-2 (Rendering)',
-    claim: 'Joint pose-radiance optimization on LLFF scenes produces 2–5° rotation drift. Resolved: learning rate clamped to 1e-5 after 10k iterations.',
-    evidenceCount: 8,
-  },
-  {
-    id: 'DSP-031',
-    title: 'Anti-Aliasing Mip Filter Slows Rendering 3×',
-    status: 'resolved',
-    date: '2025-10-06',
-    claimant: 'Agent Ω-3 (Optimization)',
-    respondent: 'Agent Σ-7 (3DGS Specialist)',
-    claim: 'EWA splatting filter for anti-aliasing reduces FPS from 180 to 60. Resolved: approximation via pre-filtered 2D covariance accepted.',
-    evidenceCount: 3,
-  },
-];
-
-const TESTS = [
-  {
-    name: 'Opacity Reset A/B',
-    hypothesis: 'Removing periodic reset maintains PSNR within 0.1 dB while saving 15% training time.',
-    metric: 'PSNR / Train-time',
-    cost: '~4 GPU-hr',
-    resolves: 'DSP-042',
-  },
-  {
-    name: 'Depth vs. Pruning Ablation',
-    hypothesis: 'Decoupled scheduling (depth loss off during pruning phases) prevents hollow-structure artifacts.',
-    metric: 'Chamfer Dist.',
-    cost: '~6 GPU-hr',
-    resolves: 'DSP-039',
-  },
-  {
-    name: 'ADC Gradient Threshold Sweep',
-    hypothesis: 'Raising split threshold to 0.0005 in low-variance regions reduces Gaussian count 30% with <0.01 SSIM loss.',
-    metric: 'Count / SSIM',
-    cost: '~2 GPU-hr',
-    resolves: 'DSP-038',
-  },
-];
+interface Test {
+  name: string;
+  hypothesis: string;
+  metric: string;
+  cost: string;
+  resolves: string;
+}
 
 const PROTOCOL_STEPS = [
   'Claimant files dispute with quantitative claim and supporting evidence.',
@@ -133,9 +37,110 @@ const PROTOCOL_STEPS = [
   'Ruling issued. If unresolved, escalation to PI with veto power.',
 ];
 
-/* ── component ── */
 export default function Court() {
+  const { projectId: paramId } = useParams();
+  const storeId = useProjectStore((s) => s.currentId);
+  const projectId = paramId || storeId;
+
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showResolved, setShowResolved] = useState(false);
+
+  useEffect(() => {
+    if (!projectId) { setLoading(false); return; }
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [courtRes, disputesRes, claimsRes] = await Promise.all([
+          fetch(`${BASE}/api/v1/projects/${projectId}/court`),
+          fetch(`${BASE}/api/v1/projects/${projectId}/disputes`),
+          fetch(`${BASE}/api/v1/projects/${projectId}/claims`),
+        ]);
+        const courtData = courtRes.ok ? await courtRes.json() : [];
+        const disputesData = disputesRes.ok ? await disputesRes.json() : [];
+        const claimsData = claimsRes.ok ? await claimsRes.json() : [];
+
+        const claimMap = new Map<string, any>();
+        for (const c of claimsData) claimMap.set(c.id, c);
+
+        const mapped: Dispute[] = [
+          ...courtData.map((d: any) => ({
+            id: d.id,
+            title: d.notes || `Disagreement ${d.id.slice(0, 8)}`,
+            status: d.status || 'active',
+            date: d.created_at?.slice(0, 10) || '',
+            claimant: d.claim_ids?.[0] ? (claimMap.get(d.claim_ids[0])?.claim_type || 'Claimant') : 'Claimant',
+            respondent: d.claim_ids?.[1] ? (claimMap.get(d.claim_ids[1])?.claim_type || 'Respondent') : 'Respondent',
+            claim: d.claim_ids?.map((cid: string) => claimMap.get(cid)?.text).filter(Boolean).join(' vs. ') || 'No claims',
+            evidenceCount: d.claim_ids?.reduce((sum: number, cid: string) => sum + (claimMap.get(cid)?.evidence?.length || 0), 0) || 0,
+          })),
+          ...disputesData.map((d: any) => ({
+            id: d.id,
+            title: d.resolution || `Dispute ${d.id.slice(0, 8)}`,
+            status: d.status || 'active',
+            date: d.created_at?.slice(0, 10) || '',
+            claimant: claimMap.get(d.claim_a_id)?.text?.slice(0, 60) || 'Claim A',
+            respondent: claimMap.get(d.claim_b_id)?.text?.slice(0, 60) || 'Claim B',
+            claim: [claimMap.get(d.claim_a_id)?.text, claimMap.get(d.claim_b_id)?.text].filter(Boolean).join(' vs. ') || 'Dispute',
+            evidenceCount: (claimMap.get(d.claim_a_id)?.evidence?.length || 0) + (claimMap.get(d.claim_b_id)?.evidence?.length || 0),
+          })),
+        ];
+
+        setDisputes(mapped);
+
+        const testItems: Test[] = courtData
+          .filter((d: any) => d.discriminating_experiment_json)
+          .map((d: any) => {
+            const exp = typeof d.discriminating_experiment_json === 'string'
+              ? JSON.parse(d.discriminating_experiment_json)
+              : d.discriminating_experiment_json;
+            return {
+              name: exp.name || 'Test',
+              hypothesis: exp.hypothesis || '',
+              metric: exp.metric || '',
+              cost: exp.cost || '',
+              resolves: d.id.slice(0, 8),
+            };
+          });
+        setTests(testItems);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load court data');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [projectId]);
+
+  if (loading) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--fg-dim)'}}>Loading...</p></div>;
+  if (error) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--accent-red)'}}>{error}</p></div>;
+
+  if (!projectId) {
+    return (
+      <div className="court-page">
+        <div className="court-header">
+          <div className="court-label">Deliberation</div>
+          <h1>Adversarial Court</h1>
+          <div className="court-subtitle">Select a project to view disputes</div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeDisputes = disputes.filter(d => d.status === 'active' || d.status === 'escalated');
+  const resolvedDisputes = disputes.filter(d => d.status === 'resolved');
+  const escalatedCount = disputes.filter(d => d.status === 'escalated').length;
+
+  const STATS = [
+    { label: 'Active', value: activeDisputes.length, icon: Scale, cls: 'active' },
+    { label: 'Resolved', value: resolvedDisputes.length, cls: 'resolved', icon: CheckCircle2 },
+    { label: 'Evidence Items', value: disputes.reduce((s, d) => s + d.evidenceCount, 0), cls: 'evidence', icon: FileText },
+    { label: 'Escalated', value: escalatedCount, cls: 'escalated', icon: AlertTriangle },
+  ];
 
   return (
     <div className="court-page">
@@ -167,13 +172,16 @@ export default function Court() {
       <div className="court-body">
         <div>
           <div className="court-section-title">
-            Active Disputes <span className="count">{ACTIVE_DISPUTES.length}</span>
+            Active Disputes <span className="count">{activeDisputes.length}</span>
           </div>
 
           <div className="court-disputes">
-            {ACTIVE_DISPUTES.map(d => (
+            {activeDisputes.map(d => (
               <DisputeCard key={d.id} dispute={d} />
             ))}
+            {activeDisputes.length === 0 && (
+              <div style={{ padding: 20, color: 'var(--fg-dim)', fontSize: 13 }}>No active disputes</div>
+            )}
           </div>
 
           <button
@@ -181,12 +189,12 @@ export default function Court() {
             onClick={() => setShowResolved(v => !v)}
           >
             <ChevronDown size={14} className={`chevron ${showResolved ? 'open' : ''}`} />
-            Resolved Disputes ({RESOLVED_DISPUTES.length})
+            Resolved Disputes ({resolvedDisputes.length})
           </button>
 
           {showResolved && (
             <div className="court-resolved">
-              {RESOLVED_DISPUTES.map(d => (
+              {resolvedDisputes.map(d => (
                 <DisputeCard key={d.id} dispute={d} />
               ))}
             </div>
@@ -199,7 +207,10 @@ export default function Court() {
               <FlaskConical size={12} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
               Discriminating Tests
             </div>
-            {TESTS.map(t => (
+            {tests.length === 0 && (
+              <div style={{ padding: 12, color: 'var(--fg-dim)', fontSize: 12 }}>No tests proposed yet</div>
+            )}
+            {tests.map(t => (
               <div className="test-item" key={t.name}>
                 <div className="test-name">{t.name}</div>
                 <div className="test-hypothesis">{t.hypothesis}</div>

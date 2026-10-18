@@ -1,15 +1,12 @@
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Briefcase, TrendingUp, Zap, ArrowRight, Lock
 } from 'lucide-react';
+import { useProjectStore } from '../stores/projects';
 import '../styles/portfolio.css';
 
-/* ── mock data ── */
-const BUDGET = {
-  total: 240,
-  spent: 156,
-  remaining: 84,
-  unit: 'GPU-hours',
-};
+const BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 interface PortfolioItem {
   rank: number;
@@ -21,102 +18,75 @@ interface PortfolioItem {
   unlocks: string[];
 }
 
-const ITEMS: PortfolioItem[] = [
-  {
-    rank: 1,
-    title: '3DGS Opacity Scheduling Overhaul',
-    status: 'active',
-    allocation: 22,
-    impact: 'high',
-    impactScore: '+1.4 dB',
-    unlocks: ['Faster convergence', 'Reduced Gaussian count'],
-  },
-  {
-    rank: 2,
-    title: 'Mip-NeRF 360 Full Benchmark Suite',
-    status: 'active',
-    allocation: 18,
-    impact: 'high',
-    impactScore: 'Baseline',
-    unlocks: ['Court evidence', 'Publication metrics'],
-  },
-  {
-    rank: 3,
-    title: 'Hybrid NeRF↔3DGS Distillation Pipeline',
-    status: 'active',
-    allocation: 15,
-    impact: 'high',
-    impactScore: '+2.1 dB',
-    unlocks: ['Real-time rendering', 'Quality preservation'],
-  },
-  {
-    rank: 4,
-    title: 'Adaptive Density Control Threshold Sweep',
-    status: 'planned',
-    allocation: 12,
-    impact: 'medium',
-    impactScore: '-30% count',
-    unlocks: ['Memory reduction'],
-  },
-  {
-    rank: 5,
-    title: 'Depth-Aware Floater Pruning v2',
-    status: 'blocked',
-    allocation: 10,
-    impact: 'medium',
-    impactScore: '-15% artifacts',
-    unlocks: ['Cleaner geometry'],
-  },
-  {
-    rank: 6,
-    title: 'Specular Surface NeRF Extension',
-    status: 'planned',
-    allocation: 8,
-    impact: 'medium',
-    impactScore: '+0.8 dB',
-    unlocks: ['Metal/glass rendering'],
-  },
-  {
-    rank: 7,
-    title: 'Camera Pose Refinement Stabilization',
-    status: 'completed',
-    allocation: 9,
-    impact: 'low',
-    impactScore: 'Done',
-    unlocks: [],
-  },
-  {
-    rank: 8,
-    title: 'SH Degree Schedule Optimization',
-    status: 'completed',
-    allocation: 6,
-    impact: 'low',
-    impactScore: 'Done',
-    unlocks: [],
-  },
-];
-
-const PROJECTIONS = [
-  { value: '31.2 dB', label: 'Projected PSNR', desc: 'Average across 9 scenes at convergence' },
-  { value: '142 FPS', label: 'Render Speed', desc: 'Real-time at 1080p on RTX 4090' },
-  { value: '1.8M', label: 'Gaussian Budget', desc: 'Target count per scene (down from 2.6M)' },
-];
-
-interface Unlock {
-  source: string;
-  targets: string[];
-}
-
-const UNLOCKS: Unlock[] = [
-  { source: 'Opacity Scheduling', targets: ['Faster Convergence', 'Density Control', 'Memory Budget'] },
-  { source: 'Full Benchmark', targets: ['Court Evidence', 'Publication', 'Comparison Baselines'] },
-  { source: 'NeRF↔3DGS Distill', targets: ['Real-Time Demo', 'Quality Preservation', 'Deployment'] },
-  { source: 'Depth-Aware Pruning', targets: ['Clean Geometry', 'Downstream 3D Tasks'] },
-];
-
-/* ── component ── */
 export default function Portfolio() {
-  const spentPct = (BUDGET.spent / BUDGET.total) * 100;
+  const { projectId: paramId } = useParams();
+  const storeId = useProjectStore((s) => s.currentId);
+  const projectId = paramId || storeId;
+
+  const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!projectId) { setLoading(false); return; }
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [strategiesRes, prioritiesRes] = await Promise.all([
+          fetch(`${BASE}/api/v1/projects/${projectId}/strategies`),
+          fetch(`${BASE}/api/v1/projects/${projectId}/priorities`),
+        ]);
+        const strategies = strategiesRes.ok ? await strategiesRes.json() : [];
+        const priorities = prioritiesRes.ok ? await prioritiesRes.json() : [];
+
+        const priorityMap = new Map<string, any>();
+        for (const p of priorities) priorityMap.set(p.strategy_id || p.agenda_item_id, p);
+
+        const mapped: PortfolioItem[] = strategies.map((s: any, i: number) => {
+          const priority = priorityMap.get(s.id);
+          return {
+            rank: priority?.rank ?? i + 1,
+            title: s.name,
+            status: s.status === 'active' ? 'active' : s.status === 'retired' ? 'completed' : 'planned',
+            allocation: priority ? Math.round(priority.score * 25) : Math.max(5, 25 - i * 3),
+            impact: priority?.score >= 0.8 ? 'high' : priority?.score >= 0.5 ? 'medium' : 'low',
+            impactScore: priority?.rationale?.slice(0, 20) || `v${s.version}`,
+            unlocks: [],
+          };
+        });
+
+        mapped.sort((a, b) => a.rank - b.rank);
+        setItems(mapped);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load portfolio');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [projectId]);
+
+  if (loading) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--fg-dim)'}}>Loading...</p></div>;
+  if (error) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--accent-red)'}}>{error}</p></div>;
+
+  if (!projectId) {
+    return (
+      <div className="pf-page">
+        <div className="pf-header">
+          <div className="pf-label">Strategy</div>
+          <h1>Research Portfolio</h1>
+          <div className="pf-subtitle">Select a project to view portfolio</div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalAlloc = items.reduce((s, i) => s + i.allocation, 0);
+  const activeCount = items.filter(i => i.status === 'active').length;
+  const completedCount = items.filter(i => i.status === 'completed').length;
+  const spentPct = totalAlloc > 0 ? (completedCount / items.length) * 100 : 0;
 
   return (
     <div className="pf-page">
@@ -131,17 +101,17 @@ export default function Portfolio() {
       <div className="pf-budget">
         <div className="pf-budget-top">
           <div>
-            <div className="pf-budget-title">Compute Budget</div>
-            <div className="pf-budget-amount">{BUDGET.total} {BUDGET.unit}</div>
+            <div className="pf-budget-title">Research Strategies</div>
+            <div className="pf-budget-amount">{items.length} strategies</div>
           </div>
           <div className="pf-budget-stats">
             <div className="pf-budget-stat">
-              <span className="pf-budget-stat-value spent">{BUDGET.spent}</span>
-              <span className="pf-budget-stat-label">Spent</span>
+              <span className="pf-budget-stat-value spent">{activeCount}</span>
+              <span className="pf-budget-stat-label">Active</span>
             </div>
             <div className="pf-budget-stat">
-              <span className="pf-budget-stat-value remaining">{BUDGET.remaining}</span>
-              <span className="pf-budget-stat-label">Remaining</span>
+              <span className="pf-budget-stat-value remaining">{completedCount}</span>
+              <span className="pf-budget-stat-label">Completed</span>
             </div>
           </div>
         </div>
@@ -150,7 +120,7 @@ export default function Portfolio() {
           <div className="pf-budget-bar-remaining" />
         </div>
         <div className="pf-budget-legend">
-          <span><span className="pf-budget-legend-dot spent" /> Spent ({spentPct.toFixed(0)}%)</span>
+          <span><span className="pf-budget-legend-dot spent" /> Completed ({spentPct.toFixed(0)}%)</span>
           <span><span className="pf-budget-legend-dot remaining" /> Remaining ({(100 - spentPct).toFixed(0)}%)</span>
         </div>
       </div>
@@ -161,7 +131,7 @@ export default function Portfolio() {
             <Briefcase size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />
             Research Initiatives
           </h2>
-          <span>{ITEMS.length} items · {ITEMS.filter(i => i.status === 'active').length} active</span>
+          <span>{items.length} items · {activeCount} active</span>
         </div>
         <table className="pf-table">
           <thead>
@@ -175,7 +145,7 @@ export default function Portfolio() {
             </tr>
           </thead>
           <tbody>
-            {ITEMS.map(item => (
+            {items.map(item => (
               <tr key={item.rank}>
                 <td className="num">
                   <span className={`pf-rank ${item.rank <= 3 ? `rank-${item.rank}` : ''}`}>
@@ -210,37 +180,31 @@ export default function Portfolio() {
         </table>
       </div>
 
-      <div className="pf-section-title">
-        <TrendingUp size={13} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
-        Impact Projections
-      </div>
-      <div className="pf-projections">
-        {PROJECTIONS.map(p => (
-          <div className="pf-projection-card" key={p.label}>
-            <div className="pf-projection-value">{p.value}</div>
-            <div className="pf-projection-label">{p.label}</div>
-            <div className="pf-projection-desc">{p.desc}</div>
+      {items.length > 0 && (
+        <>
+          <div className="pf-section-title">
+            <TrendingUp size={13} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
+            Strategy Overview
           </div>
-        ))}
-      </div>
-
-      <div className="pf-section-title">
-        <Zap size={13} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} />
-        Downstream Unlock Graph
-      </div>
-      <div className="pf-unlocks">
-        {UNLOCKS.map(u => (
-          <div className="pf-unlock-row" key={u.source}>
-            <span className="pf-unlock-source">{u.source}</span>
-            <ArrowRight size={14} className="pf-unlock-arrow" />
-            <div className="pf-unlock-targets">
-              {u.targets.map(t => (
-                <span className="pf-unlock-target" key={t}>{t}</span>
-              ))}
+          <div className="pf-projections">
+            <div className="pf-projection-card">
+              <div className="pf-projection-value">{items.length}</div>
+              <div className="pf-projection-label">Total Strategies</div>
+              <div className="pf-projection-desc">Across all research directions</div>
+            </div>
+            <div className="pf-projection-card">
+              <div className="pf-projection-value">{activeCount}</div>
+              <div className="pf-projection-label">Active</div>
+              <div className="pf-projection-desc">Currently being explored</div>
+            </div>
+            <div className="pf-projection-card">
+              <div className="pf-projection-value">{completedCount}</div>
+              <div className="pf-projection-label">Completed</div>
+              <div className="pf-projection-desc">Successfully retired</div>
             </div>
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 }

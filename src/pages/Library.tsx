@@ -1,33 +1,20 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Search, BookOpen } from 'lucide-react'
 import '../styles/library.css'
 
-interface MockPaper {
+const BASE = import.meta.env.VITE_API_BASE_URL || ''
+
+interface Paper {
   id: string
   title: string
   authors: string[]
   year: number
   venue: string
   citations: number
-  provenance: 'arxiv' | 'papier' | 'openalex' | 'manual'
+  provenance: string
   cluster: string
   abstract: string
 }
-
-const MOCK_PAPERS: MockPaper[] = [
-  { id: 'p1', title: '3D Gaussian Splatting for Real-Time Radiance Field Rendering', authors: ['Kerbl, B.', 'Kopanas, G.', 'Leimkühler, T.', 'Drettakis, G.'], year: 2023, venue: 'SIGGRAPH', citations: 1847, provenance: 'arxiv', cluster: 'computer_vision', abstract: 'We introduce three-dimensional Gaussian Splatting, a rasterization approach for real-time radiance field rendering that achieves state-of-the-art visual quality while training and rendering significantly faster than previous methods.' },
-  { id: 'p2', title: 'Instant Neural Graphics Primitives with a Multiresolution Hash Encoding', authors: ['Müller, T.', 'Evans, A.', 'Schied, C.', 'Keller, A.'], year: 2022, venue: 'SIGGRAPH', citations: 2341, provenance: 'arxiv', cluster: 'computer_vision', abstract: 'Neural graphics primitives, parameterized by fully connected neural networks, can be costly to train and evaluate. We reduce this cost with a versatile new input encoding.' },
-  { id: 'p3', title: 'NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis', authors: ['Mildenhall, B.', 'Srinivasan, P.P.', 'Tancik, M.', 'Barron, J.T.', 'Ramamoorthi, R.', 'Ng, R.'], year: 2020, venue: 'ECCV', citations: 8932, provenance: 'papier', cluster: 'computer_vision', abstract: 'We present a method that achieves state-of-the-art results for synthesizing novel views of complex scenes by optimizing an underlying continuous volumetric scene function.' },
-  { id: 'p4', title: 'Mip-NeRF 360: Unbounded Anti-Aliased Neural Radiance Fields', authors: ['Barron, J.T.', 'Mildenhall, B.', 'Verbin, D.', 'Srinivasan, P.P.', 'Hedman, P.'], year: 2022, venue: 'CVPR', citations: 1256, provenance: 'arxiv', cluster: 'computer_vision', abstract: 'We present an extension of mip-NeRF that uses a non-linear scene parameterization, online distillation, and a novel distortion-based regularizer to handle unbounded scenes.' },
-  { id: 'p5', title: 'SuGaR: Surface-Aligned Gaussian Splatting for Efficient 3D Mesh Reconstruction', authors: ['Guédon, A.', 'Lepetit, V.'], year: 2024, venue: 'CVPR', citations: 89, provenance: 'papier', cluster: 'computer_vision', abstract: 'We propose a method to extract accurate meshes from 3D Gaussian Splatting by aligning Gaussians with the surface of the scene.' },
-  { id: 'p6', title: 'Depth Anything: Unleashing the Power of Large-Scale Unlabeled Data', authors: ['Yang, L.', 'Kang, B.', 'Huang, Z.', 'Xu, X.', 'Feng, J.', 'Zhao, H.'], year: 2024, venue: 'CVPR', citations: 456, provenance: 'openalex', cluster: 'computer_vision', abstract: 'We present Depth Anything, a foundation model for monocular depth estimation trained on a dataset of 62 million images.' },
-  { id: 'p7', title: 'DreamGaussian: Generative Gaussian Splatting for Efficient 3D Content Creation', authors: ['Tang, J.', 'Ren, J.', 'Zhou, H.', 'Liu, Z.', 'Zeng, G.'], year: 2024, venue: 'ICLR', citations: 234, provenance: 'arxiv', cluster: 'generative_models', abstract: 'We propose DreamGaussian, a novel framework that combines 3D Gaussian Splatting with generative models for efficient 3D content creation.' },
-  { id: 'p8', title: 'LRM: Large Reconstruction Model for Single Image to 3D', authors: ['Hong, Y.', 'Zhang, K.', 'Gu, J.', 'Bi, S.', 'Zhou, Y.', 'Liu, D.', 'Liu, F.', 'Sunkavalli, K.', 'Bui, T.', 'Tan, H.'], year: 2024, venue: 'ICLR', citations: 178, provenance: 'openalex', cluster: 'multimodal', abstract: 'We propose the first Large Reconstruction Model that predicts the 3D model of an object from a single input image within 5 seconds.' },
-  { id: 'p9', title: 'GaussianEditor: Swift and Controllable 3D Editing with Gaussian Splatting', authors: ['Chen, Y.', 'Chen, Z.', 'Zhang, C.', 'Wang, F.', 'Yang, X.', 'Wang, Y.', 'Cai, Z.', 'Yang, L.', 'Liu, H.', 'Lin, G.'], year: 2024, venue: 'CVPR', citations: 67, provenance: 'papier', cluster: 'generative_models', abstract: 'We present GaussianEditor, an innovative 3D editing algorithm based on Gaussian Splatting that achieves delicate and controllable editing.' },
-  { id: 'p10', title: 'Zip-NeRF: Anti-Aliased Grid-Based Neural Radiance Fields', authors: ['Barron, J.T.', 'Mildenhall, B.', 'Verbin, D.', 'Srinivasan, P.P.', 'Hedman, P.'], year: 2023, venue: 'ICCV', citations: 543, provenance: 'arxiv', cluster: 'computer_vision', abstract: 'Neural radiance field training can be accelerated through the use of grid-based representations. We combine the ideas of mip-NeRF and grid-based models.' },
-  { id: 'p11', title: 'GOF: Gaussian Opacity Fields for Efficient Mesh Reconstruction', authors: ['Yu, Z.', 'Shen, S.'], year: 2024, venue: 'NeurIPS', citations: 42, provenance: 'manual', cluster: 'computer_vision', abstract: 'We propose Gaussian Opacity Fields for efficient and high-quality mesh reconstruction from multi-view images using 3D Gaussian Splatting.' },
-  { id: 'p12', title: 'NerfAcc: Efficient Sampling Accelerates NeRFs', authors: ['Li, R.', 'Gao, H.', 'Tancik, M.', 'Kanazawa, A.'], year: 2023, venue: 'ICCV', citations: 312, provenance: 'openalex', cluster: 'computer_vision', abstract: 'We propose NerfAcc, a flexible toolbox for accelerating NeRF training through efficient ray sampling strategies.' },
-]
 
 const PROVENANCE_LABELS: Record<string, string> = {
   all: 'All',
@@ -35,28 +22,75 @@ const PROVENANCE_LABELS: Record<string, string> = {
   papier: 'Papier',
   openalex: 'OpenAlex',
   manual: 'Manual',
+  synthetic: 'Synthetic',
 }
 
 const CLUSTER_META: Record<string, { label: string; color: string }> = {
-  computer_vision: { label: 'Computer Vision', color: '#0891B2' },
-  generative_models: { label: 'Generative Models', color: '#C026D3' },
-  nlp: { label: 'NLP', color: '#0FAF82' },
-  reinforcement_learning: { label: 'RL', color: '#7C3AED' },
-  multimodal: { label: 'Multimodal', color: '#D97706' },
+  computer_vision: { label: 'Computer Vision', color: '#57DDF6' },
+  generative_models: { label: 'Generative Models', color: '#E790EE' },
+  nlp: { label: 'NLP', color: '#4EE8BA' },
+  reinforcement_learning: { label: 'RL', color: '#B99AFF' },
+  multimodal: { label: 'Multimodal', color: '#F5A623' },
 }
 
 type SortKey = 'relevance' | 'year' | 'citations'
 
 function formatAuthors(authors: string[]): string {
+  if (!authors || authors.length === 0) return 'Unknown'
   if (authors.length <= 3) return authors.join(', ')
   return `${authors.slice(0, 3).join(', ')} et al.`
 }
 
 export default function Library() {
+  const [papers, setPapers] = useState<Paper[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const [query, setQuery] = useState('')
   const [provenanceFilter, setProvenanceFilter] = useState('all')
   const [sortBy, setSortBy] = useState<SortKey>('citations')
   const [expandedAbstracts, setExpandedAbstracts] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await fetch(`${BASE}/api/v1/papers`)
+        if (!res.ok) throw new Error(`Failed (${res.status})`)
+        const data = await res.json()
+        const mapped: Paper[] = data.map((p: any) => {
+          let authors: string[] = []
+          if (p.authors_json) {
+            const parsed = typeof p.authors_json === 'string' ? JSON.parse(p.authors_json) : p.authors_json
+            authors = Array.isArray(parsed) ? parsed : []
+          }
+          let cluster = ''
+          if (p.topics_json) {
+            const topics = typeof p.topics_json === 'string' ? JSON.parse(p.topics_json) : p.topics_json
+            cluster = Array.isArray(topics) && topics.length > 0 ? topics[0] : ''
+          }
+          return {
+            id: p.id,
+            title: p.title,
+            authors,
+            year: p.publication_year || 0,
+            venue: '',
+            citations: p.citation_count || 0,
+            provenance: p.data_mode || 'synthetic',
+            cluster,
+            abstract: p.abstract || '',
+          }
+        })
+        setPapers(mapped)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load papers')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   const toggleAbstract = useCallback((id: string) => {
     setExpandedAbstracts((prev) => {
@@ -68,15 +102,15 @@ export default function Library() {
   }, [])
 
   const filtered = useMemo(() => {
-    let papers = MOCK_PAPERS
+    let result = papers
 
     if (provenanceFilter !== 'all') {
-      papers = papers.filter((p) => p.provenance === provenanceFilter)
+      result = result.filter((p) => p.provenance === provenanceFilter)
     }
 
     if (query.trim()) {
       const q = query.toLowerCase()
-      papers = papers.filter(
+      result = result.filter(
         (p) =>
           p.title.toLowerCase().includes(q) ||
           p.authors.some((a) => a.toLowerCase().includes(q)) ||
@@ -84,39 +118,43 @@ export default function Library() {
       )
     }
 
-    const sorted = [...papers]
+    const sorted = [...result]
     if (sortBy === 'year') sorted.sort((a, b) => b.year - a.year)
     else if (sortBy === 'citations') sorted.sort((a, b) => b.citations - a.citations)
 
     return sorted
-  }, [query, provenanceFilter, sortBy])
+  }, [papers, query, provenanceFilter, sortBy])
 
   const clusterBreakdown = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const p of MOCK_PAPERS) counts[p.cluster] = (counts[p.cluster] || 0) + 1
+    for (const p of papers) if (p.cluster) counts[p.cluster] = (counts[p.cluster] || 0) + 1
     return counts
-  }, [])
+  }, [papers])
 
   const yearBreakdown = useMemo(() => {
     const counts: Record<number, number> = {}
-    for (const p of MOCK_PAPERS) counts[p.year] = (counts[p.year] || 0) + 1
+    for (const p of papers) if (p.year) counts[p.year] = (counts[p.year] || 0) + 1
     const years = Object.keys(counts).map(Number).sort()
-    const max = Math.max(...Object.values(counts))
+    const max = Math.max(...Object.values(counts), 1)
     return { counts, years, max }
-  }, [])
+  }, [papers])
 
   const provenanceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const p of MOCK_PAPERS) counts[p.provenance] = (counts[p.provenance] || 0) + 1
+    for (const p of papers) counts[p.provenance] = (counts[p.provenance] || 0) + 1
     return counts
-  }, [])
+  }, [papers])
 
   const provenanceBadgeColors: Record<string, string> = {
-    arxiv: '#DC2626',
-    papier: '#0FAF82',
-    openalex: '#D97706',
-    manual: '#8F99A8',
+    arxiv: '#EF5350',
+    papier: '#4EE8BA',
+    openalex: '#F5A623',
+    manual: '#556577',
+    synthetic: '#8F99A8',
   }
+
+  if (loading) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--fg-dim)'}}>Loading...</p></div>
+  if (error) return <div className="page-content" style={{display:'flex',alignItems:'center',justifyContent:'center'}}><p style={{color:'var(--accent-red)'}}>{error}</p></div>
 
   return (
     <div className="library-container">
@@ -124,7 +162,7 @@ export default function Library() {
         <div className="library-label">Paper Library</div>
         <h1 className="library-title">Source Library</h1>
         <div className="library-stats">
-          <span><span className="stat-val">{MOCK_PAPERS.length}</span> papers</span>
+          <span><span className="stat-val">{papers.length}</span> papers</span>
           <span><span className="stat-val">{Object.keys(clusterBreakdown).length}</span> clusters</span>
           <span><span className="stat-val">{Object.keys(provenanceBreakdown).length}</span> sources</span>
         </div>
@@ -133,10 +171,9 @@ export default function Library() {
       <div className="library-sync-panel">
         <div className="sync-status">
           <span className="sync-dot connected" />
-          <span style={{ color: 'var(--accent-green)' }}>Papier Connected</span>
+          <span style={{ color: 'var(--accent-green)' }}>Connected</span>
         </div>
-        <span className="sync-meta">Last sync: 2 min ago &middot; 847 papers</span>
-        <button className="sync-btn">Sync Now</button>
+        <span className="sync-meta">{papers.length} papers loaded</span>
       </div>
 
       <div className="library-toolbar">
@@ -198,8 +235,8 @@ export default function Library() {
                 <div className="paper-authors">{formatAuthors(paper.authors)}</div>
 
                 <div className="paper-meta">
-                  <span className="paper-badge year">{paper.year}</span>
-                  <span className="paper-badge venue">{paper.venue}</span>
+                  {paper.year > 0 && <span className="paper-badge year">{paper.year}</span>}
+                  {paper.venue && <span className="paper-badge venue">{paper.venue}</span>}
                   <span className="paper-badge citations">{paper.citations.toLocaleString()} cit.</span>
                   <span className={`paper-badge provenance provenance-${paper.provenance}`}>
                     {paper.provenance}
@@ -217,16 +254,20 @@ export default function Library() {
                   )}
                 </div>
 
-                <div
-                  className={`paper-abstract ${expanded ? 'expanded' : 'collapsed'}`}
-                  onClick={() => toggleAbstract(paper.id)}
-                >
-                  {paper.abstract}
-                </div>
-                {paper.abstract.length > 100 && (
-                  <span className="paper-abstract-toggle" onClick={() => toggleAbstract(paper.id)}>
-                    {expanded ? 'Show less' : 'Show more'}
-                  </span>
+                {paper.abstract && (
+                  <>
+                    <div
+                      className={`paper-abstract ${expanded ? 'expanded' : 'collapsed'}`}
+                      onClick={() => toggleAbstract(paper.id)}
+                    >
+                      {paper.abstract}
+                    </div>
+                    {paper.abstract.length > 100 && (
+                      <span className="paper-abstract-toggle" onClick={() => toggleAbstract(paper.id)}>
+                        {expanded ? 'Show less' : 'Show more'}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             )
@@ -247,28 +288,30 @@ export default function Library() {
             ))}
           </div>
 
-          <div className="sidebar-card">
-            <div className="sidebar-card-title">By Year</div>
-            {yearBreakdown.years.map((year) => (
-              <div key={year} className="year-bar-row">
-                <span className="year-bar-label">{year}</span>
-                <div className="year-bar-track">
-                  <div
-                    className="year-bar-fill"
-                    style={{ width: `${(yearBreakdown.counts[year] / yearBreakdown.max) * 100}%` }}
-                  />
+          {yearBreakdown.years.length > 0 && (
+            <div className="sidebar-card">
+              <div className="sidebar-card-title">By Year</div>
+              {yearBreakdown.years.map((year) => (
+                <div key={year} className="year-bar-row">
+                  <span className="year-bar-label">{year}</span>
+                  <div className="year-bar-track">
+                    <div
+                      className="year-bar-fill"
+                      style={{ width: `${(yearBreakdown.counts[year] / yearBreakdown.max) * 100}%` }}
+                    />
+                  </div>
+                  <span className="year-bar-count">{yearBreakdown.counts[year]}</span>
                 </div>
-                <span className="year-bar-count">{yearBreakdown.counts[year]}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="sidebar-card">
             <div className="sidebar-card-title">By Source</div>
             {Object.entries(provenanceBreakdown).map(([key, count]) => (
               <div key={key} className="sidebar-row">
                 <span className="sidebar-row-label">
-                  <span className="sidebar-row-dot" style={{ background: provenanceBadgeColors[key] }} />
+                  <span className="sidebar-row-dot" style={{ background: provenanceBadgeColors[key] || '#8F99A8' }} />
                   {PROVENANCE_LABELS[key] || key}
                 </span>
                 <span className="sidebar-row-count">{count}</span>

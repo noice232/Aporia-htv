@@ -1,0 +1,43 @@
+APORIA — Tiger Data Integration Setup
+======================================
+
+FILES TO COPY (replace existing):
+  app/database.py       → replaces SQLite-only version with PostgreSQL + Tiger Data hypertables
+  app/config.py         → adds .env file loading
+  app/routers/analytics.py → adds Tiger Data continuous aggregate queries
+  requirements.txt      → adds psycopg2-binary and python-dotenv
+  .env                  → your Tiger Cloud connection string (DO NOT commit this)
+  .env.example          → safe template for others
+
+NEW FILES:
+  migrations/001_continuous_aggregates.sql → run in Tiger Cloud SQL Editor
+
+STEPS:
+  1. Copy all files above into your project (D:/Hackthon/htv/Aporia-frontend/)
+  2. Make sure .env is in your .gitignore (add ".env" line if not there)
+  3. Install new dependencies:
+       pip install psycopg2-binary python-dotenv
+  4. Delete aporia.db (the old SQLite file) — you won't need it anymore
+  5. Start the backend:
+       uvicorn app.main:app --reload
+     It will auto-create all tables as hypertables in Tiger Cloud
+  6. Open Tiger Cloud dashboard → SQL Editor (bottom of page)
+     Paste and run: migrations/001_continuous_aggregates.sql
+     This creates the continuous aggregates for fast analytics
+
+WHAT CHANGED:
+  - database.py: detects PostgreSQL vs SQLite automatically, creates hypertables
+    and compression policies on PostgreSQL, keeps SQLite fallback working
+  - config.py: loads DATABASE_URL from .env file
+  - analytics.py: uses Tiger Data time_bucket() and continuous aggregates on PostgreSQL,
+    falls back to plain SQL on SQLite. Added two new endpoints:
+      GET /api/v1/projects/{id}/analytics/timeseries   — hourly event breakdown
+      GET /api/v1/projects/{id}/analytics/experiments/daily — daily run stats
+  - requirements.txt: added psycopg2-binary and python-dotenv
+
+FOR THE MLH JUDGES:
+  Your app now uses Tiger Data (TimescaleDB) features:
+  ✓ Hypertables on research_events and experiment_runs
+  ✓ Automatic compression on data older than 7 days
+  ✓ Continuous aggregates for real-time analytics
+  ✓ time_bucket() queries for time-series analysis

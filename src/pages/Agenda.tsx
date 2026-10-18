@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
+import { listAgenda } from '../api/client'
+import type { AgendaItem } from '../api/client'
 import '../styles/agenda.css'
 
 interface Task {
@@ -9,22 +11,34 @@ interface Task {
   description: string
   priority: number
   status: 'completed' | 'in_progress' | 'queued' | 'blocked'
-  agent: 'scanner' | 'experimenter' | 'evaluator'
+  agent: string
   dependencies: string[]
   createdAt: string
   progress?: number
 }
 
-const MOCK_TASKS: Task[] = [
-  { id: 'T-001', title: 'Survey NeRF baselines', description: 'Scan arXiv for NeRF papers 2023-2024, extract key metrics and architectures', priority: 0, status: 'completed', agent: 'scanner', dependencies: [], createdAt: '2024-10-17T08:00:00Z' },
-  { id: 'T-002', title: 'Benchmark instant-ngp', description: 'Run instant-ngp on Blender synthetic dataset, collect PSNR/SSIM/LPIPS', priority: 0, status: 'completed', agent: 'experimenter', dependencies: ['T-001'], createdAt: '2024-10-17T09:30:00Z' },
-  { id: 'T-003', title: 'Evaluate 3D Gaussian Splatting', description: 'Compare 3DGS rendering quality and speed against NeRF baselines', priority: 0, status: 'in_progress', agent: 'experimenter', dependencies: ['T-002'], createdAt: '2024-10-17T11:00:00Z', progress: 65 },
-  { id: 'T-004', title: 'Analyze depth estimation gap', description: 'Investigate depth prediction accuracy difference between volumetric and point-based methods', priority: 1, status: 'in_progress', agent: 'evaluator', dependencies: ['T-002'], createdAt: '2024-10-17T12:00:00Z', progress: 30 },
-  { id: 'T-005', title: 'Retrieve SuGaR + GOF papers', description: 'Semantic search for mesh extraction from Gaussians methods via Papier', priority: 1, status: 'queued', agent: 'scanner', dependencies: ['T-003'], createdAt: '2024-10-17T14:00:00Z' },
-  { id: 'T-006', title: 'Design hybrid NeRF-GS pipeline', description: 'Propose architecture combining NeRF depth supervision with GS rendering', priority: 1, status: 'queued', agent: 'experimenter', dependencies: ['T-003', 'T-004'], createdAt: '2024-10-17T15:00:00Z' },
-  { id: 'T-007', title: 'Write comparative analysis', description: 'Generate technical report comparing approaches across quality, speed, and memory metrics', priority: 2, status: 'blocked', agent: 'evaluator', dependencies: ['T-003', 'T-004', 'T-005'], createdAt: '2024-10-17T16:00:00Z' },
-  { id: 'T-008', title: 'Human review checkpoint', description: 'Present findings for CFG guidance — human feedback redirects next research phase', priority: 0, status: 'queued', agent: 'evaluator', dependencies: ['T-006'], createdAt: '2024-10-17T17:00:00Z' },
-]
+function mapAgendaItem(item: AgendaItem): Task {
+  const raw = item as unknown as Record<string, unknown>
+  const statusMap: Record<string, Task['status']> = {
+    completed: 'completed',
+    in_progress: 'in_progress',
+    running: 'in_progress',
+    queued: 'queued',
+    pending: 'queued',
+    blocked: 'blocked',
+  }
+  return {
+    id: item.id,
+    title: (raw.question as string) || (raw.title as string) || item.id,
+    description: (raw.description as string) || '',
+    priority: item.priority ?? 0,
+    status: statusMap[item.status] || 'queued',
+    agent: (raw.agent_type as string) || 'scanner',
+    dependencies: (raw.depends_on as string[]) || [],
+    createdAt: (raw.created_at as string) || new Date().toISOString(),
+    progress: raw.progress as number | undefined,
+  }
+}
 
 const STATUS_ORDER: Task['status'][] = ['in_progress', 'queued', 'blocked', 'completed']
 
@@ -50,29 +64,58 @@ function formatTime(iso: string) {
 export default function Agenda() {
   const { projectId } = useParams()
   const [filter, setFilter] = useState<Task['status'] | 'all'>('all')
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const tasks = MOCK_TASKS
+  const fetchAgenda = useCallback(async () => {
+    if (!projectId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const items = await listAgenda(projectId)
+      setTasks((items as AgendaItem[]).map(mapAgendaItem))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load agenda')
+    } finally {
+      setLoading(false)
+    }
+  }, [projectId])
 
-  const counts = useMemo(() => ({
+  useEffect(() => { fetchAgenda() }, [fetchAgenda])
+
+  if (!projectId) {
+    return (
+      <div className="agenda-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: 'var(--fg-dim)', fontSize: 13 }}>
+          Select a project to view the Research Agenda
+        </div>
+      </div>
+    )
+  }
+
+  if (loading && tasks.length === 0) {
+    return (
+      <div className="agenda-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--fg-dim)', fontSize: 13 }}>Loading agenda...</div>
+      </div>
+    )
+  }
+
+  const counts = {
     total: tasks.length,
     in_progress: tasks.filter(t => t.status === 'in_progress').length,
     completed: tasks.filter(t => t.status === 'completed').length,
     blocked: tasks.filter(t => t.status === 'blocked').length,
-  }), [tasks])
+  }
 
-  const filtered = useMemo(() => {
-    if (filter === 'all') return tasks
-    return tasks.filter(t => t.status === filter)
-  }, [tasks, filter])
+  const filtered = filter === 'all' ? tasks : tasks.filter(t => t.status === filter)
 
-  const grouped = useMemo(() => {
-    const groups: Record<string, Task[]> = {}
-    for (const status of STATUS_ORDER) {
-      const items = filtered.filter(t => t.status === status)
-      if (items.length > 0) groups[status] = items
-    }
-    return groups
-  }, [filtered])
+  const grouped: Record<string, Task[]> = {}
+  for (const status of STATUS_ORDER) {
+    const items = filtered.filter(t => t.status === status)
+    if (items.length > 0) grouped[status] = items
+  }
 
   return (
     <div className="agenda-container">
@@ -81,6 +124,12 @@ export default function Agenda() {
       <p className="agenda-project">
         Project: <code>{projectId}</code>
       </p>
+
+      {error && (
+        <div style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid var(--accent-red)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', fontSize: 13, color: 'var(--accent-red)', marginBottom: 16 }}>
+          {error}
+        </div>
+      )}
 
       <div className="agenda-stats">
         <div className="agenda-stat">
@@ -114,6 +163,12 @@ export default function Agenda() {
           Add Task
         </button>
       </div>
+
+      {tasks.length === 0 && !loading && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 40, textAlign: 'center', color: 'var(--fg-dim)', fontSize: 13 }}>
+          No agenda items yet. Start a research run to populate the queue.
+        </div>
+      )}
 
       {Object.entries(grouped).map(([status, items]) => (
         <div className="agenda-group" key={status}>

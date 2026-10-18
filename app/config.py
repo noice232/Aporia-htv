@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     scoring_mode: str = "stub"
     gemini_api_key: str | None = None
     gemini_model_id: str = "gemini-2.0-flash"
+    cors_origins: str = "*"
 
 
 settings = Settings()
