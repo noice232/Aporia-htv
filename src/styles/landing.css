@@ -165,6 +165,20 @@
   white-space: nowrap;
 }
 
+/* ── Soft radial glow behind text ── */
+.landing-overlay-content::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  height: 85%;
+  background: radial-gradient(ellipse at center, rgba(240, 236, 228, 0.75) 0%, rgba(240, 236, 228, 0.4) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 /* ── Visibility transitions ── */
 .landing-overlay-content {
   opacity: 0;
