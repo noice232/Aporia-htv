@@ -53,7 +53,7 @@ function getActiveLabel(w: number): 0 | 1 | 2 {
 
 export default function Judgments() {
   const { projectId } = useParams()
-  const [w, setW] = useState(1.0)
+  const [w, setW] = useState(0.0)
   const [judgment, setJudgment] = useState('')
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [principles, setPrinciples] = useState<Principle[]>([])
@@ -88,7 +88,6 @@ export default function Judgments() {
       setDataMode(comp.data_mode ?? 'mock')
       if (comp.with_cfg?.w != null) {
         setServerW(comp.with_cfg.w)
-        setW(comp.with_cfg.w)
       }
 
       setPrinciples((principleResult as ApiPrinciple[]).map(mapPrinciple))

@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.demo_research import (
     _next_demo_time, apply_feedback, create_experiment, emit, experiment_out, paper_details,
     paper_results, policy_comparison, require_project, run_research_loop,
     seed_demo, step_out, timeline,
 )
 from app.models.demo_research import DemoExperiment, ResearchStep
+from app.models.project import Project
 from app.schemas.demo_research import (
     DemoSeedOut, EvaluateIn, ExperimentIn, ExperimentOut, FeedbackIn,
     FeedbackResult, PaperDetail, PaperResult, PaperRetrieveIn, PaperSearchIn,
@@ -22,9 +25,43 @@ router = APIRouter(prefix="/api/v1", tags=["demo-research"])
 
 
 @router.post("/projects/{project_id}/research/start", response_model=ResearchStartOut)
-def start_research(project_id: str, db: Session = Depends(get_db)):
+def start_research(
+    project_id: str,
+    live: bool = Body(False, embed=True),
+    topic: str | None = Body(None, embed=True),
+    db: Session = Depends(get_db),
+):
     project = require_project(db, project_id)
-    return run_research_loop(db, project)
+    if not live:
+        return run_research_loop(db, project)
+
+    project.research_state = "running"
+    db.commit()
+
+    def _run_live():
+        session = SessionLocal()
+        try:
+            p = session.get(Project, project_id)
+            if not p:
+                return
+            from app.demo_research import run_research_loop as _loop
+            _loop(session, p, commit=True)
+        except Exception:
+            p2 = session.get(Project, project_id)
+            if p2:
+                p2.research_state = "failed"
+                session.commit()
+        finally:
+            session.close()
+
+    threading.Thread(target=_run_live, daemon=True).start()
+
+    return ResearchStartOut(
+        project_id=project_id,
+        state="running",
+        steps=[],
+        experiment_id=None,
+    )
 
 
 @router.get("/projects/{project_id}/research/steps", response_model=list[ResearchStepOut])

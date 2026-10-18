@@ -50,7 +50,15 @@ class ResearchControlOut(BaseModel):
     affected_runs: int
 
 
+class AutonomousStartIn(BaseModel):
+    max_iterations: int = 5
+    threshold: float = 0.85
+    topic: str | None = None
+
+
 class AutonomousStartOut(BaseModel):
     project_id: str
     state: str
     message: str
+    max_iterations: int = 5
+    threshold: float = 0.85

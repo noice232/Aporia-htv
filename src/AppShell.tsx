@@ -28,6 +28,7 @@ export default function AppShell() {
   const [railOpen, setRailOpen] = useState(false)
   const location = useLocation()
   const isLanding = location.pathname === '/'
+  const isProjectRoute = location.pathname.includes('/projects/')
   useSSE()
 
   return (
@@ -68,7 +69,7 @@ export default function AppShell() {
       </main>
 
       {!isLanding && <Inspector />}
-      {!isLanding && <TimelineDock />}
+      {!isLanding && isProjectRoute && <TimelineDock />}
     </div>
   )
 }

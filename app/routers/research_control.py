@@ -12,6 +12,7 @@ from app.models.project import ExperimentRun, Project, ResearchEvent
 from app.models.research_session import HumanCheckpoint, ResearchSession
 from app.schemas.research_session import CheckpointOut
 from app.schemas.run import (
+    AutonomousStartIn,
     AutonomousStartOut,
     ResearchControlOut,
     ResearchControlRequest,
@@ -122,12 +123,21 @@ def research_control(
     "/projects/{project_id}/research/autonomous",
     response_model=AutonomousStartOut,
 )
-def start_autonomous(project_id: str, db: Session = Depends(get_db)):
+def start_autonomous(
+    project_id: str,
+    body: AutonomousStartIn | None = None,
+    db: Session = Depends(get_db),
+):
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     if project.research_state == "running":
         raise HTTPException(status_code=409, detail="Research already running")
+
+    max_iter = body.max_iterations if body else 5
+    thresh = body.threshold if body else 0.85
+    max_iter = max(1, min(max_iter, 20))
+    thresh = max(0.1, min(thresh, 1.0))
 
     import threading
     from app.database import SessionLocal
@@ -136,7 +146,7 @@ def start_autonomous(project_id: str, db: Session = Depends(get_db)):
     def _run():
         session = SessionLocal()
         try:
-            run_autonomous_loop(session, project_id, max_iterations=5, threshold=0.85)
+            run_autonomous_loop(session, project_id, max_iterations=max_iter, threshold=thresh)
         except Exception as exc:
             p = session.get(Project, project_id)
             if p:
@@ -164,7 +174,9 @@ def start_autonomous(project_id: str, db: Session = Depends(get_db)):
     return AutonomousStartOut(
         project_id=project_id,
         state="running",
-        message="Autonomous research loop started (3-5 iterations)",
+        message=f"Autonomous research loop started ({max_iter} iterations, threshold {thresh:.0%})",
+        max_iterations=max_iter,
+        threshold=thresh,
     )
 
 

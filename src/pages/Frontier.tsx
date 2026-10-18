@@ -6,6 +6,82 @@ import '../styles/frontier.css'
 
 const BASE = import.meta.env.VITE_API_BASE_URL || ''
 
+const _3DGS_PAPERS: { id: string; title: string; topic: number; cluster: number }[] = [
+  { id: 'gs-001', title: '3D Gaussian Splatting for Real-Time Radiance Field Rendering', topic: 0, cluster: 0 },
+  { id: 'gs-002', title: 'Dynamic 3D Gaussians: Tracking by Persistent Dynamic View Synthesis', topic: 0, cluster: 0 },
+  { id: 'gs-003', title: 'SuGaR: Surface-Aligned Gaussian Splatting', topic: 0, cluster: 1 },
+  { id: 'gs-004', title: 'GaussianEditor: Swift and Controllable 3D Editing with Gaussian Splatting', topic: 0, cluster: 1 },
+  { id: 'gs-005', title: 'Deformable 3D Gaussians for High-Fidelity Monocular Dynamic Scene Reconstruction', topic: 0, cluster: 0 },
+  { id: 'gs-006', title: 'PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics', topic: 1, cluster: 2 },
+  { id: 'gs-007', title: 'DreamGaussian: Generative Gaussian Splatting for Efficient 3D Content Creation', topic: 1, cluster: 2 },
+  { id: 'gs-008', title: 'GaussianDreamer: Fast Generation from Text to 3D with Point Cloud Priors', topic: 1, cluster: 2 },
+  { id: 'gs-009', title: 'Compact 3D Gaussian Representation for Radiance Field', topic: 2, cluster: 3 },
+  { id: 'gs-010', title: 'Mip-Splatting: Alias-free 3D Gaussian Splatting', topic: 2, cluster: 3 },
+  { id: 'gs-011', title: 'GaussianAvatar: Towards Realistic Human Avatar Modeling from a Single Video', topic: 3, cluster: 4 },
+  { id: 'gs-012', title: 'Animatable Gaussians: Learning Pose-Dependent Gaussian Maps', topic: 3, cluster: 4 },
+  { id: 'gs-013', title: 'Gaussian Head Avatar: Ultra High-Fidelity Head Avatar via Dynamic Gaussians', topic: 3, cluster: 4 },
+  { id: 'gs-014', title: 'GPS-Gaussian: Generalizable Pixel-wise 3D Gaussian Splatting for Real-time Human Novel View Synthesis', topic: 3, cluster: 5 },
+  { id: 'gs-015', title: 'SC-GS: Sparse-Controlled Gaussian Splatting for Editable Dynamic Scenes', topic: 0, cluster: 0 },
+  { id: 'gs-016', title: 'Gaussian Splatting SLAM', topic: 4, cluster: 6 },
+  { id: 'gs-017', title: 'SplaTAM: Splat Track & Map 3D Gaussians for Dense RGB-D SLAM', topic: 4, cluster: 6 },
+  { id: 'gs-018', title: 'Photo-SLAM: Real-time Simultaneous Localization and Photorealistic Mapping', topic: 4, cluster: 6 },
+  { id: 'gs-019', title: 'LangSplat: 3D Language Gaussian Splatting', topic: 5, cluster: 7 },
+  { id: 'gs-020', title: 'Gaussian Grouping: Segment and Edit Anything in 3D Scenes', topic: 5, cluster: 7 },
+  { id: 'gs-021', title: 'COLMAP-Free 3D Gaussian Splatting', topic: 2, cluster: 3 },
+  { id: 'gs-022', title: 'GS-IR: 3D Gaussian Splatting for Inverse Rendering', topic: 1, cluster: 2 },
+  { id: 'gs-023', title: 'Scaffold-GS: Structured 3D Gaussians for View-Adaptive Rendering', topic: 2, cluster: 3 },
+  { id: 'gs-024', title: 'NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis', topic: 6, cluster: 8 },
+  { id: 'gs-025', title: 'Instant Neural Graphics Primitives with a Multiresolution Hash Encoding', topic: 6, cluster: 8 },
+  { id: 'gs-026', title: 'Point-NeRF: Point-based Neural Radiance Fields', topic: 6, cluster: 8 },
+  { id: 'gs-027', title: 'Plenoxels: Radiance Fields without Neural Networks', topic: 6, cluster: 9 },
+  { id: 'gs-028', title: 'Multi-View Stereo Revisited', topic: 7, cluster: 10 },
+  { id: 'gs-029', title: 'PixelSplat: 3D Gaussian Splats from Image Pairs for Scalable Generalizable 3D Reconstruction', topic: 0, cluster: 1 },
+  { id: 'gs-030', title: 'GauHuman: Articulated Gaussian Splatting for Real-Time 3D Human Rendering', topic: 3, cluster: 5 },
+]
+
+const _3DGS_EDGES: [string, string][] = [
+  ['gs-001', 'gs-002'], ['gs-001', 'gs-003'], ['gs-001', 'gs-005'], ['gs-001', 'gs-009'],
+  ['gs-001', 'gs-010'], ['gs-001', 'gs-015'], ['gs-001', 'gs-023'], ['gs-001', 'gs-029'],
+  ['gs-024', 'gs-001'], ['gs-024', 'gs-025'], ['gs-024', 'gs-026'], ['gs-024', 'gs-027'],
+  ['gs-002', 'gs-005'], ['gs-002', 'gs-015'], ['gs-003', 'gs-004'],
+  ['gs-006', 'gs-005'], ['gs-007', 'gs-008'], ['gs-007', 'gs-001'],
+  ['gs-011', 'gs-012'], ['gs-011', 'gs-013'], ['gs-011', 'gs-014'], ['gs-011', 'gs-030'],
+  ['gs-016', 'gs-017'], ['gs-016', 'gs-018'], ['gs-019', 'gs-020'],
+  ['gs-021', 'gs-001'], ['gs-022', 'gs-001'], ['gs-025', 'gs-026'],
+  ['gs-001', 'gs-016'], ['gs-001', 'gs-019'], ['gs-001', 'gs-011'],
+  ['gs-028', 'gs-024'], ['gs-026', 'gs-001'],
+]
+
+function make3DGSFallback(): ExternalData {
+  const R = 40
+  const nodeMap = new Map<string, number>()
+  const nodes: AtlasNode[] = _3DGS_PAPERS.map((p, i) => {
+    nodeMap.set(p.id, i)
+    const angle = (i / _3DGS_PAPERS.length) * Math.PI * 2 + p.cluster * 0.5
+    const r = R * (0.5 + p.cluster * 0.12) + (i % 3) * 6
+    return {
+      id: p.id,
+      x: Math.cos(angle) * r + (Math.random() - 0.5) * 8,
+      y: Math.sin(angle) * r + (Math.random() - 0.5) * 8,
+      z: (p.topic - 3) * 10 + (Math.random() - 0.5) * 5,
+      topic: p.topic,
+      cluster: p.cluster,
+      size: p.id === 'gs-001' ? 3 : p.id === 'gs-024' ? 2.5 : 1 + Math.random() * 0.5,
+      kind: 'paper',
+      title: p.title,
+    }
+  })
+  const links: AtlasLink[] = _3DGS_EDGES
+    .map(([s, t]) => {
+      const src = nodeMap.get(s)
+      const dst = nodeMap.get(t)
+      if (src === undefined || dst === undefined) return null
+      return { source: s, target: t, src, dst }
+    })
+    .filter((e): e is AtlasLink => e !== null)
+  return { nodes, links }
+}
+
 async function fetchFrontierData(projectId: string): Promise<ExternalData | null> {
   try {
     const [nodesRes, edgesRes] = await Promise.all([
@@ -13,43 +89,30 @@ async function fetchFrontierData(projectId: string): Promise<ExternalData | null
       fetch(`${BASE}/api/v1/projects/${projectId}/frontier/edges`),
     ])
     if (!nodesRes.ok || !edgesRes.ok) return null
-    const rawNodes: Array<{
-      id: string
-      title?: string
-      topic_index?: number
-      cluster_index?: number
-      x?: number
-      y?: number
-      z?: number
-      size?: number
-      kind?: string
-    }> = await nodesRes.json()
-    const rawEdges: Array<{
-      source_id?: string
-      target_id?: string
-      source?: string
-      target?: string
-    }> = await edgesRes.json()
+    const rawNodes: any[] = await nodesRes.json()
+    const rawEdges: any[] = await edgesRes.json()
     if (!rawNodes.length) return null
     const nodeMap = new Map<string, number>()
-    const nodes: AtlasNode[] = rawNodes.map((n, i) => {
+    const nodes: AtlasNode[] = rawNodes.map((n: any, i: number) => {
       nodeMap.set(n.id, i)
+      let extra: any = {}
+      try { if (n.detail) extra = JSON.parse(n.detail) } catch {}
       return {
         id: n.id,
-        x: n.x ?? 0,
-        y: n.y ?? 0,
-        z: n.z ?? 0,
-        topic: n.topic_index ?? 0,
-        cluster: n.cluster_index ?? 0,
-        size: n.size ?? 1,
-        kind: n.kind ?? 'paper',
-        title: n.title ?? n.id,
+        x: extra.x ?? n.x ?? (Math.cos(i * 0.7) * (3 + i % 5)),
+        y: extra.y ?? n.y ?? (Math.sin(i * 0.7) * (3 + i % 5)),
+        z: extra.z ?? n.z ?? ((i % 7 - 3) * 0.8),
+        topic: extra.topic_index ?? n.topic_index ?? (i % 8),
+        cluster: extra.cluster_index ?? n.cluster_index ?? (i % 10),
+        size: extra.size ?? n.size ?? 1,
+        kind: n.node_type ?? n.kind ?? 'paper',
+        title: n.label ?? n.title ?? n.id,
       }
     })
     const links: AtlasLink[] = rawEdges
       .map((e) => {
-        const srcId = e.source_id ?? e.source ?? ''
-        const dstId = e.target_id ?? e.target ?? ''
+        const srcId = e.source_node_id ?? e.source_id ?? e.source ?? ''
+        const dstId = e.target_node_id ?? e.target_id ?? e.target ?? ''
         const src = nodeMap.get(srcId)
         const dst = nodeMap.get(dstId)
         if (src === undefined || dst === undefined) return null
@@ -93,10 +156,11 @@ export default function Frontier() {
     async function init() {
       const data = await fetchFrontierData(currentId!)
       if (cancelled) return
+      const fallback = (!data || data.nodes.length === 0) ? make3DGSFallback() : null
       const controls = initCosmos(
         canvas!,
         (node, x, y) => { setTooltip(node ? { node, x, y } : null) },
-        data ?? undefined,
+        data ?? fallback ?? undefined,
       )
       if (!controls || cancelled) { controls?.destroy(); return }
       controlsRef.current = controls

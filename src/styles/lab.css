@@ -1115,3 +1115,102 @@
   border-color: var(--border-active);
   outline: none;
 }
+
+/* ── Auto Config Panel ── */
+
+.lab-auto-config {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-lavender, #a78bfa);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: lab-config-in 0.2s ease-out;
+}
+
+@keyframes lab-config-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lab-auto-config-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-lavender, #a78bfa);
+  margin-bottom: 16px;
+}
+
+.lab-auto-config-field {
+  margin-bottom: 16px;
+}
+
+.lab-auto-config-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  margin-bottom: 6px;
+}
+
+.lab-auto-config-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lab-auto-config-slider-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  appearance: none;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  outline: none;
+}
+
+.lab-auto-config-slider-row input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-lavender, #a78bfa);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.lab-auto-config-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+  min-width: 40px;
+  text-align: right;
+}
+
+.lab-auto-config-hint {
+  font-size: 11px;
+  color: var(--fg-dim);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.lab-auto-config-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--fg);
+  font-family: inherit;
+}
+
+.lab-auto-config-input:focus {
+  border-color: var(--accent-lavender, #a78bfa);
+  outline: none;
+}
+
+.lab-auto-config-input::placeholder {
+  color: var(--fg-dim);
+}

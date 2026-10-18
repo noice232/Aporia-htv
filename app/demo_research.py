@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from datetime import timedelta, timezone
 from typing import Any
@@ -12,8 +13,14 @@ from sqlalchemy.orm import Session
 
 from app.mock_graph import mock_graph
 from app.models.demo_research import DemoExperiment, ResearchFeedback, ResearchStep
+from app.models.frontier import FrontierEdge, FrontierNode
+from app.models.meta import MetaTrial
+from app.models.paper import Paper
+from app.models.portfolio import PortfolioStrategy
 from app.models.profile import ResearcherPrinciple, ResearcherProfile
 from app.models.project import Project, ResearchEvent, _utcnow
+from app.models.skill import CandidateSkill
+from app.models.workspace import User, Workspace, WorkspaceMember
 from app.schemas.demo_research import (
     ComparisonBranch, ComparisonCandidate, ComparisonDiff, DemoSeedOut,
     ExperimentIn, ExperimentOut, FeedbackIn, FeedbackOut, FeedbackResult,
@@ -311,6 +318,12 @@ _CANDIDATES = (
     ("multi_view_stereo", "Multi-view stereo", 0.63),
 )
 
+_CONDITIONED_DEFAULT = {
+    "nerf": 0.70,
+    "gaussian_splatting": 0.91,
+    "multi_view_stereo": 0.58,
+}
+
 
 def policy_comparison(db: Session, project_id: str) -> PolicyComparisonOut:
     feedback = db.query(ResearchFeedback).filter(
@@ -324,17 +337,18 @@ def policy_comparison(db: Session, project_id: str) -> PolicyComparisonOut:
         preferred = (candidate_from_text(source.text)
                      or (candidate_from_text(parent.content) if parent else None)
                      or "gaussian_splatting")
-    w = 0.85 if redirect else (0.35 if feedback else 0.0)
+    w = 0.85 if redirect else (0.35 if feedback else 0.5)
     conditioned = {
         "nerf": 0.40, "gaussian_splatting": 0.96, "multi_view_stereo": 0.60,
-    } if preferred == "gaussian_splatting" else {
-        candidate_id: (0.96 if candidate_id == preferred else 0.45)
-        for candidate_id, _, _ in _CANDIDATES
-    }
+    } if preferred == "gaussian_splatting" else (
+        {candidate_id: (0.96 if candidate_id == preferred else 0.45)
+         for candidate_id, _, _ in _CANDIDATES}
+        if preferred else _CONDITIONED_DEFAULT
+    )
     def ranked(guided: bool) -> list[ComparisonCandidate]:
         scores = []
         for candidate_id, label, base in _CANDIDATES:
-            s_c = conditioned[candidate_id] if preferred else base
+            s_c = conditioned[candidate_id]
             s_guided = round((1 - w) * base + w * s_c, 4)
             scores.append((candidate_id, label, base, s_c, s_guided,
                            s_guided if guided else base))
@@ -464,10 +478,34 @@ def timeline(db: Session, project_id: str) -> list[TimelineEntry]:
 
 
 def seed_demo(db: Session) -> DemoSeedOut:
+    ws = db.get(Workspace, "default")
+    if ws is None:
+        _team = [
+            ("Dr. Sarah Chen", "sarah.chen@aporia.dev", "PI — 3D Vision & Neural Rendering", "admin"),
+            ("Marcus Rivera", "marcus.r@aporia.dev", "PhD — Real-time Graphics", "member"),
+            ("Anika Patel", "anika.p@aporia.dev", "Postdoc — Differentiable Rendering", "member"),
+            ("James Okafor", "james.o@aporia.dev", "Engineer — GPU Optimization", "member"),
+        ]
+        users = []
+        for name, email, expertise, role in _team:
+            u = User(email=email, display_name=name,
+                     expertise_json=json.dumps([expertise]), bio=expertise)
+            db.add(u)
+            users.append((u, role))
+        db.flush()
+        ws = Workspace(id="default", name="Aporia Research Lab",
+                       visibility="private", owner_id=users[0][0].id)
+        db.add(ws)
+        db.flush()
+        for u, role in users:
+            db.add(WorkspaceMember(workspace_id="default", user_id=u.id, role=role))
+        db.flush()
+
     project = Project(
         title="3D Reconstruction: NeRF to Gaussian Splatting",
         objective="Compare sparse-view 3D reconstruction methods with human guidance on rendering speed and visual quality.",
         status="completed", research_state="idle", created_at=_utcnow(),
+        workspace_id="default",
     )
     db.add(project)
     db.flush()
@@ -499,6 +537,135 @@ def seed_demo(db: Session) -> DemoSeedOut:
         weight_adjustments_json="{}",
         created_at=_next_demo_time(db, project.id),
     ))
+    _FRONTIER_PAPERS = [
+        ("3D Gaussian Splatting for Real-Time Radiance Field Rendering", "paper"),
+        ("Dynamic 3D Gaussians: Tracking by Persistent Dynamic View Synthesis", "paper"),
+        ("SuGaR: Surface-Aligned Gaussian Splatting", "paper"),
+        ("GaussianEditor: Swift and Controllable 3D Editing", "paper"),
+        ("Deformable 3D Gaussians for Monocular Dynamic Scene Reconstruction", "paper"),
+        ("PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics", "paper"),
+        ("DreamGaussian: Generative Gaussian Splatting for 3D Content Creation", "paper"),
+        ("GaussianDreamer: Fast Generation from Text to 3D Gaussians", "paper"),
+        ("Compact 3D Gaussian Representation for Radiance Field", "paper"),
+        ("Mip-Splatting: Alias-free 3D Gaussian Splatting", "paper"),
+        ("GaussianAvatar: Realistic Human Avatar from a Single Video", "paper"),
+        ("Animatable Gaussians: Learning Pose-Dependent Gaussian Maps", "paper"),
+        ("Gaussian Head Avatar: Ultra High-Fidelity via Dynamic Gaussians", "paper"),
+        ("GPS-Gaussian: Generalizable Pixel-wise 3D Gaussian Splatting", "paper"),
+        ("SC-GS: Sparse-Controlled Gaussian Splatting for Editable Scenes", "paper"),
+        ("Gaussian Splatting SLAM", "paper"),
+        ("SplaTAM: Splat Track & Map 3D Gaussians for Dense RGB-D SLAM", "paper"),
+        ("Photo-SLAM: Real-time Localization and Photorealistic Mapping", "paper"),
+        ("LangSplat: 3D Language Gaussian Splatting", "paper"),
+        ("Gaussian Grouping: Segment and Edit Anything in 3D Scenes", "paper"),
+        ("COLMAP-Free 3D Gaussian Splatting", "paper"),
+        ("GS-IR: 3D Gaussian Splatting for Inverse Rendering", "paper"),
+        ("Scaffold-GS: Structured 3D Gaussians for View-Adaptive Rendering", "paper"),
+        ("NeRF: Representing Scenes as Neural Radiance Fields", "paper"),
+        ("Instant Neural Graphics Primitives with Multiresolution Hash Encoding", "paper"),
+        ("Point-NeRF: Point-based Neural Radiance Fields", "paper"),
+        ("Plenoxels: Radiance Fields without Neural Networks", "paper"),
+        ("Multi-View Stereo Revisited", "paper"),
+        ("PixelSplat: 3D Gaussian Splats from Image Pairs", "paper"),
+        ("GauHuman: Articulated Gaussian Splatting for 3D Human Rendering", "paper"),
+    ]
+    _FRONTIER_EDGES = [
+        (0, 1), (0, 2), (0, 4), (0, 8), (0, 9), (0, 14), (0, 22), (0, 28),
+        (23, 0), (23, 24), (23, 25), (23, 26), (1, 4), (1, 14), (2, 3),
+        (5, 4), (6, 7), (6, 0), (10, 11), (10, 12), (10, 13), (10, 29),
+        (15, 16), (15, 17), (18, 19), (20, 0), (21, 0), (24, 25),
+        (0, 15), (0, 18), (0, 10), (27, 23), (25, 0),
+    ]
+    _TOPIC_MAP = [0, 0, 0, 0, 0, 4, 1, 1, 6, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    frontier_nodes = []
+    for i, (label, node_type) in enumerate(_FRONTIER_PAPERS):
+        angle = (i / len(_FRONTIER_PAPERS)) * 2 * math.pi
+        radius = 3.0 + (i % 5) * 1.2
+        x = round(math.cos(angle) * radius + (i % 3 - 1) * 0.4, 2)
+        y = round(math.sin(angle) * radius + (i % 4 - 2) * 0.3, 2)
+        z = round((i % 7 - 3) * 0.7, 2)
+        topic = _TOPIC_MAP[i] if i < len(_TOPIC_MAP) else i % 8
+        node = FrontierNode(
+            project_id=project.id, node_type=node_type, label=label,
+            detail=json.dumps({"topic_index": topic, "cluster_index": i % 10, "x": x, "y": y, "z": z, "size": round(0.8 + (i % 4) * 0.3, 2)}),
+            status="open", priority=round(1.0 - i * 0.02, 2), data_mode="mock",
+        )
+        db.add(node)
+        frontier_nodes.append(node)
+    db.flush()
+    for src_idx, dst_idx in _FRONTIER_EDGES:
+        db.add(FrontierEdge(
+            project_id=project.id,
+            source_node_id=frontier_nodes[src_idx].id,
+            target_node_id=frontier_nodes[dst_idx].id,
+            edge_type="derived_from", weight=1.0,
+        ))
+    db.flush()
+
+    strats = []
+    for name, desc, status in [
+        ("Gaussian Splatting Optimization", "Improve 3DGS quality via adaptive density control and spherical harmonics refinement", "active"),
+        ("NeRF Baseline Comparison", "Establish NeRF baselines (Instant-NGP, Mip-NeRF) for fair comparison against Gaussian methods", "active"),
+        ("Real-time Rendering Pipeline", "Optimize rasterization pipeline for 60fps on consumer GPUs using tile-based sorting", "planned"),
+        ("Multi-view Capture Protocol", "Standardize capture methodology with structured light and calibrated multi-camera rigs", "active"),
+        ("Perceptual Quality Metrics", "Develop evaluation metrics (LPIPS, DISTS) that correlate with human preference judgments", "completed"),
+    ]:
+        s = PortfolioStrategy(project_id=project.id, name=name, description=desc, status=status)
+        db.add(s)
+        strats.append(s)
+    db.flush()
+
+    if len(strats) >= 4:
+        db.add(MetaTrial(workspace_id="default", strategy_a_id=strats[0].id,
+                         strategy_b_id=strats[1].id, status="completed",
+                         result_json=json.dumps({"winner": "a", "result": "a_wins",
+                                                 "metrics": {"a_psnr": 29.4, "b_psnr": 28.2, "a_fps": 42, "b_fps": 0.4}})))
+        db.add(MetaTrial(workspace_id="default", strategy_a_id=strats[2].id,
+                         strategy_b_id=strats[3].id, status="running"))
+    db.flush()
+
+    _LIBRARY_PAPERS = [
+        ("3D Gaussian Splatting for Real-Time Radiance Field Rendering", ["B. Kerbl", "G. Kopanas", "T. Leimkuhler", "G. Drettakis"], 2023, 1842, ["3DGS", "Real-time Rendering"], "We present 3D Gaussian Splatting, a method for real-time radiance field rendering that uses anisotropic 3D Gaussians as the scene representation."),
+        ("NeRF: Representing Scenes as Neural Radiance Fields", ["B. Mildenhall", "P. Srinivasan", "M. Tancik", "J. Barron"], 2020, 8291, ["NeRF", "View Synthesis"], "We present a method that synthesizes novel views of complex scenes by optimizing an underlying continuous volumetric scene function."),
+        ("Instant Neural Graphics Primitives", ["T. Muller", "A. Evans", "C. Schied", "A. Keller"], 2022, 3102, ["Neural Rendering", "Hash Encoding"], "Neural graphics primitives with multiresolution hash encoding for training NeRFs in seconds rather than hours."),
+        ("Dynamic 3D Gaussians: Tracking by Persistent Dynamic View Synthesis", ["J. Luiten", "G. Kopanas", "B. Leibe", "D. Ramanan"], 2023, 412, ["Dynamic Scenes", "3DGS"], "We present a method for modeling dynamic scenes using persistent 3D Gaussians tracked across time."),
+        ("SuGaR: Surface-Aligned Gaussian Splatting", ["A. Guedon", "V. Lepetit"], 2023, 287, ["Surface Reconstruction", "3DGS"], "A method to extract accurate meshes from Gaussian splatting by aligning Gaussians with scene surfaces."),
+        ("DreamGaussian: Generative Gaussian Splatting for 3D Content Creation", ["J. Tang", "J. Ren", "H. Zhou", "Z. Liu", "G. Zeng"], 2023, 356, ["3D Generation", "3DGS"], "Efficient 3D content creation from single-view images by combining Gaussian splatting with score distillation."),
+        ("GaussianEditor: Swift and Controllable 3D Editing", ["Y. Chen", "Z. Chen", "C. Zhang", "F. Wang", "H. Yang"], 2023, 198, ["3D Editing", "3DGS"], "A framework for controllable 3D scene editing using Gaussian splatting representations."),
+        ("Mip-Splatting: Alias-free 3D Gaussian Splatting", ["Z. Yu", "A. Chen", "B. Huang", "T. Sattler", "A. Geiger"], 2023, 274, ["Anti-aliasing", "3DGS"], "Addressing aliasing artifacts in 3D Gaussian Splatting with a 3D smoothing filter and 2D Mip filter."),
+        ("GaussianAvatar: Towards Realistic Human Avatar Modeling", ["Y. Hu", "H. Zhu", "Z. Liang", "F. Lu", "L. Ma"], 2023, 165, ["Avatars", "3DGS"], "Modeling realistic human avatars from monocular video using pose-dependent 3D Gaussians."),
+        ("Gaussian Splatting SLAM", ["H. Matsuki", "R. Murai", "P. Kelly", "A. Sherrill"], 2023, 223, ["SLAM", "3DGS"], "Dense visual SLAM using 3D Gaussian Splatting as the scene representation for real-time tracking and mapping."),
+        ("LangSplat: 3D Language Gaussian Splatting", ["M. Qin", "W. Li", "J. Zhou", "H. Wang", "H. Pfister"], 2023, 189, ["Language Grounding", "3DGS"], "Open-vocabulary 3D scene understanding by learning language features on 3D Gaussians."),
+        ("Scaffold-GS: Structured 3D Gaussians for View-Adaptive Rendering", ["T. Lu", "M. Yu", "L. Xu", "Y. Jiang", "L. Wang", "Y. Ma"], 2023, 145, ["Structure", "3DGS"], "Using anchor points and neural Gaussians for view-adaptive rendering with structured 3D Gaussians."),
+        ("Point-NeRF: Point-based Neural Radiance Fields", ["Q. Xu", "Z. Xu", "J. Philip", "S. Bi", "Z. Shu", "K. Sunkavalli"], 2022, 467, ["Point Cloud", "NeRF"], "A point-based neural radiance field that can be efficiently rendered with aggregated neural point features."),
+        ("Plenoxels: Radiance Fields without Neural Networks", ["S. Fridovich-Keil", "A. Yu", "M. Tancik", "Q. Chen", "B. Recht", "A. Kanazawa"], 2022, 621, ["Voxel", "Real-time"], "A sparse voxel-based radiance field that trains 100x faster than NeRF with no neural network."),
+        ("Compact 3D Gaussian Representation for Radiance Field", ["J. Lee", "D. Rho", "X. Sun", "J. Ko", "E. Park"], 2023, 132, ["Compression", "3DGS"], "Reducing the storage cost of 3D Gaussian Splatting while maintaining visual quality."),
+        ("COLMAP-Free 3D Gaussian Splatting", ["Y. Fu", "S. Liu", "A. Kulkarni", "J. Kautz", "A. Efros", "X. Wang"], 2023, 178, ["Pose-free", "3DGS"], "Learning 3D Gaussian Splatting from sequential video frames without pre-computed camera poses."),
+        ("Photo-SLAM: Real-time Localization and Photorealistic Mapping", ["H. Huang", "L. Li", "H. Cheng", "S. Yeung"], 2024, 89, ["SLAM", "Photorealism"], "Real-time simultaneous localization and photorealistic mapping using hyper primitives."),
+        ("GS-IR: 3D Gaussian Splatting for Inverse Rendering", ["Z. Liang", "Q. Zhang", "Y. Feng", "Y. Shan", "K. Jia"], 2023, 112, ["Inverse Rendering", "3DGS"], "Decomposing scenes into materials and lighting using 3D Gaussian Splatting for relighting."),
+        ("PixelSplat: 3D Gaussian Splats from Image Pairs", ["D. Charatan", "S. Li", "A. Tagliasacchi", "V. Sitzmann"], 2023, 156, ["Generalizable", "3DGS"], "Feed-forward prediction of 3D Gaussian Splats from stereo image pairs for scalable reconstruction."),
+        ("Multi-View Stereo Revisited", ["J. Gu", "Z. Chen", "F. Dunn"], 2022, 234, ["MVS", "Depth Estimation"], "Revisiting multi-view stereo with modern architectures for dense depth estimation."),
+    ]
+    for title, authors, year, citations, topics, abstract in _LIBRARY_PAPERS:
+        db.add(Paper(title=title, authors_json=json.dumps(authors), publication_year=year,
+                     citation_count=citations, topics_json=json.dumps(topics),
+                     abstract=abstract, data_mode="synthetic"))
+    db.flush()
+
+    for title, desc, conf in [
+        ("Novel View Synthesis", "Generate photorealistic images from unseen viewpoints using sparse input views", 0.92),
+        ("Differentiable Rendering", "End-to-end gradient computation through the rendering pipeline for optimization", 0.88),
+        ("Point Cloud Processing", "Efficient manipulation and analysis of large-scale 3D point sets", 0.85),
+        ("GPU Kernel Optimization", "Custom CUDA kernels for real-time inference and rasterization", 0.79),
+        ("Perceptual Quality Assessment", "LPIPS, SSIM, DISTS and human preference-based evaluation of rendered images", 0.91),
+        ("Camera Calibration", "Intrinsic and extrinsic parameter estimation for multi-view setups", 0.83),
+        ("Scene Graph Construction", "Building semantic 3D scene representations from visual observations", 0.76),
+        ("Mesh Reconstruction", "Surface extraction from implicit and explicit 3D representations", 0.81),
+    ]:
+        db.add(CandidateSkill(project_id=project.id, title=title, description=desc,
+                              confidence=conf, status="promoted", data_mode="synthetic"))
+    db.flush()
+
     db.commit()
     experiment = db.query(DemoExperiment).filter(
         DemoExperiment.project_id == project.id,

@@ -37,8 +37,12 @@ type ResearchState = 'idle' | 'running' | 'paused' | 'completed' | 'cancelled' |
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
-async function startAutonomous(projectId: string) {
-  const res = await fetch(`${API_BASE}/api/v1/projects/${encodeURIComponent(projectId)}/research/autonomous`, { method: 'POST' })
+async function startAutonomous(projectId: string, maxIterations = 5, threshold = 0.85) {
+  const res = await fetch(`${API_BASE}/api/v1/projects/${encodeURIComponent(projectId)}/research/autonomous`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ max_iterations: maxIterations, threshold }),
+  })
   if (!res.ok) throw new Error(`Autonomous start failed (${res.status})`)
   return res.json()
 }
@@ -226,6 +230,10 @@ export default function Lab() {
   const [loading, setLoading] = useState(false)
   const [launching, setLaunching] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [maxIterations, setMaxIterations] = useState(5)
+  const [threshold, setThreshold] = useState(0.85)
+  const [topic, setTopic] = useState('')
+  const [showAutoConfig, setShowAutoConfig] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchStatus = useCallback(async () => {
@@ -314,7 +322,7 @@ export default function Lab() {
     setLaunching(true)
     setError(null)
     try {
-      await startAutonomous(projectId)
+      await startAutonomous(projectId, maxIterations, threshold)
       setResearchState('running')
       await fetchAll()
     } catch (err) {
@@ -383,30 +391,97 @@ export default function Lab() {
 
       {/* Launch Controls */}
       {isIdle && (
-        <div className="lab-launch-row">
-          <button
-            className="lab-launch-btn lab-launch-btn--demo"
-            onClick={handleLaunchDemo}
-            disabled={launching}
-          >
-            <span className="lab-launch-icon">&#9654;</span>
-            <div>
-              <div className="lab-launch-btn-title">Demo Research (3DGS)</div>
-              <div className="lab-launch-btn-desc">Scripted walkthrough with mock data</div>
+        <>
+          <div className="lab-launch-row">
+            <button
+              className="lab-launch-btn lab-launch-btn--demo"
+              onClick={handleLaunchDemo}
+              disabled={launching}
+            >
+              <span className="lab-launch-icon">&#9654;</span>
+              <div>
+                <div className="lab-launch-btn-title">Demo Research (3DGS)</div>
+                <div className="lab-launch-btn-desc">3D Gaussian Splatting research session</div>
+              </div>
+            </button>
+            <button
+              className="lab-launch-btn lab-launch-btn--auto"
+              onClick={() => setShowAutoConfig((v) => !v)}
+              disabled={launching}
+            >
+              <span className="lab-launch-icon">&#9889;</span>
+              <div>
+                <div className="lab-launch-btn-title">Autonomous Loop</div>
+                <div className="lab-launch-btn-desc">Configurable evaluator iterations</div>
+              </div>
+            </button>
+          </div>
+
+          {showAutoConfig && (
+            <div className="lab-auto-config">
+              <div className="lab-auto-config-title">Autonomous Loop Configuration</div>
+
+              <div className="lab-auto-config-field">
+                <label>Max iterations</label>
+                <div className="lab-auto-config-slider-row">
+                  <input
+                    type="range"
+                    min={1}
+                    max={20}
+                    step={1}
+                    value={maxIterations}
+                    onChange={(e) => setMaxIterations(Number(e.target.value))}
+                  />
+                  <span className="lab-auto-config-value">{maxIterations}</span>
+                </div>
+                <div className="lab-auto-config-hint">
+                  Each iteration runs 4-6 camera strategies. ~{maxIterations * 2}s total runtime.
+                </div>
+              </div>
+
+              <div className="lab-auto-config-field">
+                <label>Coverage threshold</label>
+                <div className="lab-auto-config-slider-row">
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    step={5}
+                    value={Math.round(threshold * 100)}
+                    onChange={(e) => setThreshold(Number(e.target.value) / 100)}
+                  />
+                  <span className="lab-auto-config-value">{(threshold * 100).toFixed(0)}%</span>
+                </div>
+                <div className="lab-auto-config-hint">
+                  Loop stops early when coverage meets this target.
+                </div>
+              </div>
+
+              <div className="lab-auto-config-field">
+                <label>Research topic (optional)</label>
+                <input
+                  type="text"
+                  className="lab-auto-config-input"
+                  placeholder="e.g. 3D Gaussian Splatting, NeRF, Multi-view Stereo..."
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                />
+                <div className="lab-auto-config-hint">
+                  Leave blank to use the project's default topic.
+                </div>
+              </div>
+
+              <button
+                className="lab-btn-primary"
+                onClick={handleLaunchAutonomous}
+                disabled={launching}
+                style={{ marginTop: 8, width: '100%' }}
+              >
+                {launching ? 'Starting...' : `Launch (${maxIterations} iterations, ${(threshold * 100).toFixed(0)}% threshold)`}
+              </button>
             </div>
-          </button>
-          <button
-            className="lab-launch-btn lab-launch-btn--auto"
-            onClick={handleLaunchAutonomous}
-            disabled={launching}
-          >
-            <span className="lab-launch-icon">&#9889;</span>
-            <div>
-              <div className="lab-launch-btn-title">Autonomous Loop</div>
-              <div className="lab-launch-btn-desc">Real evaluator + Gemini AI iterations</div>
-            </div>
-          </button>
-        </div>
+          )}
+        </>
       )}
 
       <div className="lab-layout">
