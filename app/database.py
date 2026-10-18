@@ -5,7 +5,9 @@ from app.config import settings
 
 _url = settings.database_url
 if _url.startswith("postgres://"):
-    _url = _url.replace("postgres://", "postgresql://", 1)
+    _url = _url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif _url.startswith("postgresql://"):
+    _url = _url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 _is_sqlite = _url.startswith("sqlite")
 
