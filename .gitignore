@@ -153,6 +153,22 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 
+<<<<<<< HEAD
 # Local scenes may be large or privately sourced. Never ship these in dist.
 /.local-scenes/
 /public/demo-scene/
+=======
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.venv/
+venv/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+>>>>>>> origin/feat/backend
