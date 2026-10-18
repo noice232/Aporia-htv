@@ -122,7 +122,7 @@ export default function Home() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. 3D Reconstruction Coverage Analysis"
+          placeholder="e.g. Multi-Agent Research Exploration"
           className="home-input"
         />
 

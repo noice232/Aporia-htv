@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { initCosmos, type AtlasNode } from '../engine/cosmos'
+import { initCosmos, TOPICS, type AtlasNode } from '../engine/cosmos'
 import '../styles/landing.css'
 
 export default function Landing() {
@@ -9,7 +9,9 @@ export default function Landing() {
   const navigate = useNavigate()
   const [visible, setVisible] = useState(false)
   const [exiting, setExiting] = useState(false)
+  const [cosmosMode, setCosmosMode] = useState(false)
   const [tooltip, setTooltip] = useState<{ title: string; x: number; y: number } | null>(null)
+  const [selectedPaper, setSelectedPaper] = useState<AtlasNode | null>(null)
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -26,6 +28,11 @@ export default function Landing() {
           setTooltip({ title: node.title, x, y })
         } else {
           setTooltip(null)
+        }
+      },
+      onPick: (node: AtlasNode | null) => {
+        if (node && !node.title.startsWith('Research paper')) {
+          setSelectedPaper(node)
         }
       },
     })
@@ -51,7 +58,7 @@ export default function Landing() {
       <canvas ref={canvasRef} className="landing-cosmos" />
 
       {/* Tooltip */}
-      {tooltip && (
+      {tooltip && !selectedPaper && (
         <div
           className="cosmos-tooltip"
           style={{ left: tooltip.x, top: tooltip.y }}
@@ -61,7 +68,7 @@ export default function Landing() {
       )}
 
       {/* Content overlaid on top — pointer-events pass through to cosmos */}
-      <div className="landing-overlay-content">
+      <div className={`landing-overlay-content ${cosmosMode ? 'cosmos-mode-hidden' : ''}`}>
         <div className="landing-badge">Collaborative Autonomous Research</div>
         <h1 className="landing-title">APORIA</h1>
         <p className="landing-tagline">
@@ -69,12 +76,21 @@ export default function Landing() {
           and humans guide the direction of discovery.
         </p>
 
-        <button className="landing-enter" onClick={handleEnter}>
-          Enter Research Environment
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </button>
+        <div className="landing-buttons-row">
+          <button className="landing-enter" onClick={handleEnter}>
+            Enter Research Environment
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+          <button className="landing-cosmos-toggle" onClick={() => setCosmosMode(true)}>
+            Explore Cosmos
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </button>
+        </div>
 
         <div className="landing-pillars">
           <div className="landing-pillar">
@@ -101,7 +117,42 @@ export default function Landing() {
         </div>
       </div>
 
-      <div className="landing-hint">Drag to orbit &middot; Scroll to zoom &middot; Hover for paper titles</div>
+      {/* Cosmos mode — back button */}
+      {cosmosMode && (
+        <button className="landing-cosmos-back" onClick={() => { setCosmosMode(false); setSelectedPaper(null) }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back
+        </button>
+      )}
+
+      {/* Paper popup */}
+      {selectedPaper && (
+        <div className="paper-popup-overlay" onClick={() => setSelectedPaper(null)}>
+          <div className="paper-popup" onClick={(e) => e.stopPropagation()}>
+            <button className="paper-popup-close" onClick={() => setSelectedPaper(null)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6 6 18M6 6l12 12"/>
+              </svg>
+            </button>
+            <div className="paper-popup-topic" style={{ color: TOPICS[selectedPaper.topic]?.color || '#6598ff' }}>
+              {TOPICS[selectedPaper.topic]?.name || 'Research'}
+            </div>
+            <h2 className="paper-popup-title">{selectedPaper.title}</h2>
+            <div className="paper-popup-meta">
+              <span>Node #{selectedPaper.id}</span>
+              <span>Cluster {selectedPaper.cluster}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`landing-hint ${cosmosMode ? 'cosmos-mode-hint' : ''}`}>
+        {cosmosMode
+          ? 'Click on a node to view paper details'
+          : 'Drag to orbit · Scroll to zoom · Hover for paper titles'}
+      </div>
     </div>
   )
 }

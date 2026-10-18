@@ -456,7 +456,7 @@ export function initCosmos(
   let prev = 0
   function frame(now: number) {
     if (destroyed) return
-    if (!paused && !dragging) { yaw += Math.min(32, now - prev) * .000025 }
+    if (!paused && !dragging) { yaw += Math.min(32, now - prev) * .00008 }
     prev = now
     draw()
     requestAnimationFrame(frame)

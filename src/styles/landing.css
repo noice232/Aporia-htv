@@ -61,10 +61,10 @@
 
 .landing-tagline {
   font-size: clamp(14px, 2vw, 17px);
-  color: rgba(60, 50, 40, 0.72);
+  color: rgba(40, 32, 24, 0.9);
   line-height: 1.7;
   margin-bottom: 36px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 /* ── Enter button — clickable ── */
@@ -98,6 +98,160 @@
   transform: translateY(0);
 }
 
+/* ── Buttons row ── */
+.landing-buttons-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.landing-buttons-row .landing-enter {
+  margin-bottom: 0;
+}
+
+/* ── Explore Cosmos pill ── */
+.landing-cosmos-toggle {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid rgba(26, 23, 20, 0.25);
+  color: #1a1714;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 1.0s forwards;
+  letter-spacing: 0.02em;
+}
+
+.landing-cosmos-toggle:hover {
+  background: rgba(26, 23, 20, 0.06);
+  border-color: rgba(26, 23, 20, 0.4);
+}
+
+/* ── Cosmos mode: hide overlay ── */
+.landing-overlay-content.cosmos-mode-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-30px) !important;
+  transition: opacity 0.5s ease, transform 0.5s ease !important;
+}
+
+/* ── Cosmos back button ── */
+.landing-cosmos-back {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(240, 236, 228, 0.88);
+  border: 1px solid rgba(60, 50, 40, 0.15);
+  color: #1a1714;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 32px;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+.landing-cosmos-back:hover {
+  background: rgba(240, 236, 228, 0.95);
+  box-shadow: 0 4px 16px rgba(26, 23, 20, 0.1);
+}
+
+/* ── Paper popup ── */
+.paper-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 23, 20, 0.3);
+  backdrop-filter: blur(4px);
+  animation: popupOverlayIn 0.2s ease;
+}
+
+@keyframes popupOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.paper-popup {
+  position: relative;
+  background: #f5f2ec;
+  border: 1px solid rgba(60, 50, 40, 0.12);
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(26, 23, 20, 0.2);
+  animation: popupCardIn 0.3s ease;
+}
+
+@keyframes popupCardIn {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.paper-popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(60, 50, 40, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.paper-popup-close:hover {
+  color: #1a1714;
+  background: rgba(60, 50, 40, 0.08);
+}
+
+.paper-popup-topic {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.paper-popup-title {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1714;
+  line-height: 1.35;
+  margin-bottom: 16px;
+}
+
+.paper-popup-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: rgba(60, 50, 40, 0.5);
+}
+
+.cosmos-mode-hint {
+  color: rgba(60, 50, 40, 0.55) !important;
+}
+
 /* ── Pillars ── */
 .landing-pillars {
   display: grid;
@@ -109,11 +263,11 @@
 }
 
 .landing-pillar {
-  background: rgba(240, 236, 228, 0.65);
-  border: 1px solid rgba(60, 50, 40, 0.08);
+  background: rgba(240, 236, 228, 0.88);
+  border: 1px solid rgba(60, 50, 40, 0.12);
   border-radius: 12px;
   padding: 24px 18px 20px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   pointer-events: auto;
   transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
 }
@@ -246,5 +400,19 @@
   .cosmos-tooltip {
     font-size: 11px;
     max-width: 260px;
+  }
+
+  .landing-cosmos-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .paper-popup {
+    max-width: 320px;
+    padding: 24px 20px 20px;
+  }
+
+  .paper-popup-title {
+    font-size: 17px;
   }
 }
