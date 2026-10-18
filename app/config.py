@@ -8,5 +8,9 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model_id: str = "gemini-2.0-flash"
 
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
 
 settings = Settings()

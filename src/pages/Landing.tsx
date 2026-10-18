@@ -11,15 +11,21 @@ export default function Landing() {
   const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap'
+    document.head.appendChild(link)
+
     const canvas = canvasRef.current
     if (!canvas) return
-    const controls = initCosmos(canvas, { dark: true })
+    const controls = initCosmos(canvas, { dark: false })
     if (controls) controlsRef.current = controls
     const t = setTimeout(() => setVisible(true), 100)
     return () => {
       clearTimeout(t)
       controls?.destroy()
       controlsRef.current = null
+      link.remove()
     }
   }, [])
 
@@ -30,7 +36,9 @@ export default function Landing() {
 
   return (
     <div className={`landing ${visible ? 'visible' : ''} ${exiting ? 'exiting' : ''}`}>
-      <canvas ref={canvasRef} className="landing-cosmos" style={{ pointerEvents: 'none' }} />
+      <div className="landing-cosmos-wrapper">
+        <canvas ref={canvasRef} className="landing-cosmos" />
+      </div>
       <div className="landing-overlay" />
 
       <div className="landing-content">
@@ -41,26 +49,9 @@ export default function Landing() {
           and humans guide the direction of discovery.
         </p>
 
-        <div className="landing-stats">
-          <div className="landing-stat">
-            <span className="landing-stat-value">19,500+</span>
-            <span className="landing-stat-label">Research Papers</span>
-          </div>
-          <div className="landing-stat-divider" />
-          <div className="landing-stat">
-            <span className="landing-stat-value">8</span>
-            <span className="landing-stat-label">Research Domains</span>
-          </div>
-          <div className="landing-stat-divider" />
-          <div className="landing-stat">
-            <span className="landing-stat-value">CFG</span>
-            <span className="landing-stat-label">Guidance Policy</span>
-          </div>
-        </div>
-
         <button className="landing-enter" onClick={handleEnter}>
           Enter Research Environment
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </button>
