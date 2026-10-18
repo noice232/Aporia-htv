@@ -156,4 +156,8 @@ __pycache__/
 .venv/
 venv/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
