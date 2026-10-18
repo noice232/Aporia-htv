@@ -1,0 +1,88 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.database import init_db
+import app.models  # noqa: F401 — register ORM models so init_db creates tables
+from app.routers.health import router as health_router
+from app.routers.projects import router as projects_router
+from app.routers.policy import router as policy_router
+from app.routers.profile import router as profile_router
+from app.routers.fork import router as fork_router
+from app.routers.research_session import router as research_session_router
+from app.routers.papiers import router as papiers_router
+from app.routers.frontier import router as frontier_router
+from app.routers.artifact import router as artifact_router
+from app.routers.plan import router as plan_router
+from app.routers.parallax import router as parallax_router
+from app.routers.skill import router as skill_router
+from app.routers.portfolio import router as portfolio_router
+from app.routers.court import router as court_router
+from app.routers.runs import router as runs_router
+from app.routers.research_control import router as research_control_router
+from app.routers.workspace import router as workspace_router
+from app.routers.papers import router as papers_router
+from app.routers.corpus import router as corpus_router
+from app.routers.sources import router as sources_router
+from app.routers.questions import router as questions_router
+from app.routers.judgments import router as judgments_router
+from app.routers.team import router as team_router
+from app.routers.lessons import router as lessons_router
+from app.routers.ws_portfolio import router as ws_portfolio_router
+from app.routers.meta import router as meta_router
+from app.routers.analytics import router as analytics_router
+from app.routers.integrations import router as integrations_router
+from app.routers.project_state import router as project_state_router
+from app.routers.sse import router as sse_router
+from app.routers.demo_research import router as demo_research_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="APORIA", version="1.0.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(health_router)
+app.include_router(projects_router)
+app.include_router(policy_router)
+app.include_router(profile_router)
+app.include_router(fork_router)
+app.include_router(research_session_router)
+app.include_router(papiers_router)
+app.include_router(frontier_router)
+app.include_router(artifact_router)
+app.include_router(plan_router)
+app.include_router(parallax_router)
+app.include_router(skill_router)
+app.include_router(portfolio_router)
+app.include_router(court_router)
+app.include_router(runs_router)
+app.include_router(research_control_router)
+app.include_router(workspace_router)
+app.include_router(papers_router)
+app.include_router(corpus_router)
+app.include_router(sources_router)
+app.include_router(questions_router)
+app.include_router(judgments_router)
+app.include_router(team_router)
+app.include_router(lessons_router)
+app.include_router(ws_portfolio_router)
+app.include_router(meta_router)
+app.include_router(analytics_router)
+app.include_router(integrations_router)
+app.include_router(project_state_router)
+app.include_router(sse_router)
+app.include_router(demo_research_router)

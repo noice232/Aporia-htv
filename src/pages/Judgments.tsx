@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
-import { scorePolicy, listPrinciples, compileJudgment } from '../api/client'
-import type { Candidate as ApiCandidate, Principle as ApiPrinciple } from '../api/client'
+import { getPolicyComparison, listPrinciples, compileJudgment } from '../api/client'
+import type { PolicyComparison, Principle as ApiPrinciple } from '../api/client'
 import '../styles/judgments.css'
 
 interface Candidate {
@@ -15,15 +15,6 @@ interface Principle {
   id: string
   text: string
   status: 'approved' | 'pending'
-}
-
-function mapCandidate(c: ApiCandidate): Candidate {
-  return {
-    id: c.candidate_id,
-    action: c.label,
-    s_u: c.s_u ?? 0,
-    s_c: c.s_c ?? 0,
-  }
 }
 
 function mapPrinciple(p: ApiPrinciple): Principle {
@@ -66,6 +57,8 @@ export default function Judgments() {
   const [judgment, setJudgment] = useState('')
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [principles, setPrinciples] = useState<Principle[]>([])
+  const [dataMode, setDataMode] = useState<string>('mock')
+  const [serverW, setServerW] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -75,19 +68,36 @@ export default function Judgments() {
     setLoading(true)
     setError(null)
     try {
-      const [policyResult, principleResult] = await Promise.all([
-        scorePolicy(projectId, w),
+      const [comparison, principleResult] = await Promise.all([
+        getPolicyComparison(projectId),
         listPrinciples(projectId),
       ])
-      const scores = (policyResult as { scores?: ApiCandidate[] }).scores
-      if (scores) setCandidates(scores.map(mapCandidate))
+
+      const comp = comparison as PolicyComparison
+      const branch = comp.with_cfg ?? comp.without_cfg
+      if (branch?.candidates) {
+        setCandidates(
+          branch.candidates.map((c) => ({
+            id: c.candidate_id,
+            action: c.label,
+            s_u: c.s_u,
+            s_c: c.s_c,
+          })),
+        )
+      }
+      setDataMode(comp.data_mode ?? 'mock')
+      if (comp.with_cfg?.w != null) {
+        setServerW(comp.with_cfg.w)
+        setW(comp.with_cfg.w)
+      }
+
       setPrinciples((principleResult as ApiPrinciple[]).map(mapPrinciple))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load judgment data')
     } finally {
       setLoading(false)
     }
-  }, [projectId, w])
+  }, [projectId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -160,10 +170,18 @@ export default function Judgments() {
     <div className="page-content">
       <div className="judgments-page">
         <div>
-          <div className="judgments-label">Judgment Compiler</div>
+          <div className="judgments-label">
+            Judgment Compiler
+            <span className={`data-mode-badge ${dataMode}`}>{dataMode}</span>
+          </div>
           <h1 className="judgments-title">CFG Dual-Score Policy</h1>
           <p className="judgments-project">
             Project: <code>{projectId}</code>
+            {serverW != null && (
+              <span style={{ marginLeft: 12, fontSize: 12, color: 'var(--fg-dim)' }}>
+                Server w={serverW.toFixed(1)}
+              </span>
+            )}
           </p>
         </div>
 

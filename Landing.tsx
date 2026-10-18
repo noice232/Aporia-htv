@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { initCosmos } from '../engine/cosmos'
+import { initCosmos, type AtlasNode } from '../engine/cosmos'
 import '../styles/landing.css'
 
 export default function Landing() {
@@ -9,6 +9,7 @@ export default function Landing() {
   const navigate = useNavigate()
   const [visible, setVisible] = useState(false)
   const [exiting, setExiting] = useState(false)
+  const [tooltip, setTooltip] = useState<{ title: string; x: number; y: number } | null>(null)
 
   useEffect(() => {
     const link = document.createElement('link')
@@ -18,8 +19,18 @@ export default function Landing() {
 
     const canvas = canvasRef.current
     if (!canvas) return
-    const controls = initCosmos(canvas, { dark: false })
+    const controls = initCosmos(canvas, {
+      dark: false,
+      onHover: (node: AtlasNode | null, x: number, y: number) => {
+        if (node && !node.title.startsWith('Research paper')) {
+          setTooltip({ title: node.title, x, y })
+        } else {
+          setTooltip(null)
+        }
+      },
+    })
     if (controls) controlsRef.current = controls
+
     const t = setTimeout(() => setVisible(true), 100)
     return () => {
       clearTimeout(t)
@@ -36,35 +47,27 @@ export default function Landing() {
 
   return (
     <div className={`landing ${visible ? 'visible' : ''} ${exiting ? 'exiting' : ''}`}>
-      <div className="landing-cosmos-wrapper">
-        <canvas ref={canvasRef} className="landing-cosmos" />
-      </div>
-      <div className="landing-overlay" />
+      {/* Cosmos canvas — full screen, always interactive */}
+      <canvas ref={canvasRef} className="landing-cosmos" />
 
-      <div className="landing-content">
-        <div className="landing-badge">Multiplayer Autonomous Research</div>
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="cosmos-tooltip"
+          style={{ left: tooltip.x, top: tooltip.y }}
+        >
+          {tooltip.title}
+        </div>
+      )}
+
+      {/* Content overlaid on top — pointer-events pass through to cosmos */}
+      <div className="landing-overlay-content">
+        <div className="landing-badge">Collaborative Autonomous Research</div>
         <h1 className="landing-title">APORIA</h1>
         <p className="landing-tagline">
-          A workspace for autonomous research<br />
-          and human-guided discovery.
+          Where AI agents explore the frontier of knowledge<br />
+          and humans guide the direction of discovery.
         </p>
-
-        <div className="landing-stats">
-          <div className="landing-stat">
-            <span className="landing-stat-value">19,500+</span>
-            <span className="landing-stat-label">Research Papers</span>
-          </div>
-          <div className="landing-stat-divider" />
-          <div className="landing-stat">
-            <span className="landing-stat-value">8</span>
-            <span className="landing-stat-label">Research Domains</span>
-          </div>
-          <div className="landing-stat-divider" />
-          <div className="landing-stat">
-            <span className="landing-stat-value">CFG</span>
-            <span className="landing-stat-label">Guidance Policy</span>
-          </div>
-        </div>
 
         <button className="landing-enter" onClick={handleEnter}>
           Enter Research Environment
@@ -92,11 +95,13 @@ export default function Landing() {
             <div className="landing-pillar-icon">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
-            <h3>Multiplayer</h3>
+            <h3>Collaborative</h3>
             <p>Multiple researchers and agents collaborate on shared research projects</p>
           </div>
         </div>
       </div>
+
+      <div className="landing-hint">Drag to orbit &middot; Scroll to zoom &middot; Hover for paper titles</div>
     </div>
   )
 }

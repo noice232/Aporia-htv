@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useSSE } from './hooks/useSSE'
 import { AppHeader } from './components/shell/AppHeader'
 import { SideRail } from './components/shell/SideRail'
 import { Inspector } from './components/shell/Inspector'
@@ -25,13 +26,16 @@ const JoinProject = lazy(() => import('./pages/JoinProject'))
 
 export default function AppShell() {
   const [railOpen, setRailOpen] = useState(false)
+  const location = useLocation()
+  const isLanding = location.pathname === '/'
+  useSSE()
 
   return (
-    <div className="app-shell">
-      <AppHeader onMenuToggle={() => setRailOpen((o) => !o)} />
-      <SideRail open={railOpen} onClose={() => setRailOpen(false)} />
+    <div className={`app-shell ${isLanding ? 'app-shell--landing' : ''}`}>
+      {!isLanding && <AppHeader onMenuToggle={() => setRailOpen((o) => !o)} />}
+      {!isLanding && <SideRail open={railOpen} onClose={() => setRailOpen(false)} />}
 
-      <main className="main-canvas">
+      <main className={isLanding ? 'main-canvas main-canvas--landing' : 'main-canvas'}>
         <ErrorBoundary>
           <Suspense fallback={<LoadingState />}>
             <Routes>
@@ -63,8 +67,8 @@ export default function AppShell() {
         </ErrorBoundary>
       </main>
 
-      <Inspector />
-      <TimelineDock />
+      {!isLanding && <Inspector />}
+      {!isLanding && <TimelineDock />}
     </div>
   )
 }
