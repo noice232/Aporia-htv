@@ -29,28 +29,14 @@ export default function Home() {
         const res = await fetch(`${BASE}/api/v1/demo/seed`, { method: 'POST' })
         if (res.ok) {
           const data = await res.json()
-          if (data.project) {
-            addProject(data.project)
-            setCurrent(data.project.id)
-          } else if (data.projects) {
-            setProjects(data.projects)
-          } else if (data.project_id) {
-            const proj = {
-              id: data.project_id,
-              title: data.title || '3D Reconstruction: NeRF to Gaussian Splatting',
-              objective: 'Compare sparse-view 3D reconstruction methods with human guidance on rendering speed and visual quality.',
-              status: 'completed',
-              created_at: new Date().toISOString(),
-            }
-            addProject(proj as any)
-            setCurrent(proj.id)
-          }
+          if (data.project) addProject(data.project)
+          if (data.projects) setProjects(data.projects)
         }
       } catch {
         // backend may not support demo seed yet
       }
     })()
-  }, [projects.length, addProject, setProjects, setCurrent])
+  }, [projects.length, addProject, setProjects])
 
   async function handleLaunch(e: React.FormEvent) {
     e.preventDefault()
@@ -136,7 +122,7 @@ export default function Home() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. 3D Reconstruction Coverage Analysis"
+          placeholder="e.g. Multi-Agent Research Exploration"
           className="home-input"
         />
 

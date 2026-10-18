@@ -53,11 +53,11 @@ export function createAtlas(seed = 42, density = 1) {
   const points: AtlasNode[] = []
   const links: AtlasLink[] = []
   const cores = [
-    { c: [-5.3, -3.0, 0.2], axes: [3.25, 1.45, 1.0], angle: -.5, count: 3600, topic: 0 },
-    { c: [1.0, -1.0, 0], axes: [2.7, 2.65, 1.8], angle: .15, count: 4500, topic: 1 },
-    { c: [1.4, 5.05, 0.5], axes: [1.1, 3.15, 1.1], angle: -.38, count: 3500, topic: 2 },
-    { c: [7.2, -3.0, -0.4], axes: [2.3, 1.0, 1.1], angle: -.24, count: 2700, topic: 3 },
-    { c: [-1.1, -6.75, 1.0], axes: [.75, 2.0, .9], angle: -.2, count: 1200, topic: 4 },
+    { c: [-5.3, -3.0, 0.2], axes: [3.25, 1.45, 1.0], angle: -.5, count: 2000, topic: 0 },
+    { c: [1.0, -1.0, 0], axes: [2.7, 2.65, 1.8], angle: .15, count: 2500, topic: 1 },
+    { c: [1.4, 5.05, 0.5], axes: [1.1, 3.15, 1.1], angle: -.38, count: 2000, topic: 2 },
+    { c: [7.2, -3.0, -0.4], axes: [2.3, 1.0, 1.1], angle: -.24, count: 1500, topic: 3 },
+    { c: [-1.1, -6.75, 1.0], axes: [.75, 2.0, .9], angle: -.2, count: 700, topic: 4 },
   ]
   const push = (x: number, y: number, z: number, topic: number, cluster: number, size: number, kind = 'paper') => {
     const id = points.length
@@ -410,7 +410,7 @@ export function initCosmos(
     activeLinks = bufferVAO(linkBuffers(filter), gl!.LINES)
   }
 
-  const initial = { yaw: .06, pitch: -.1, zoom: 2.4 }
+  const initial = { yaw: .06, pitch: -.1, zoom: 1.9 }
   let yaw = initial.yaw, pitch = initial.pitch, zoom = initial.zoom
   let dragging = false, moved = false, lastX = 0, lastY = 0, dpr = 1
 

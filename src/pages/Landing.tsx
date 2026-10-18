@@ -3,6 +3,39 @@ import { useNavigate } from 'react-router-dom'
 import { initCosmos, TOPICS, type AtlasNode } from '../engine/cosmos'
 import '../styles/landing.css'
 
+const PAPER_TITLES = [
+  'ImageNet Classification with Deep Convolutional Neural Networks',
+  'Very Deep Convolutional Networks for Large-Scale Image Recognition',
+  'Going Deeper with Convolutions',
+  'Deep Residual Learning for Image Recognition',
+  'Faster R-CNN: Towards Real-Time Object Detection',
+  'You Only Look Once: Unified Real-Time Object Detection',
+  'SSD: Single Shot MultiBox Detector',
+  'Feature Pyramid Networks for Object Detection',
+  'Mask R-CNN',
+  'Generative Adversarial Networks',
+  'Image Style Transfer Using Convolutional Neural Networks',
+  'Spatial Transformer Networks',
+  'U-Net: Convolutional Networks for Biomedical Image Segmentation',
+  'An Image is Worth 16x16 Words: Transformers for Image Recognition',
+  'DETR: End-to-End Object Detection with Transformers',
+  'CLIP: Learning Transferable Visual Models from Natural Language',
+  'Denoising Diffusion Probabilistic Models',
+  'High-Resolution Image Synthesis with Latent Diffusion Models',
+  'Segment Anything',
+  'DINOv2: Learning Robust Visual Features without Supervision',
+  'NeRF: Representing Scenes as Neural Radiance Fields',
+  'EfficientNet: Rethinking Model Scaling for CNNs',
+  'MobileNets: Efficient CNNs for Mobile Vision Applications',
+  'CycleGAN: Unpaired Image-to-Image Translation',
+  'Batch Normalization: Accelerating Deep Network Training',
+  'Dropout: A Simple Way to Prevent Overfitting',
+  'DenseNet: Densely Connected Convolutional Networks',
+  'ShuffleNet: An Efficient CNN for Mobile Devices',
+  'YOLO9000: Better, Faster, Stronger',
+  'Attention Is All You Need',
+]
+
 export default function Landing() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const controlsRef = useRef<ReturnType<typeof initCosmos>>(null)
@@ -31,8 +64,11 @@ export default function Landing() {
         }
       },
       onPick: (node: AtlasNode | null) => {
-        if (node && !node.title.startsWith('Research paper')) {
-          setSelectedPaper(node)
+        if (node) {
+          const display = node.title.startsWith('Research paper')
+            ? { ...node, title: PAPER_TITLES[Math.floor(Math.random() * PAPER_TITLES.length)] }
+            : node
+          setSelectedPaper(display)
         }
       },
     })
