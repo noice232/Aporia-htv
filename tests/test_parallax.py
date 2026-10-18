@@ -162,6 +162,17 @@ class TestDispute:
     def test_resolve_dispute_a_wins(self):
         pid = _make_project()
         a, b = self._two_claims(pid)
+        # Add evidence to both claims (required before resolution)
+        client.post(f"/api/v1/projects/{pid}/claims/{a}/evidence", json={
+            "evidence_type": "supports",
+            "description": "Experiment supports pathway A",
+            "strength": 0.9,
+        })
+        client.post(f"/api/v1/projects/{pid}/claims/{b}/evidence", json={
+            "evidence_type": "contradicts",
+            "description": "Experiment contradicts pathway B",
+            "strength": 0.7,
+        })
         dr = client.post(f"/api/v1/projects/{pid}/disputes", json={
             "claim_a_id": a, "claim_b_id": b,
         })

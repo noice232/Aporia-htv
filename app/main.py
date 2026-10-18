@@ -17,6 +17,7 @@ from app.routers.plan import router as plan_router
 from app.routers.parallax import router as parallax_router
 from app.routers.skill import router as skill_router
 from app.routers.portfolio import router as portfolio_router
+from app.routers.court import router as court_router
 
 
 @asynccontextmanager
@@ -39,3 +40,4 @@ app.include_router(plan_router)
 app.include_router(parallax_router)
 app.include_router(skill_router)
 app.include_router(portfolio_router)
+app.include_router(court_router)

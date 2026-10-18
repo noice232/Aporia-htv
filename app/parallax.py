@@ -112,6 +112,11 @@ def resolve_dispute(
     if not dispute:
         raise ValueError("Dispute not found")
 
+    ev_a = db.query(ClaimEvidence).filter(ClaimEvidence.claim_id == dispute.claim_a_id).count()
+    ev_b = db.query(ClaimEvidence).filter(ClaimEvidence.claim_id == dispute.claim_b_id).count()
+    if ev_a == 0 or ev_b == 0:
+        raise ValueError("Both claims require evidence before resolution")
+
     dispute.resolution = resolution
     dispute.status = "resolved"
     dispute.resolved_at = datetime.now(timezone.utc)
