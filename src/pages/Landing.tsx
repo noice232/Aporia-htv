@@ -96,7 +96,7 @@ export default function Landing() {
 
   return (
     <div className={`landing ${visible ? 'visible' : ''} ${exiting ? 'exiting' : ''}`}>
-      <canvas ref={canvasRef} className="landing-cosmos" />
+      <canvas ref={canvasRef} className="landing-cosmos" style={selectedPaper ? { pointerEvents: 'none' } : undefined} />
 
       {tooltip && !selectedPaper && (
         <div
