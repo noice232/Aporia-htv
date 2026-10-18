@@ -45,6 +45,7 @@ class ExperimentRun(Base):
     experiment_spec_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("experiment_specs.id"), nullable=True)
     cancel_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True)
+    strategy_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
 
 class ResearchEvent(Base):

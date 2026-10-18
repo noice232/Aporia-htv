@@ -28,6 +28,10 @@ from app.routers.questions import router as questions_router
 from app.routers.judgments import router as judgments_router
 from app.routers.team import router as team_router
 from app.routers.lessons import router as lessons_router
+from app.routers.ws_portfolio import router as ws_portfolio_router
+from app.routers.meta import router as meta_router
+from app.routers.analytics import router as analytics_router
+from app.routers.integrations import router as integrations_router
 
 
 @asynccontextmanager
@@ -61,3 +65,7 @@ app.include_router(questions_router)
 app.include_router(judgments_router)
 app.include_router(team_router)
 app.include_router(lessons_router)
+app.include_router(ws_portfolio_router)
+app.include_router(meta_router)
+app.include_router(analytics_router)
+app.include_router(integrations_router)

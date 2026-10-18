@@ -15,6 +15,7 @@ from app.models.source import SourceContext
 from app.models.question import HumanQuestion
 from app.models.team import TeamComment, TeamParticipant, TeamSession
 from app.models.lesson import ResearchLesson
+from app.models.meta import MetaTrial
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -34,4 +35,5 @@ __all__ = [
     "HumanQuestion",
     "TeamSession", "TeamParticipant", "TeamComment",
     "ResearchLesson",
+    "MetaTrial",
 ]
