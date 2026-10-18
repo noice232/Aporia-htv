@@ -14,13 +14,14 @@
     "types:generate": "openapi-typescript contracts/openapi.yaml -o src/api/generated.ts"
   },
   "dependencies": {
+    "@cosmograph/cosmograph": "^2.5.1",
+    "@cosmograph/react": "^2.5.1",
     "@mkkellogg/gaussian-splats-3d": "^0.4.7",
     "@react-three/drei": "^10.0.6",
     "@react-three/fiber": "^9.0.4",
     "@react-three/postprocessing": "^3.0.4",
     "lucide-react": "^0.468.0",
     "openapi-fetch": "^0.15.0",
-    "postprocessing": "^6.39.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.1.1",

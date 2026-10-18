@@ -1,9 +1,13 @@
 import type { GraphNode, GraphEdge } from '../stores/graph'
 
-const CLUSTERS: Record<string, { center: [number, number, number]; color: [number, number, number]; papers: string[] }> = {
+const CLUSTERS: Record<string, {
+  color: string
+  papers: string[]
+  paperCount: number
+}> = {
   computer_vision: {
-    center: [-12, 5, -8],
-    color: [0.34, 0.87, 0.96],
+    color: 'rgba(87, 221, 246, 0.9)',
+    paperCount: 214302,
     papers: [
       'DINOv2: Learning Robust Visual Features',
       'Segment Anything Model (SAM)',
@@ -15,11 +19,16 @@ const CLUSTERS: Record<string, { center: [number, number, number]; color: [numbe
       'Grounding DINO: Marrying DINO with Grounded Pre-Training',
       'RAM: Recognize Anything Model',
       'Co-DETR: DETRs with Collaborative Hybrid Assignments',
+      'YOLO-World: Real-Time Open-Vocabulary Object Detection',
+      'SAM 2: Segment Anything in Images and Videos',
+      'OWLv2: Scaling Open-Vocabulary Object Detection',
+      'Mask2Former: Masked-attention Mask Transformer',
+      'BEVFormer: Learning Bird Eye View Representation',
     ],
   },
   generative_models: {
-    center: [14, -3, 6],
-    color: [0.91, 0.56, 0.93],
+    color: 'rgba(233, 144, 238, 0.9)',
+    paperCount: 387611,
     papers: [
       'Stable Diffusion 3: Scaling Rectified Flow Transformers',
       'DALL-E 3: Improving Image Generation with Better Captions',
@@ -31,11 +40,14 @@ const CLUSTERS: Record<string, { center: [number, number, number]; color: [numbe
       'EMU Edit: Precise Image Editing via Recognition',
       'IP-Adapter: Text Compatible Image Prompt Adapter',
       'InstantID: Zero-shot Identity-Preserving Generation',
+      'FLUX.1: Black Forest Labs Rectified Flow Transformer',
+      'Sora: Creating Video from Text',
+      'Imagen 3: Better Photorealism with DeepMind',
     ],
   },
   nlp: {
-    center: [3, 10, 14],
-    color: [0.31, 0.91, 0.73],
+    color: 'rgba(78, 232, 186, 0.9)',
+    paperCount: 298421,
     papers: [
       'LLaMA 3: Open Foundation and Fine-Tuned Models',
       'Mixtral of Experts: Efficient Sparse Transformer',
@@ -48,11 +60,14 @@ const CLUSTERS: Record<string, { center: [number, number, number]; color: [numbe
       'Constitutional AI: Harmlessness from AI Feedback',
       'Direct Preference Optimization: Your Language Model',
       'Zephyr: Direct Distillation of LM Alignment',
+      'Qwen2: Alibaba Technical Report',
+      'DeepSeek-V2: A Strong Open-Source MoE Language Model',
+      'Command R+: Scalable RAG-Optimized LLM',
     ],
   },
   reinforcement_learning: {
-    center: [-8, -10, -14],
-    color: [0.73, 0.60, 1.0],
+    color: 'rgba(185, 154, 255, 0.9)',
+    paperCount: 176843,
     papers: [
       'Decision Transformer: Reinforcement Learning via Seq',
       'RLHF: Training Language Models to Follow Instructions',
@@ -62,11 +77,13 @@ const CLUSTERS: Record<string, { center: [number, number, number]; color: [numbe
       'METRA: Scalable Unsupervised RL with Metric-Aware',
       'Eureka: Human-Level Reward Design via Coding LLMs',
       'Q-Transformer: Scalable Offline Reinforcement Learning',
+      'RT-2: Vision-Language-Action Models Transfer Web',
+      'Gato: A Generalist Agent',
     ],
   },
   multimodal: {
-    center: [10, 8, -12],
-    color: [0.96, 0.65, 0.14],
+    color: 'rgba(245, 166, 35, 0.9)',
+    paperCount: 298421,
     papers: [
       'LLaVA-1.5: Improved Baselines with Visual Instruction',
       'CogVLM: Visual Expert for Pretrained Language Models',
@@ -77,6 +94,8 @@ const CLUSTERS: Record<string, { center: [number, number, number]; color: [numbe
       'Video-LLaMA: An Instruction-tuned Audio-Visual LLM',
       'ImageBind: One Embedding Space To Bind Them All',
       'NExT-GPT: Any-to-Any Multimodal LLM',
+      'Ferret: Refer and Ground Anything Anywhere at Any',
+      'MiniGPT-4: Enhancing Vision-Language Understanding',
     ],
   },
 }
@@ -89,74 +108,146 @@ function seededRandom(seed: number) {
   }
 }
 
-export function generateMockGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const nodes: GraphNode[] = []
-  const edges: GraphEdge[] = []
+function gaussian(rand: () => number): number {
+  let u = 0, v = 0
+  while (u === 0) u = rand()
+  while (v === 0) v = rand()
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
+}
+
+export const CLUSTER_LABELS: Record<string, string> = {
+  computer_vision: 'Computer Vision',
+  generative_models: 'Generative Models',
+  nlp: 'Natural Language Processing',
+  reinforcement_learning: 'Reinforcement Learning',
+  multimodal: 'Multimodal',
+}
+
+export const CLUSTER_COLORS: Record<string, string> = {
+  computer_vision: 'rgba(87, 221, 246, 0.9)',
+  generative_models: 'rgba(233, 144, 238, 0.9)',
+  nlp: 'rgba(78, 232, 186, 0.9)',
+  reinforcement_learning: 'rgba(185, 154, 255, 0.9)',
+  multimodal: 'rgba(245, 166, 35, 0.9)',
+}
+
+export const CLUSTER_PAPER_COUNTS: Record<string, number> = Object.fromEntries(
+  Object.entries(CLUSTERS).map(([k, v]) => [k, v.paperCount])
+)
+
+export interface CosmographPoint {
+  id: string
+  label: string
+  cluster: string
+  color: string
+  size: number
+  venue: string
+  year: number
+  citations: number
+}
+
+export interface CosmographLink {
+  source: string
+  target: string
+  type: string
+  weight: number
+}
+
+export function generateCosmographData(): { points: CosmographPoint[]; links: CosmographLink[] } {
   const rand = seededRandom(42)
+  const points: CosmographPoint[] = []
+  const links: CosmographLink[] = []
+
+  const venues = ['NeurIPS', 'ICML', 'ICLR', 'CVPR', 'ECCV', 'ACL', 'EMNLP']
 
   for (const [cluster, data] of Object.entries(CLUSTERS)) {
+    // Named papers as larger anchor nodes
     for (let i = 0; i < data.papers.length; i++) {
-      const spread = 6
-      const position: [number, number, number] = [
-        data.center[0] + (rand() - 0.5) * spread * 2,
-        data.center[1] + (rand() - 0.5) * spread * 2,
-        data.center[2] + (rand() - 0.5) * spread * 2,
-      ]
-      const size = 0.15 + rand() * 0.35
-
-      nodes.push({
-        id: `${cluster}_${i}`,
+      points.push({
+        id: `${cluster}_named_${i}`,
         label: data.papers[i],
-        type: 'paper',
         cluster,
-        position,
         color: data.color,
-        size,
-        metadata: {
-          year: 2023 + Math.floor(rand() * 2),
-          venue: ['NeurIPS', 'ICML', 'ICLR', 'CVPR', 'ECCV', 'ACL', 'EMNLP'][Math.floor(rand() * 7)],
-          citations: Math.floor(rand() * 500) + 10,
-        },
+        size: 3 + rand() * 5,
+        venue: venues[Math.floor(rand() * venues.length)],
+        year: 2023 + Math.floor(rand() * 2),
+        citations: Math.floor(rand() * 800) + 50,
+      })
+    }
+
+    // Fill with many smaller unlabeled particles to create density
+    const fillCount = 120 + Math.floor(rand() * 80)
+    for (let i = 0; i < fillCount; i++) {
+      points.push({
+        id: `${cluster}_fill_${i}`,
+        label: '',
+        cluster,
+        color: data.color,
+        size: 0.5 + rand() * 2,
+        venue: venues[Math.floor(rand() * venues.length)],
+        year: 2020 + Math.floor(rand() * 5),
+        citations: Math.floor(rand() * 100),
       })
     }
   }
 
-  const edgeTypes: GraphEdge['type'][] = ['citation', 'dependency', 'evidence', 'contradiction']
-
-  for (const node of nodes) {
-    const sameCluster = nodes.filter((n) => n.cluster === node.cluster && n.id !== node.id)
-    const intraCount = Math.min(Math.floor(rand() * 3) + 1, sameCluster.length)
-    for (let i = 0; i < intraCount; i++) {
-      const target = sameCluster[Math.floor(rand() * sameCluster.length)]
-      const edgeId = [node.id, target.id].sort().join('__')
-      if (!edges.find((e) => e.id === edgeId)) {
-        edges.push({
-          id: edgeId,
-          source: node.id,
-          target: target.id,
-          type: edgeTypes[Math.floor(rand() * 3)],
-          weight: 0.3 + rand() * 0.7,
-        })
-      }
-    }
-
-    if (rand() > 0.6) {
-      const otherNodes = nodes.filter((n) => n.cluster !== node.cluster)
-      if (otherNodes.length > 0) {
-        const target = otherNodes[Math.floor(rand() * otherNodes.length)]
-        const edgeId = [node.id, target.id].sort().join('__')
-        if (!edges.find((e) => e.id === edgeId)) {
-          edges.push({
-            id: edgeId,
-            source: node.id,
+  // Intra-cluster links (dense)
+  for (const cluster of Object.keys(CLUSTERS)) {
+    const clusterPoints = points.filter((p) => p.cluster === cluster)
+    for (let i = 0; i < clusterPoints.length; i++) {
+      const linkCount = 1 + Math.floor(rand() * 3)
+      for (let j = 0; j < linkCount; j++) {
+        const target = clusterPoints[Math.floor(rand() * clusterPoints.length)]
+        if (target.id !== clusterPoints[i].id) {
+          links.push({
+            source: clusterPoints[i].id,
             target: target.id,
-            type: rand() > 0.7 ? 'contradiction' : 'citation',
-            weight: 0.1 + rand() * 0.4,
+            type: 'citation',
+            weight: 0.3 + rand() * 0.7,
           })
         }
       }
     }
   }
 
+  // Inter-cluster links (sparse)
+  const allClusters = Object.keys(CLUSTERS)
+  for (let i = 0; i < 40; i++) {
+    const c1 = allClusters[Math.floor(rand() * allClusters.length)]
+    const c2 = allClusters[Math.floor(rand() * allClusters.length)]
+    if (c1 === c2) continue
+    const p1 = points.filter((p) => p.cluster === c1)
+    const p2 = points.filter((p) => p.cluster === c2)
+    links.push({
+      source: p1[Math.floor(rand() * p1.length)].id,
+      target: p2[Math.floor(rand() * p2.length)].id,
+      type: 'citation',
+      weight: 0.1 + rand() * 0.3,
+    })
+  }
+
+  return { points, links }
+}
+
+// Legacy types for stores (keep backward compat)
+export function generateMockGraph(): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const { points, links } = generateCosmographData()
+  const nodes: GraphNode[] = points.filter((p) => p.label).map((p) => ({
+    id: p.id,
+    label: p.label,
+    type: 'paper' as const,
+    cluster: p.cluster,
+    position: [0, 0, 0] as [number, number, number],
+    color: [0, 0, 0] as [number, number, number],
+    size: p.size,
+    metadata: { venue: p.venue, year: p.year, citations: p.citations },
+  }))
+  const edges: GraphEdge[] = links.slice(0, 100).map((l, i) => ({
+    id: `edge_${i}`,
+    source: l.source,
+    target: l.target,
+    type: 'citation' as const,
+    weight: l.weight,
+  }))
   return { nodes, edges }
 }

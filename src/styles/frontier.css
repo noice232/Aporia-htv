@@ -2,6 +2,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  background: #050710;
 }
 
 .frontier-canvas {
@@ -20,38 +21,95 @@
   pointer-events: auto;
 }
 
+/* ── Top bar ── */
+
 .frontier-top-bar {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: 20px;
+  left: 24px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-end;
+  gap: 20px;
 }
 
-.frontier-search {
+.frontier-title-block {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-panel);
+  flex-direction: column;
+  gap: 2px;
+}
+
+.frontier-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--fg);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.frontier-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-dim);
+  letter-spacing: 0.03em;
+}
+
+.frontier-view-modes {
+  display: flex;
+  gap: 2px;
+  background: rgba(11, 17, 27, 0.7);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 14px;
-  width: 280px;
+  border-radius: 8px;
+  padding: 3px;
   backdrop-filter: blur(12px);
 }
 
-.frontier-search input {
+.frontier-view-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-dim);
+  transition: all 0.15s ease;
+}
+
+.frontier-view-btn:hover {
+  color: var(--fg-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.frontier-view-btn.active {
+  color: var(--fg);
+  background: rgba(87, 221, 246, 0.12);
+}
+
+/* ── Search ── */
+
+.frontier-search-bar {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(11, 17, 27, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  width: 260px;
+  backdrop-filter: blur(12px);
+}
+
+.frontier-search-bar input {
   background: none;
   border: none;
   outline: none;
   color: var(--fg);
-  font-size: 13px;
+  font-size: 12px;
   width: 100%;
 }
 
-.frontier-search input::placeholder {
+.frontier-search-bar input::placeholder {
   color: var(--fg-dim);
 }
 
@@ -60,29 +118,23 @@
   flex-shrink: 0;
 }
 
-.frontier-stats {
-  display: flex;
-  gap: 16px;
-  margin-left: auto;
+.frontier-search-kbd {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
   color: var(--fg-dim);
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 14px;
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
-.frontier-stats .stat-value {
-  color: var(--accent-cyan);
-  font-weight: 500;
-}
+/* ── Cluster filter pills ── */
 
 .frontier-cluster-filter {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
+  bottom: 50px;
+  left: 24px;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -92,81 +144,80 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
-  background: var(--bg-panel);
+  background: rgba(11, 17, 27, 0.7);
   border: 1px solid var(--border);
-  color: var(--fg-muted);
+  color: var(--fg-dim);
   backdrop-filter: blur(12px);
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .frontier-cluster-chip:hover {
   border-color: var(--border-active);
-  color: var(--fg);
+  color: var(--fg-muted);
 }
 
 .frontier-cluster-chip.active {
-  border-color: var(--chip-color);
+  border-color: color-mix(in srgb, var(--chip-color) 50%, transparent);
   color: var(--fg);
 }
 
 .frontier-cluster-chip-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--chip-color);
-  opacity: 0.4;
-  transition: opacity 0.15s ease;
+  opacity: 0.35;
+  transition: all 0.2s ease;
 }
 
 .frontier-cluster-chip.active .frontier-cluster-chip-dot {
   opacity: 1;
-  box-shadow: 0 0 6px var(--chip-color);
+  box-shadow: 0 0 8px var(--chip-color);
 }
 
-.frontier-detail {
+/* ── Cluster tooltip / detail panel ── */
+
+.frontier-tooltip {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 80px;
+  right: 24px;
   width: 300px;
-  background: var(--bg-panel);
+  background: rgba(11, 17, 27, 0.92);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   padding: 20px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
 }
 
-.frontier-detail-header {
+.frontier-tooltip-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
-.frontier-detail-cluster {
+.frontier-tooltip-name {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--fg-dim);
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.frontier-detail-dot {
-  width: 6px;
-  height: 6px;
+.frontier-tooltip-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
-.frontier-detail-close {
+.frontier-tooltip-close {
   width: 24px;
   height: 24px;
   display: flex;
@@ -174,69 +225,108 @@
   justify-content: center;
   border-radius: 6px;
   color: var(--fg-dim);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.frontier-detail-close:hover {
+.frontier-tooltip-close:hover {
   background: var(--bg-hover);
   color: var(--fg);
 }
 
-.frontier-detail-title {
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.35;
-  margin-bottom: 10px;
-}
-
-.frontier-detail-meta {
+.frontier-tooltip-stats {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 20px;
   margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }
 
-.frontier-detail-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(87, 221, 246, 0.08);
-  color: var(--fg-muted);
-}
-
-.frontier-detail-section-title {
-  margin-bottom: 8px;
-}
-
-.frontier-detail-conn-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.frontier-detail-conn-item {
+.frontier-tooltip-stat {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
 }
 
-.frontier-detail-conn-type {
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
+.frontier-tooltip-stat-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+.frontier-tooltip-stat-label {
+  font-size: 10px;
+  color: var(--fg-dim);
   text-transform: uppercase;
-  color: var(--accent-mint);
+  letter-spacing: 0.08em;
 }
 
-.frontier-detail-conn-label {
-  font-size: 12px;
-  color: var(--fg-muted);
-  line-height: 1.3;
+.frontier-tooltip-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 8px;
 }
+
+.frontier-tooltip-papers {
+  margin-bottom: 14px;
+}
+
+.frontier-tooltip-paper {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.frontier-tooltip-paper:last-child {
+  border-bottom: none;
+}
+
+.frontier-tooltip-paper-title {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  margin-bottom: 3px;
+}
+
+.frontier-tooltip-paper-meta {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-dim);
+}
+
+.frontier-tooltip-keywords {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.frontier-tooltip-kw {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(87, 221, 246, 0.07);
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+}
+
+/* ── Hint bar ── */
+
+.frontier-hint {
+  position: absolute;
+  bottom: 16px;
+  right: 24px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  opacity: 0.6;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* ── Loading ── */
 
 .frontier-loading {
   position: absolute;
@@ -244,7 +334,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: #050710;
   z-index: 10;
 }
 
@@ -253,9 +343,9 @@
 }
 
 .frontier-loading-ring {
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--border);
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(151, 180, 220, 0.12);
   border-top-color: var(--accent-cyan);
   border-radius: 50%;
   animation: frontier-spin 0.8s linear infinite;
@@ -270,35 +360,45 @@
   font-size: 12px;
   font-family: var(--font-mono);
   color: var(--fg-dim);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
+/* ── Responsive ── */
+
 @media (max-width: 768px) {
-  .frontier-search {
-    width: 100%;
-  }
-
   .frontier-top-bar {
-    flex-wrap: wrap;
+    left: 12px;
+    top: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  .frontier-stats {
-    margin-left: 0;
-    width: 100%;
-    justify-content: center;
+  .frontier-search-bar {
+    top: 12px;
+    right: 12px;
+    width: 180px;
   }
 
-  .frontier-detail {
+  .frontier-view-modes {
+    display: none;
+  }
+
+  .frontier-tooltip {
     top: auto;
     bottom: 60px;
-    left: 16px;
-    right: 16px;
+    left: 12px;
+    right: 12px;
     width: auto;
   }
 
   .frontier-cluster-filter {
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
+    left: 12px;
+    right: 12px;
+    bottom: 40px;
+  }
+
+  .frontier-hint {
+    display: none;
   }
 }
