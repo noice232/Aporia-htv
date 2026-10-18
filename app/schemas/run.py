@@ -48,3 +48,9 @@ class ResearchControlOut(BaseModel):
     project_id: str
     new_state: str
     affected_runs: int
+
+
+class AutonomousStartOut(BaseModel):
+    project_id: str
+    state: str
+    message: str

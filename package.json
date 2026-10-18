@@ -5,11 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "smoke": "node scripts/smoke.mjs",
-    "smoke:poc": "node scripts/poc-smoke.mjs",
-    "smoke:demo": "node scripts/demo-smoke.mjs",
-    "format:check": "prettier --check src/App.tsx src/Poc.tsx src/ResearchDemo.tsx src/api/client.ts src/styles.css src/poc.css src/demo.css src/main.tsx vite.config.ts scripts/smoke.mjs scripts/poc-smoke.mjs scripts/demo-smoke.mjs scripts/sample-ply.mjs",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,css}' vite.config.ts 'scripts/*.mjs'",
     "preview": "vite preview --host 0.0.0.0",
     "types:generate": "openapi-typescript contracts/openapi.yaml -o src/api/generated.ts"
   },

@@ -133,17 +133,32 @@ export function SideRail({ open, onClose }: SideRailProps) {
         {/* Research section second */}
         <div className="rail-section">
           <div className="rail-label">Research</div>
-          {NAV_ITEMS.map(({ to, icon: Icon, label, project }) => (
-            <NavLink
-              key={to}
-              to={project ? projectPath(to) : to}
-              className={({ isActive }) => `rail-nav-item ${isActive ? 'active' : ''}`}
-              onClick={onClose}
-            >
-              <Icon size={16} />
-              {label}
-            </NavLink>
-          ))}
+          {NAV_ITEMS.map(({ to, icon: Icon, label, project }) => {
+            const disabled = project && !currentId
+            if (disabled) {
+              return (
+                <span
+                  key={to}
+                  className="rail-nav-item--disabled"
+                  title="Select a project first"
+                >
+                  <Icon size={16} />
+                  {label}
+                </span>
+              )
+            }
+            return (
+              <NavLink
+                key={to}
+                to={project ? projectPath(to) : to}
+                className={({ isActive }) => `rail-nav-item ${isActive ? 'active' : ''}`}
+                onClick={onClose}
+              >
+                <Icon size={16} />
+                {label}
+              </NavLink>
+            )
+          })}
         </div>
       </div>
 

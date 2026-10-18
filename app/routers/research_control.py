@@ -12,6 +12,7 @@ from app.models.project import ExperimentRun, Project, ResearchEvent
 from app.models.research_session import HumanCheckpoint, ResearchSession
 from app.schemas.research_session import CheckpointOut
 from app.schemas.run import (
+    AutonomousStartOut,
     ResearchControlOut,
     ResearchControlRequest,
     ResearchStatusOut,
@@ -114,6 +115,56 @@ def research_control(
         project_id=project_id,
         new_state=new_state,
         affected_runs=affected_runs,
+    )
+
+
+@router.post(
+    "/projects/{project_id}/research/autonomous",
+    response_model=AutonomousStartOut,
+)
+def start_autonomous(project_id: str, db: Session = Depends(get_db)):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    if project.research_state == "running":
+        raise HTTPException(status_code=409, detail="Research already running")
+
+    import threading
+    from app.database import SessionLocal
+    from app.runner import run_autonomous_loop
+
+    def _run():
+        session = SessionLocal()
+        try:
+            run_autonomous_loop(session, project_id, max_iterations=5, threshold=0.85)
+        except Exception as exc:
+            p = session.get(Project, project_id)
+            if p:
+                p.research_state = "failed"
+                seq = (
+                    session.query(func.max(ResearchEvent.sequence))
+                    .filter_by(project_id=project_id)
+                    .scalar()
+                    or 0
+                ) + 1
+                session.add(ResearchEvent(
+                    project_id=project_id,
+                    sequence=seq,
+                    type="autonomous.error",
+                    payload_json=json.dumps({"error": str(exc)}),
+                ))
+                session.commit()
+        finally:
+            session.close()
+
+    project.research_state = "running"
+    db.commit()
+    threading.Thread(target=_run, daemon=True).start()
+
+    return AutonomousStartOut(
+        project_id=project_id,
+        state="running",
+        message="Autonomous research loop started (3-5 iterations)",
     )
 
 
