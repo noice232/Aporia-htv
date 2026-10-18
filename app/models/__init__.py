@@ -16,6 +16,7 @@ from app.models.question import HumanQuestion
 from app.models.team import TeamComment, TeamParticipant, TeamSession
 from app.models.lesson import ResearchLesson
 from app.models.meta import MetaTrial
+from app.models.demo_research import ResearchStep, ResearchFeedback, DemoExperiment
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -36,4 +37,5 @@ __all__ = [
     "TeamSession", "TeamParticipant", "TeamComment",
     "ResearchLesson",
     "MetaTrial",
+    "ResearchStep", "ResearchFeedback", "DemoExperiment",
 ]

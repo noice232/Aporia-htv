@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -27,14 +26,22 @@ class ProjectStateOut(BaseModel):
 class GraphNode(BaseModel):
     id: str
     label: str
-    type: str
-    status: str
+    type: Literal["paper", "claim", "question", "method", "blocker"]
+    cluster: str | None = None
+    position: tuple[float, float, float]
+    color: tuple[float, float, float]
+    size: float
+    metadata: dict[str, Any] | None = None
+    status: str | None = None
 
 
 class GraphEdge(BaseModel):
+    id: str
     source: str
     target: str
-    relationship: str
+    type: Literal["citation", "dependency", "evidence", "contradiction"]
+    weight: float
+    relationship: str | None = None
 
 
 class GraphOut(BaseModel):

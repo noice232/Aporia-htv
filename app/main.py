@@ -34,6 +34,7 @@ from app.routers.analytics import router as analytics_router
 from app.routers.integrations import router as integrations_router
 from app.routers.project_state import router as project_state_router
 from app.routers.sse import router as sse_router
+from app.routers.demo_research import router as demo_research_router
 
 
 @asynccontextmanager
@@ -73,3 +74,4 @@ app.include_router(analytics_router)
 app.include_router(integrations_router)
 app.include_router(project_state_router)
 app.include_router(sse_router)
+app.include_router(demo_research_router)
