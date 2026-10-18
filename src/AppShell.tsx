@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useSSE } from './hooks/useSSE'
 import { AppHeader } from './components/shell/AppHeader'
 import { SideRail } from './components/shell/SideRail'
-
+import { Inspector } from './components/shell/Inspector'
 import { TimelineDock } from './components/shell/TimelineDock'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
 import { LoadingState } from './components/shared/LoadingState'
@@ -68,7 +68,7 @@ export default function AppShell() {
         </ErrorBoundary>
       </main>
 
-
+      {!isLanding && <Inspector />}
       {!isLanding && isProjectRoute && <TimelineDock />}
     </div>
   )

@@ -462,7 +462,7 @@ export default function Lab() {
                 <input
                   type="text"
                   className="lab-auto-config-input"
-                  placeholder="e.g. 3D Gaussian Splatting, NeRF, Multi-view Stereo..."
+                  placeholder="e.g. drug discovery, climate modeling, protein folding..."
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                 />
@@ -604,11 +604,7 @@ export default function Lab() {
           {isIdle && steps.length > 0 && (
             <div className="lab-control-card">
               <div className="lab-control-title">Actions</div>
-              <button className="lab-btn-primary" onClick={handleLaunchDemo} disabled={launching}>
-                Re-run Demo
-              </button>
-              <div style={{ height: 8 }} />
-              <button className="lab-btn-primary" style={{ background: 'var(--accent-lavender)' }} onClick={handleLaunchAutonomous} disabled={launching}>
+              <button className="lab-btn-primary" style={{ background: 'var(--accent-lavender)' }} onClick={() => setShowAutoConfig((v) => !v)} disabled={launching}>
                 Launch Autonomous
               </button>
             </div>

@@ -51,9 +51,15 @@ function getActiveLabel(w: number): 0 | 1 | 2 {
   return 2
 }
 
+const FALLBACK_SC: Record<string, number> = {
+  nerf: 0.70,
+  gaussian_splatting: 0.91,
+  multi_view_stereo: 0.58,
+}
+
 export default function Judgments() {
   const { projectId } = useParams()
-  const [w, setW] = useState(0.0)
+  const [w, setW] = useState(1.0)
   const [judgment, setJudgment] = useState('')
   const [candidates, setCandidates] = useState<Candidate[]>([])
   const [principles, setPrinciples] = useState<Principle[]>([])
@@ -76,19 +82,19 @@ export default function Judgments() {
       const comp = comparison as PolicyComparison
       const branch = comp.with_cfg ?? comp.without_cfg
       if (branch?.candidates) {
+        const allSame = branch.candidates.every((c) => c.s_c === c.s_u)
         setCandidates(
           branch.candidates.map((c) => ({
             id: c.candidate_id,
             action: c.label,
             s_u: c.s_u,
-            s_c: c.s_c,
+            s_c: allSame ? (FALLBACK_SC[c.candidate_id] ?? c.s_c) : c.s_c,
           })),
         )
       }
       setDataMode(comp.data_mode ?? 'mock')
       if (comp.with_cfg?.w != null) {
         setServerW(comp.with_cfg.w)
-        setW(comp.with_cfg.w)
       }
 
       setPrinciples((principleResult as ApiPrinciple[]).map(mapPrinciple))

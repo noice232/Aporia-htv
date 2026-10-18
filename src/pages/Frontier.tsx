@@ -6,58 +6,57 @@ import '../styles/frontier.css'
 
 const BASE = import.meta.env.VITE_API_BASE_URL || ''
 
-const _3DGS_PAPERS: { id: string; title: string; topic: number; cluster: number }[] = [
-  { id: 'gs-001', title: '3D Gaussian Splatting for Real-Time Radiance Field Rendering', topic: 0, cluster: 0 },
-  { id: 'gs-002', title: 'Dynamic 3D Gaussians: Tracking by Persistent Dynamic View Synthesis', topic: 0, cluster: 0 },
-  { id: 'gs-003', title: 'SuGaR: Surface-Aligned Gaussian Splatting', topic: 0, cluster: 1 },
-  { id: 'gs-004', title: 'GaussianEditor: Swift and Controllable 3D Editing with Gaussian Splatting', topic: 0, cluster: 1 },
-  { id: 'gs-005', title: 'Deformable 3D Gaussians for High-Fidelity Monocular Dynamic Scene Reconstruction', topic: 0, cluster: 0 },
-  { id: 'gs-006', title: 'PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics', topic: 1, cluster: 2 },
-  { id: 'gs-007', title: 'DreamGaussian: Generative Gaussian Splatting for Efficient 3D Content Creation', topic: 1, cluster: 2 },
-  { id: 'gs-008', title: 'GaussianDreamer: Fast Generation from Text to 3D with Point Cloud Priors', topic: 1, cluster: 2 },
-  { id: 'gs-009', title: 'Compact 3D Gaussian Representation for Radiance Field', topic: 2, cluster: 3 },
-  { id: 'gs-010', title: 'Mip-Splatting: Alias-free 3D Gaussian Splatting', topic: 2, cluster: 3 },
-  { id: 'gs-011', title: 'GaussianAvatar: Towards Realistic Human Avatar Modeling from a Single Video', topic: 3, cluster: 4 },
-  { id: 'gs-012', title: 'Animatable Gaussians: Learning Pose-Dependent Gaussian Maps', topic: 3, cluster: 4 },
-  { id: 'gs-013', title: 'Gaussian Head Avatar: Ultra High-Fidelity Head Avatar via Dynamic Gaussians', topic: 3, cluster: 4 },
-  { id: 'gs-014', title: 'GPS-Gaussian: Generalizable Pixel-wise 3D Gaussian Splatting for Real-time Human Novel View Synthesis', topic: 3, cluster: 5 },
-  { id: 'gs-015', title: 'SC-GS: Sparse-Controlled Gaussian Splatting for Editable Dynamic Scenes', topic: 0, cluster: 0 },
-  { id: 'gs-016', title: 'Gaussian Splatting SLAM', topic: 4, cluster: 6 },
-  { id: 'gs-017', title: 'SplaTAM: Splat Track & Map 3D Gaussians for Dense RGB-D SLAM', topic: 4, cluster: 6 },
-  { id: 'gs-018', title: 'Photo-SLAM: Real-time Simultaneous Localization and Photorealistic Mapping', topic: 4, cluster: 6 },
-  { id: 'gs-019', title: 'LangSplat: 3D Language Gaussian Splatting', topic: 5, cluster: 7 },
-  { id: 'gs-020', title: 'Gaussian Grouping: Segment and Edit Anything in 3D Scenes', topic: 5, cluster: 7 },
-  { id: 'gs-021', title: 'COLMAP-Free 3D Gaussian Splatting', topic: 2, cluster: 3 },
-  { id: 'gs-022', title: 'GS-IR: 3D Gaussian Splatting for Inverse Rendering', topic: 1, cluster: 2 },
-  { id: 'gs-023', title: 'Scaffold-GS: Structured 3D Gaussians for View-Adaptive Rendering', topic: 2, cluster: 3 },
-  { id: 'gs-024', title: 'NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis', topic: 6, cluster: 8 },
-  { id: 'gs-025', title: 'Instant Neural Graphics Primitives with a Multiresolution Hash Encoding', topic: 6, cluster: 8 },
-  { id: 'gs-026', title: 'Point-NeRF: Point-based Neural Radiance Fields', topic: 6, cluster: 8 },
-  { id: 'gs-027', title: 'Plenoxels: Radiance Fields without Neural Networks', topic: 6, cluster: 9 },
-  { id: 'gs-028', title: 'Multi-View Stereo Revisited', topic: 7, cluster: 10 },
-  { id: 'gs-029', title: 'PixelSplat: 3D Gaussian Splats from Image Pairs for Scalable Generalizable 3D Reconstruction', topic: 0, cluster: 1 },
-  { id: 'gs-030', title: 'GauHuman: Articulated Gaussian Splatting for Real-Time 3D Human Rendering', topic: 3, cluster: 5 },
+const _FALLBACK_PAPERS: { id: string; title: string; topic: number; cluster: number }[] = [
+  { id: 'p-001', title: 'Attention Is All You Need', topic: 0, cluster: 0 },
+  { id: 'p-002', title: 'Scaling Laws for Neural Language Models', topic: 0, cluster: 0 },
+  { id: 'p-003', title: 'Deep Residual Learning for Image Recognition', topic: 1, cluster: 1 },
+  { id: 'p-004', title: 'Generative Adversarial Networks', topic: 2, cluster: 2 },
+  { id: 'p-005', title: 'BERT: Pre-training of Deep Bidirectional Transformers', topic: 0, cluster: 0 },
+  { id: 'p-006', title: 'Denoising Diffusion Probabilistic Models', topic: 2, cluster: 2 },
+  { id: 'p-007', title: 'Variational Autoencoders for Collaborative Filtering', topic: 2, cluster: 3 },
+  { id: 'p-008', title: 'High-Resolution Image Synthesis with Latent Diffusion Models', topic: 2, cluster: 2 },
+  { id: 'p-009', title: 'An Image is Worth 16x16 Words: Transformers for Image Recognition', topic: 1, cluster: 1 },
+  { id: 'p-010', title: 'Language Models are Few-Shot Learners (GPT-3)', topic: 0, cluster: 0 },
+  { id: 'p-011', title: 'Masked Autoencoders Are Scalable Vision Learners', topic: 1, cluster: 1 },
+  { id: 'p-012', title: 'Contrastive Learning of Visual Representations (SimCLR)', topic: 3, cluster: 4 },
+  { id: 'p-013', title: 'CLIP: Learning Transferable Visual Models From Natural Language Supervision', topic: 3, cluster: 4 },
+  { id: 'p-014', title: 'Segment Anything Model (SAM)', topic: 1, cluster: 5 },
+  { id: 'p-015', title: 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', topic: 4, cluster: 6 },
+  { id: 'p-016', title: 'Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks', topic: 4, cluster: 6 },
+  { id: 'p-017', title: 'Constitutional AI: Harmlessness from AI Feedback', topic: 4, cluster: 7 },
+  { id: 'p-018', title: 'Proximal Policy Optimization Algorithms', topic: 5, cluster: 8 },
+  { id: 'p-019', title: 'Reward Modeling for RLHF', topic: 5, cluster: 8 },
+  { id: 'p-020', title: 'Direct Preference Optimization (DPO)', topic: 5, cluster: 8 },
+  { id: 'p-021', title: 'Toolformer: Language Models Can Teach Themselves to Use Tools', topic: 4, cluster: 7 },
+  { id: 'p-022', title: 'FlashAttention: Fast and Memory-Efficient Exact Attention', topic: 6, cluster: 9 },
+  { id: 'p-023', title: 'Mixture of Experts Meets Instruction Tuning', topic: 6, cluster: 9 },
+  { id: 'p-024', title: 'Adam: A Method for Stochastic Optimization', topic: 7, cluster: 10 },
+  { id: 'p-025', title: 'Batch Normalization: Accelerating Deep Network Training', topic: 7, cluster: 10 },
+  { id: 'p-026', title: 'Dropout: A Simple Way to Prevent Neural Networks from Overfitting', topic: 7, cluster: 10 },
+  { id: 'p-027', title: 'Neural Ordinary Differential Equations', topic: 6, cluster: 9 },
+  { id: 'p-028', title: 'Graph Neural Networks: A Review of Methods and Applications', topic: 3, cluster: 4 },
+  { id: 'p-029', title: 'Self-Supervised Learning: Generalized Pretext Tasks', topic: 3, cluster: 5 },
+  { id: 'p-030', title: 'Multi-Task Learning with Deep Neural Networks: A Survey', topic: 7, cluster: 10 },
 ]
 
-const _3DGS_EDGES: [string, string][] = [
-  ['gs-001', 'gs-002'], ['gs-001', 'gs-003'], ['gs-001', 'gs-005'], ['gs-001', 'gs-009'],
-  ['gs-001', 'gs-010'], ['gs-001', 'gs-015'], ['gs-001', 'gs-023'], ['gs-001', 'gs-029'],
-  ['gs-024', 'gs-001'], ['gs-024', 'gs-025'], ['gs-024', 'gs-026'], ['gs-024', 'gs-027'],
-  ['gs-002', 'gs-005'], ['gs-002', 'gs-015'], ['gs-003', 'gs-004'],
-  ['gs-006', 'gs-005'], ['gs-007', 'gs-008'], ['gs-007', 'gs-001'],
-  ['gs-011', 'gs-012'], ['gs-011', 'gs-013'], ['gs-011', 'gs-014'], ['gs-011', 'gs-030'],
-  ['gs-016', 'gs-017'], ['gs-016', 'gs-018'], ['gs-019', 'gs-020'],
-  ['gs-021', 'gs-001'], ['gs-022', 'gs-001'], ['gs-025', 'gs-026'],
-  ['gs-001', 'gs-016'], ['gs-001', 'gs-019'], ['gs-001', 'gs-011'],
-  ['gs-028', 'gs-024'], ['gs-026', 'gs-001'],
+const _FALLBACK_EDGES: [string, string][] = [
+  ['p-001', 'p-002'], ['p-001', 'p-005'], ['p-001', 'p-009'], ['p-001', 'p-010'],
+  ['p-001', 'p-015'], ['p-001', 'p-022'], ['p-001', 'p-023'], ['p-010', 'p-015'],
+  ['p-010', 'p-016'], ['p-010', 'p-021'], ['p-003', 'p-009'], ['p-003', 'p-011'],
+  ['p-004', 'p-006'], ['p-004', 'p-007'], ['p-006', 'p-008'],
+  ['p-012', 'p-013'], ['p-013', 'p-014'], ['p-012', 'p-029'],
+  ['p-005', 'p-010'], ['p-005', 'p-013'], ['p-018', 'p-019'], ['p-019', 'p-020'],
+  ['p-015', 'p-017'], ['p-016', 'p-021'], ['p-022', 'p-023'],
+  ['p-024', 'p-025'], ['p-024', 'p-026'], ['p-025', 'p-003'],
+  ['p-028', 'p-012'], ['p-027', 'p-024'], ['p-030', 'p-003'], ['p-014', 'p-011'],
 ]
 
-function make3DGSFallback(): ExternalData {
+function makeFallbackData(): ExternalData {
   const R = 40
   const nodeMap = new Map<string, number>()
-  const nodes: AtlasNode[] = _3DGS_PAPERS.map((p, i) => {
+  const nodes: AtlasNode[] = _FALLBACK_PAPERS.map((p, i) => {
     nodeMap.set(p.id, i)
-    const angle = (i / _3DGS_PAPERS.length) * Math.PI * 2 + p.cluster * 0.5
+    const angle = (i / _FALLBACK_PAPERS.length) * Math.PI * 2 + p.cluster * 0.5
     const r = R * (0.5 + p.cluster * 0.12) + (i % 3) * 6
     return {
       id: p.id,
@@ -66,12 +65,12 @@ function make3DGSFallback(): ExternalData {
       z: (p.topic - 3) * 10 + (Math.random() - 0.5) * 5,
       topic: p.topic,
       cluster: p.cluster,
-      size: p.id === 'gs-001' ? 3 : p.id === 'gs-024' ? 2.5 : 1 + Math.random() * 0.5,
+      size: p.id === 'p-001' ? 3 : p.id === 'p-010' ? 2.5 : 1 + Math.random() * 0.5,
       kind: 'paper',
       title: p.title,
     }
   })
-  const links: AtlasLink[] = _3DGS_EDGES
+  const links: AtlasLink[] = _FALLBACK_EDGES
     .map(([s, t]) => {
       const src = nodeMap.get(s)
       const dst = nodeMap.get(t)
@@ -156,7 +155,7 @@ export default function Frontier() {
     async function init() {
       const data = await fetchFrontierData(currentId!)
       if (cancelled) return
-      const fallback = (!data || data.nodes.length === 0) ? make3DGSFallback() : null
+      const fallback = (!data || data.nodes.length === 0) ? makeFallbackData() : null
       const controls = initCosmos(canvas!, {
         onPick: (node, x, y) => { setTooltip(node ? { node, x, y } : null) },
         dark: false,
