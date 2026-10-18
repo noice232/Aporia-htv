@@ -410,7 +410,7 @@ export function initCosmos(
     activeLinks = bufferVAO(linkBuffers(filter), gl!.LINES)
   }
 
-  const initial = { yaw: .06, pitch: -.1, zoom: 1.9 }
+  const initial = { yaw: .06, pitch: -.1, zoom: 1.5 }
   let yaw = initial.yaw, pitch = initial.pitch, zoom = initial.zoom
   let dragging = false, moved = false, lastX = 0, lastY = 0, dpr = 1
 
