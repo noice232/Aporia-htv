@@ -7,6 +7,7 @@ from app.models.frontier import FrontierEdge, FrontierNode
 from app.models.artifact import ArtifactBlob, ExperimentSpec
 from app.models.plan import PlanHypothesis, PlanProtocol, PlanVersion, ResearchPlan
 from app.models.parallax import Claim, ClaimEvidence, Dispute
+from app.models.skill import CandidateSkill, SkillReview
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -18,4 +19,5 @@ __all__ = [
     "ArtifactBlob", "ExperimentSpec",
     "ResearchPlan", "PlanHypothesis", "PlanProtocol", "PlanVersion",
     "Claim", "ClaimEvidence", "Dispute",
+    "CandidateSkill", "SkillReview",
 ]
