@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class JudgmentRequest(BaseModel):
     text: str
+    source_id: str | None = None
 
 
 class UpdatePrinciple(BaseModel):

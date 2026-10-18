@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -67,18 +68,33 @@ def _emit(db: Session, project_id: str, event_type: str,
     db.flush()
 
 
+_PAPIERS_SOURCE_ID_PATTERN = re.compile(
+    r"^(10\.\d{4,9}/[^\s]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|papiers:[A-Za-z0-9._-]+)$"
+)
+
+
 @router.post("/projects/{project_id}/judgments", response_model=PrincipleOut, status_code=201)
 def submit_judgment(project_id: str, body: JudgmentRequest, db: Session = Depends(get_db)):
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if body.source_id is not None:
+        if not _PAPIERS_SOURCE_ID_PATTERN.match(body.source_id):
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid source_id format. Expected DOI, UUID, or papiers:<identifier>",
+            )
+
     profile = _get_or_create_profile(db, project_id)
     adjustments = compile_judgment(body.text)
+
+    source = "papiers" if body.source_id else "manual"
 
     principle = ResearcherPrinciple(
         profile_id=profile.id,
         text=body.text,
+        source=source,
         weight_adjustments_json=json.dumps(adjustments),
     )
     db.add(principle)

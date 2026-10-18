@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -8,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.models.profile import ProfileVersion, ResearcherPrinciple, ResearcherProfile
 from app.policy.scoring import U_WEIGHTS
+
+logger = logging.getLogger(__name__)
 
 _SCORING_DIMS = list(U_WEIGHTS.keys())
 
@@ -41,13 +45,97 @@ _KNOWN_PATTERNS: list[dict[str, Any]] = [
     },
 ]
 
+_JUDGMENT_EXTRACTION_PROMPT = """You are an expert at interpreting human research judgments and translating them into scoring dimension adjustments.
 
-def compile_judgment(text: str) -> dict[str, float]:
+Given a researcher's judgment text, extract how it should adjust the scoring weights for a 3D reconstruction experiment evaluation system.
+
+Researcher's judgment: "{text}"
+
+Scoring dimensions (each adjustment should be between -1.0 and 1.0):
+- visual_appeal: How aesthetically pleasing viewpoints are valued
+- geometric_coverage: How much surface geometry observation is valued
+- info_gain: How much new geometric information is valued
+- cost_efficiency: How resource-efficient acquisition is valued
+
+Return a JSON object with exactly these fields:
+- visual_appeal: float (-1.0 to 1.0, adjustment)
+- geometric_coverage: float (-1.0 to 1.0, adjustment)
+- info_gain: float (-1.0 to 1.0, adjustment)
+- cost_efficiency: float (-1.0 to 1.0, adjustment)"""
+
+
+def _compile_judgment_stub(text: str) -> dict[str, float]:
+    """Stub extraction: keyword pattern matching."""
     text_lower = text.lower()
     for pattern in _KNOWN_PATTERNS:
         if any(kw in text_lower for kw in pattern["keywords"]):
             return dict(pattern["adjustments"])
     return {dim: 0.0 for dim in _SCORING_DIMS}
+
+
+def _compile_judgment_gemini(text: str, api_key: str, model_id: str) -> dict[str, float]:
+    """Gemini extraction: send text to structured JSON, return dimension adjustments."""
+    from google import genai
+    from google.genai import types
+
+    response_schema = types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "visual_appeal": types.Schema(type=types.Type.NUMBER),
+            "geometric_coverage": types.Schema(type=types.Type.NUMBER),
+            "info_gain": types.Schema(type=types.Type.NUMBER),
+            "cost_efficiency": types.Schema(type=types.Type.NUMBER),
+        },
+        required=["visual_appeal", "geometric_coverage", "info_gain", "cost_efficiency"],
+    )
+
+    client = genai.Client(api_key=api_key)
+    prompt = _JUDGMENT_EXTRACTION_PROMPT.format(text=text)
+
+    t0 = time.monotonic()
+    response = client.models.generate_content(
+        model=model_id,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.0,
+            response_mime_type="application/json",
+            response_schema=response_schema,
+        ),
+    )
+    latency_ms = (time.monotonic() - t0) * 1000
+
+    data = json.loads(response.text)
+
+    adjustments: dict[str, float] = {}
+    for dim in _SCORING_DIMS:
+        val = data.get(dim, 0.0)
+        adjustments[dim] = max(-1.0, min(1.0, float(val)))
+
+    logger.info(
+        "Gemini judgment extraction: latency=%.0fms adjustments=%s",
+        latency_ms, adjustments,
+    )
+    return adjustments
+
+
+def compile_judgment(text: str) -> dict[str, float]:
+    from app.config import settings
+
+    if settings.scoring_mode == "gemini" and settings.gemini_api_key:
+        try:
+            return _compile_judgment_gemini(
+                text,
+                api_key=settings.gemini_api_key,
+                model_id=settings.gemini_model_id,
+            )
+        except Exception:
+            logger.warning(
+                "Gemini judgment extraction failed, falling back to stub",
+                exc_info=True,
+            )
+            return _compile_judgment_stub(text)
+
+    return _compile_judgment_stub(text)
 
 
 def _get_or_create_profile(db: Session, project_id: str) -> ResearcherProfile:
