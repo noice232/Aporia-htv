@@ -24,6 +24,7 @@ class Project(Base):
     title: Mapped[str] = mapped_column(String(256))
     objective: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="created")
+    research_state: Mapped[str] = mapped_column(String(32), default="idle")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -40,6 +41,9 @@ class ExperimentRun(Base):
     metrics_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     parameters_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     data_mode: Mapped[str] = mapped_column(String(32), default="measured")
+    experiment_spec_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("experiment_specs.id"), nullable=True)
+    cancel_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True)
 
 
 class ResearchEvent(Base):

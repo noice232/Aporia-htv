@@ -18,6 +18,8 @@ from app.routers.parallax import router as parallax_router
 from app.routers.skill import router as skill_router
 from app.routers.portfolio import router as portfolio_router
 from app.routers.court import router as court_router
+from app.routers.runs import router as runs_router
+from app.routers.research_control import router as research_control_router
 
 
 @asynccontextmanager
@@ -41,3 +43,5 @@ app.include_router(parallax_router)
 app.include_router(skill_router)
 app.include_router(portfolio_router)
 app.include_router(court_router)
+app.include_router(runs_router)
+app.include_router(research_control_router)
