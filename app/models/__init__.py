@@ -6,6 +6,7 @@ from app.models.research_session import HumanCheckpoint, ResearchSession, Sessio
 from app.models.frontier import FrontierEdge, FrontierNode
 from app.models.artifact import ArtifactBlob, ExperimentSpec
 from app.models.plan import PlanHypothesis, PlanProtocol, PlanVersion, ResearchPlan
+from app.models.parallax import Claim, ClaimEvidence, Dispute
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -16,4 +17,5 @@ __all__ = [
     "FrontierNode", "FrontierEdge",
     "ArtifactBlob", "ExperimentSpec",
     "ResearchPlan", "PlanHypothesis", "PlanProtocol", "PlanVersion",
+    "Claim", "ClaimEvidence", "Dispute",
 ]

@@ -14,6 +14,7 @@ from app.routers.papiers import router as papiers_router
 from app.routers.frontier import router as frontier_router
 from app.routers.artifact import router as artifact_router
 from app.routers.plan import router as plan_router
+from app.routers.parallax import router as parallax_router
 
 
 @asynccontextmanager
@@ -33,3 +34,4 @@ app.include_router(papiers_router)
 app.include_router(frontier_router)
 app.include_router(artifact_router)
 app.include_router(plan_router)
+app.include_router(parallax_router)
