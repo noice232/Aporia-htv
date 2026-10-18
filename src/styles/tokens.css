@@ -1,0 +1,130 @@
+:root {
+  --bg: #05070C;
+  --bg-surface: #0B111B;
+  --bg-panel: rgba(11, 17, 27, 0.92);
+  --bg-card: rgba(16, 24, 38, 0.85);
+  --bg-hover: rgba(30, 42, 62, 0.6);
+  --border: rgba(151, 180, 220, 0.14);
+  --border-active: rgba(151, 180, 220, 0.28);
+  --fg: #E5EFFA;
+  --fg-muted: #8898AF;
+  --fg-dim: #556577;
+  --accent-mint: #4EE8BA;
+  --accent-cyan: #57DDF6;
+  --accent-icy: #B4F2FF;
+  --accent-lavender: #B99AFF;
+  --accent-fuchsia: #E790EE;
+  --accent-amber: #F5A623;
+  --accent-red: #EF5350;
+  --accent-green: #66BB6A;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --rail-width: 220px;
+  --inspector-width: 320px;
+  --header-height: 52px;
+  --timeline-height: 120px;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-width: 320px;
+  overflow: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1, h2, h3, h4, p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+h3 {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: rgba(87, 221, 246, 0.25);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(151, 180, 220, 0.18);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(151, 180, 220, 0.3);
+}
