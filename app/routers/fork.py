@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.fork import execute_fork, _fork_to_dict
+from app.fork import execute_fork, replay_fork, _fork_to_dict
 from app.models.fork import ResearchFork
 from app.models.project import Project
 from app.policy.candidates import DEFAULT_CANDIDATES
@@ -16,6 +16,7 @@ from app.schemas.fork import (
     ForkOut,
     ForkRequest,
     ForkSummaryOut,
+    ReplayRequest,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["fork"])
@@ -65,6 +66,28 @@ def get_fork(project_id: str, fork_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Fork not found")
 
     return _build_fork_out(_fork_to_dict(fork))
+
+
+@router.post("/projects/{project_id}/forks/{fork_id}/replay", response_model=ForkOut, status_code=201)
+def replay_fork_endpoint(
+    project_id: str, fork_id: str, body: ReplayRequest, db: Session = Depends(get_db),
+):
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    original = db.get(ResearchFork, fork_id)
+    if not original or original.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Fork not found")
+
+    result = replay_fork(
+        db,
+        original_fork_id=fork_id,
+        new_w=body.w,
+        idempotency_key=body.idempotency_key,
+    )
+    db.commit()
+    return _build_fork_out(result)
 
 
 @router.get("/projects/{project_id}/forks", response_model=list[ForkSummaryOut])

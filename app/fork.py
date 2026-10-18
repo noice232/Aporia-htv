@@ -213,6 +213,108 @@ def execute_fork(
     return _fork_to_dict(fork, confounds=confounds)
 
 
+def replay_fork(
+    db: Session,
+    original_fork_id: str,
+    new_w: float,
+    idempotency_key: str | None = None,
+) -> dict[str, Any] | None:
+    """Load an existing fork's context and re-run dual policy with a new w value."""
+    original = db.get(ResearchFork, original_fork_id)
+    if not original:
+        return None
+
+    if idempotency_key:
+        existing = (
+            db.query(ResearchFork)
+            .filter(ResearchFork.idempotency_key == idempotency_key)
+            .first()
+        )
+        if existing:
+            return _fork_to_dict(existing)
+
+    project_id = original.project_id
+
+    human_context = build_human_context(db, project_id)
+
+    result_unguided = run_policy(db, project_id, w=0.0, human_context=human_context)
+    result_guided = run_policy(db, project_id, w=new_w, human_context=human_context)
+
+    cid_unguided = result_unguided["selected_candidate_id"]
+    cid_guided = result_guided["selected_candidate_id"]
+    snapshot_id = result_unguided["snapshot_id"]
+
+    cand_map = {c.id: c for c in DEFAULT_CANDIDATES}
+    cand_unguided = cand_map[cid_unguided]
+    cand_guided = cand_map[cid_guided]
+
+    points, normals = make_unit_cube_cloud(points_per_face=25)
+    dataset_hash = hashlib.sha256(points.tobytes() + normals.tobytes()).hexdigest()
+
+    correlation_id = str(uuid.uuid4())
+
+    run_id_u, cov_u, vis_u, tot_u = _evaluate_candidate(
+        db, project_id, cand_unguided, "unguided", points, normals, correlation_id,
+    )
+    run_id_g, cov_g, vis_g, tot_g = _evaluate_candidate(
+        db, project_id, cand_guided, "guided", points, normals, correlation_id,
+    )
+
+    delta = cov_g - cov_u
+    if delta > 1e-9:
+        winner = "guided"
+    elif delta < -1e-9:
+        winner = "unguided"
+    else:
+        winner = "tie"
+
+    limitations: list[str] = []
+    if cid_unguided == cid_guided:
+        limitations.append("both_branches_selected_same_candidate")
+
+    fork = ResearchFork(
+        project_id=project_id,
+        checkpoint_snapshot_id=snapshot_id,
+        policy_run_id_unguided=result_unguided["id"],
+        policy_run_id_guided=result_guided["id"],
+        candidate_id_unguided=cid_unguided,
+        candidate_id_guided=cid_guided,
+        w_unguided=0.0,
+        w_guided=new_w,
+        run_id_unguided=run_id_u,
+        run_id_guided=run_id_g,
+        shared_evaluator_version=original.shared_evaluator_version,
+        shared_dataset_hash=dataset_hash,
+        shared_budget="single_pose",
+        coverage_unguided=cov_u,
+        coverage_guided=cov_g,
+        coverage_delta=delta,
+        winner=winner,
+        comparison_status="complete",
+        limitations_json=json.dumps(limitations) if limitations else None,
+        idempotency_key=idempotency_key,
+    )
+    db.add(fork)
+    db.flush()
+
+    _emit(
+        db,
+        project_id,
+        "fork.replayed",
+        entity_id=fork.id,
+        payload={
+            "fork_id": fork.id,
+            "original_fork_id": original_fork_id,
+            "new_w": new_w,
+            "winner": winner,
+            "coverage_delta": delta,
+        },
+        correlation_id=correlation_id,
+    )
+
+    return _fork_to_dict(fork)
+
+
 def _fork_to_dict(fork: ResearchFork, confounds: list[str] | None = None) -> dict[str, Any]:
     cand_map = {c.id: c for c in DEFAULT_CANDIDATES}
 

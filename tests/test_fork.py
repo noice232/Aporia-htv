@@ -186,6 +186,63 @@ class TestListForks:
         assert data[0]["winner"] == "guided"
 
 
+class TestReplayCreatesNewFork:
+    def test_replay_creates_new_fork_from_original(self):
+        proj = _create_project()
+        _setup_guided_profile(proj["id"])
+        original = _create_fork(proj["id"], w=1.0)
+
+        c = _client()
+        resp = c.post(
+            f"/api/v1/projects/{proj['id']}/forks/{original['id']}/replay",
+            json={"w": 1.0},
+        )
+        assert resp.status_code == 201, resp.text
+        replayed = resp.json()
+
+        assert replayed["id"] != original["id"]
+        assert replayed["project_id"] == original["project_id"]
+        assert replayed["shared_dataset_hash"] == original["shared_dataset_hash"]
+        assert replayed["branch_unguided"]["status"] == "evaluated"
+        assert replayed["branch_guided"]["status"] == "evaluated"
+
+
+class TestReplayUsesSameEvaluatorVersion:
+    def test_evaluator_version_matches_original(self):
+        proj = _create_project()
+        _setup_guided_profile(proj["id"])
+        original = _create_fork(proj["id"], w=1.0)
+
+        c = _client()
+        resp = c.post(
+            f"/api/v1/projects/{proj['id']}/forks/{original['id']}/replay",
+            json={"w": 2.0},
+        )
+        assert resp.status_code == 201, resp.text
+        replayed = resp.json()
+
+        assert replayed["shared_evaluator_version"] == original["shared_evaluator_version"]
+
+
+class TestReplayDifferentWCanChangeWinner:
+    def test_different_w_changes_winner(self):
+        proj = _create_project()
+        _setup_guided_profile(proj["id"])
+        original = _create_fork(proj["id"], w=1.0)
+        assert original["comparison"]["winner"] == "guided"
+
+        c = _client()
+        resp = c.post(
+            f"/api/v1/projects/{proj['id']}/forks/{original['id']}/replay",
+            json={"w": 0.0},
+        )
+        assert resp.status_code == 201, resp.text
+        replayed = resp.json()
+
+        assert replayed["comparison"]["winner"] == "tie"
+        assert replayed["comparison"]["winner"] != original["comparison"]["winner"]
+
+
 class TestGetFork:
     def test_get_by_id(self):
         proj = _create_project()

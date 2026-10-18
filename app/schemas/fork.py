@@ -10,6 +10,11 @@ class ForkRequest(BaseModel):
     idempotency_key: str | None = None
 
 
+class ReplayRequest(BaseModel):
+    w: float = Field(..., ge=0.0, le=10.0)
+    idempotency_key: str | None = None
+
+
 class BranchOut(BaseModel):
     candidate_id: str
     candidate_label: str
