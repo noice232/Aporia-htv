@@ -12,6 +12,7 @@ from app.models.portfolio import AgendaPriority, PortfolioComparison, PortfolioS
 from app.models.workspace import User, Workspace, WorkspaceMember
 from app.models.paper import Paper
 from app.models.source import SourceContext
+from app.models.question import HumanQuestion
 
 __all__ = [
     "AgendaItem", "ExperimentRun", "Project", "ResearchEvent",
@@ -28,4 +29,5 @@ __all__ = [
     "User", "Workspace", "WorkspaceMember",
     "Paper",
     "SourceContext",
+    "HumanQuestion",
 ]
