@@ -7,17 +7,21 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "smoke": "node scripts/smoke.mjs",
-    "format:check": "prettier --check src/App.tsx src/api/client.ts src/styles.css src/main.tsx vite.config.ts scripts/smoke.mjs",
+    "smoke:poc": "node scripts/poc-smoke.mjs",
+    "smoke:demo": "node scripts/demo-smoke.mjs",
+    "format:check": "prettier --check src/App.tsx src/Poc.tsx src/ResearchDemo.tsx src/api/client.ts src/styles.css src/poc.css src/demo.css src/main.tsx vite.config.ts scripts/smoke.mjs scripts/poc-smoke.mjs scripts/demo-smoke.mjs scripts/sample-ply.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "types:generate": "openapi-typescript contracts/openapi.yaml -o src/api/generated.ts"
   },
   "dependencies": {
+    "@mkkellogg/gaussian-splats-3d": "^0.4.7",
     "lucide-react": "^0.468.0",
     "openapi-fetch": "^0.15.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.0",

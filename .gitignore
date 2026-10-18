@@ -148,3 +148,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Local scenes may be large or privately sourced. Never ship these in dist.
+/.local-scenes/
+/public/demo-scene/

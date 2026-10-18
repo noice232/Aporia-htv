@@ -1,0 +1,9 @@
+Black Jacket Gaussian Splat
+Creator: geofront e.U.
+Source: https://geofront.eu/splatting_guide/models.html
+Original PLY: https://geofront.eu/hosted/geosplat/data/blackjacket_geofront.ply
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+License text: https://creativecommons.org/licenses/by/4.0/
+
+The PLY is included unmodified as a public demonstration asset for APORIA.
+APORIA's source code and this third-party scene have separate rights.
